@@ -45,6 +45,7 @@ class CreatePoWizard(models.TransientModel):
                         'product_id': line.product_id.id,
                         'name': line.name,
                         'product_qty': line.product_uom_qty,
+                        'analytic_distribution':line.analytic_distribution,
                         'price_unit': line.product_id.standard_price,
                         'date_planned': fields.Datetime.now(),
                     }))
