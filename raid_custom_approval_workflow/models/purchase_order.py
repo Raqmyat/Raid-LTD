@@ -19,6 +19,8 @@ class PurchaseOrder(models.Model):
         ('to approve', 'To Approve'),
         ('submitted', 'Submitted'),
         ('op_manager', 'Ops Manager Approval'),
+        ('hr', 'HR Approval'),
+        ('legal', 'Legal Approval'),
         ('finance', 'Finance Approval'),
         ('audit', 'Audit Approval'),
         ('ceo', 'CEO Approval'),
@@ -55,6 +57,14 @@ class PurchaseOrder(models.Model):
 
     def action_op_manager_approve(self):
         self.state = 'op_manager'
+        self._create_approval_activity('raid_custom_approval_workflow.group_purchase_hr', _('Purchase Order pending HR Approval: %s', self.name))
+
+    def action_hr_approve(self):
+        self.state = 'hr'
+        self._create_approval_activity('raid_custom_approval_workflow.group_purchase_legal', _('Purchase Order pending Legal Approval: %s', self.name))
+
+    def action_legal_approve(self):
+        self.state = 'legal'
         self._create_approval_activity('raid_custom_approval_workflow.group_purchase_finance', _('Purchase Order pending Finance Approval: %s', self.name))
 
     def action_finance_approve(self):

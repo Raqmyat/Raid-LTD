@@ -12,6 +12,7 @@ class SaleOrder(models.Model):
         ('submitted', 'Submitted'),
         ('op_manager', 'Ops Manager Approval'),
         ('hr', 'HR Approval'),
+        ('legal', 'Legal Approval'),
         ('finance', 'Finance Approval'),
         ('audit', 'Audit Approval'),
         ('ceo', 'CEO Approval'),
@@ -128,6 +129,10 @@ class SaleOrder(models.Model):
 
     def action_hr_approve(self):
         self.state = 'hr'
+        self._create_approval_activity('raid_custom_approval_workflow.group_sale_legal', _('Sales Order pending Legal Approval: %s', self.name))
+
+    def action_legal_approve(self):
+        self.state = 'legal'
         self._create_approval_activity('raid_custom_approval_workflow.group_sale_finance', _('Sales Order pending Finance Approval: %s', self.name))
 
     def action_finance_approve(self):

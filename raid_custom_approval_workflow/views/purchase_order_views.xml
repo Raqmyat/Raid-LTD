@@ -24,7 +24,7 @@
             <!-- When approval is enabled, show full approval path -->
             <xpath expr="//field[@name='state']" position="after">
                 <field name="state" widget="statusbar"
-                       statusbar_visible="draft,sent,submitted,op_manager,finance,audit,ceo,purchase"
+                       statusbar_visible="draft,sent,submitted,op_manager,hr,legal,finance,audit,ceo,purchase"
                        invisible="not use_purchase_approval_cycle"
                        readonly="1"/>
             </xpath>
@@ -42,8 +42,14 @@
                 <button name="action_op_manager_approve" string="Approve (Ops Manager)" type="object" class="btn-primary"
                         invisible="not use_purchase_approval_cycle or state != 'submitted'" groups="raid_custom_approval_workflow.group_purchase_ops_manager" />
 
+                <button name="action_hr_approve" string="Approve (HR)" type="object" class="btn-primary"
+                        invisible="not use_purchase_approval_cycle or state != 'op_manager'" groups="raid_custom_approval_workflow.group_purchase_hr" />
+
+                <button name="action_legal_approve" string="Approve (Legal)" type="object" class="btn-primary"
+                        invisible="not use_purchase_approval_cycle or state != 'hr'" groups="raid_custom_approval_workflow.group_purchase_legal" />
+
                 <button name="action_finance_approve" string="Approve (Finance)" type="object" class="btn-primary"
-                        invisible="not use_purchase_approval_cycle or state != 'op_manager'" groups="raid_custom_approval_workflow.group_purchase_finance" />
+                        invisible="not use_purchase_approval_cycle or state != 'legal'" groups="raid_custom_approval_workflow.group_purchase_finance" />
 
                 <button name="action_audit_approve" string="Approve (Audit)" type="object" class="btn-primary"
                         invisible="not use_purchase_approval_cycle or state != 'finance'" groups="raid_custom_approval_workflow.group_purchase_audit" />
@@ -53,8 +59,8 @@
 
                 <!-- Reject Button -->
                 <button name="action_reject" string="Reject" type="object" class="btn-secondary"
-                        invisible="not use_purchase_approval_cycle or state not in ['submitted', 'op_manager', 'finance', 'audit']"
-                        groups="raid_custom_approval_workflow.group_purchase_ops_manager,raid_custom_approval_workflow.group_purchase_finance,raid_custom_approval_workflow.group_purchase_audit,raid_custom_approval_workflow.group_purchase_ceo" />
+                        invisible="not use_purchase_approval_cycle or state not in ['submitted', 'op_manager', 'hr', 'legal', 'finance', 'audit']"
+                        groups="raid_custom_approval_workflow.group_purchase_ops_manager,raid_custom_approval_workflow.group_purchase_hr,raid_custom_approval_workflow.group_purchase_legal,raid_custom_approval_workflow.group_purchase_finance,raid_custom_approval_workflow.group_purchase_audit,raid_custom_approval_workflow.group_purchase_ceo" />
             </xpath>
 
             <!-- Confirm button visibility -->
