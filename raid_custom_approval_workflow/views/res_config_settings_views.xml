@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.raid.approval</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="90"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Sales Settings -->
+            <xpath expr="//form//app[@name='sale_management']" position="inside">
+                <block title="Raid Sales Approvals" id="raid_sale_approval_setting">
+                    <setting string="Sales Approval Cycle" help="Enable multi-level approval for Sales Orders.">
+                        <field name="use_sale_approval_cycle"/>
+                    </setting>
+                </block>
+            </xpath>
+            <!-- Purchase Settings -->
+            <xpath expr="//form//app[@name='purchase']" position="inside">
+                <block title="Raid Purchase Approvals" id="raid_purchase_approval_setting">
+                    <setting string="Purchase Approval Cycle" help="Enable multi-level approval for Purchase Orders.">
+                        <field name="use_purchase_approval_cycle"/>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>

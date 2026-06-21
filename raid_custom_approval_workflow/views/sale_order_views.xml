@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_inherit_raid_approval" model="ir.ui.view">
+        <field name="name">sale.order.form.inherit.raid.approval</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Load hidden fields needed for conditions -->
+            <xpath expr="//field[@name='state']" position="before">
+                <field name="use_sale_approval_cycle" invisible="1"/>
+            </xpath>
+
+            <!-- Smart Button for POs -->
+            <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+                <button name="action_view_raid_purchase_orders" type="object" class="oe_stat_button" icon="fa-shopping-cart" string="Purchase Orders"/>
+            </xpath>
+
+            <!-- Status bar: show approval states ONLY when approval cycle is enabled -->
+            <xpath expr="//field[@name='state']" position="attributes">
+                <attribute name="statusbar_visible">draft,sent,sale</attribute>
+            </xpath>
+
+            <!-- When approval is enabled, show full approval path -->
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="state" widget="statusbar"
+                       statusbar_visible="draft,sent,submitted,op_manager,hr,legal,finance,audit,ceo,sale"
+                       invisible="not use_sale_approval_cycle"/>
+            </xpath>
+            <xpath expr="//field[@name='state'][1]" position="attributes">
+                <attribute name="invisible">use_sale_approval_cycle</attribute>
+            </xpath>
+
+            <!-- Approval Buttons in Header -->
+            <xpath expr="//header" position="inside">
+                <!-- Submit Button for Operations -->
+                <button name="%(raid_custom_approval_workflow.action_create_po_wizard)d" string="Submit" type="action" class="btn-primary"
+                        context="{'active_id': id, 'active_model': 'sale.order'}"
+                        invisible="not use_sale_approval_cycle or state != 'draft'" groups="raid_custom_approval_workflow.group_sale_ops_employee"/>
+
+                <!-- Approval Buttons -->
+                <button name="action_op_manager_approve" string="Approve (Ops Manager)" type="object" class="btn-primary"
+                        invisible="not use_sale_approval_cycle or state != 'submitted'" groups="raid_custom_approval_workflow.group_sale_ops_manager" />
+
+                <button name="action_hr_approve" string="Approve (HR)" type="object" class="btn-primary"
+                        invisible="not use_sale_approval_cycle or state != 'op_manager'" groups="raid_custom_approval_workflow.group_sale_hr" />
+
+                <button name="action_legal_approve" string="Approve (Legal)" type="object" class="btn-primary"
+                        invisible="not use_sale_approval_cycle or state != 'hr'" groups="raid_custom_approval_workflow.group_sale_legal" />
+
+                <button name="action_finance_approve" string="Approve (Finance)" type="object" class="btn-primary"
+                        invisible="not use_sale_approval_cycle or state != 'legal'" groups="raid_custom_approval_workflow.group_sale_finance" />
+
+                <button name="action_audit_approve" string="Approve (Audit)" type="object" class="btn-primary"
+                        invisible="not use_sale_approval_cycle or state != 'finance'" groups="raid_custom_approval_workflow.group_sale_audit" />
+
+                <button name="action_ceo_approve" string="Approve (CEO)" type="object" class="btn-primary"
+                        invisible="not use_sale_approval_cycle or state != 'audit'" groups="raid_custom_approval_workflow.group_sale_ceo" />
+
+                <!-- Reject Button -->
+                <button name="action_reject" string="Reject" type="object" class="btn-secondary"
+                        invisible="not use_sale_approval_cycle or state not in ['submitted', 'op_manager', 'hr', 'legal', 'finance', 'audit']"
+                        groups="raid_custom_approval_workflow.group_sale_ops_manager,raid_custom_approval_workflow.group_sale_hr,raid_custom_approval_workflow.group_sale_legal,raid_custom_approval_workflow.group_sale_finance,raid_custom_approval_workflow.group_sale_audit,raid_custom_approval_workflow.group_sale_ceo" />
+            </xpath>
+
+            <!-- Confirm button visibility -->
+            <xpath expr="//header/button[@name='action_confirm'][1]" position="attributes">
+                <attribute name="invisible">(use_sale_approval_cycle and state != 'ceo') or (not use_sale_approval_cycle and state != 'draft')</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='action_confirm'][2]" position="attributes">
+                <attribute name="invisible">use_sale_approval_cycle or (not use_sale_approval_cycle and state != 'sent')</attribute>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>
