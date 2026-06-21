@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_account_payment_form_invoice_allocation" model="ir.ui.view">
+        <field name="name">account.payment.form.invoice.allocation</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Header: Apply Allocations button, only relevant once posted -->
+            <xpath expr="//button[@name='action_draft']" position="before">
+                <button name="action_apply_allocations" string="Apply Allocations"
+                        type="object" class="oe_highlight"
+                        invisible="state not in ('in_process', 'paid') or allocation_type != 'invoice' or allocation_count == 0"
+                        data-hotkey="z"/>
+            </xpath>
+
+            <!-- Smart button: Allocated Invoices -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_allocated_invoices" type="object"
+                        class="oe_stat_button" icon="fa-file-text-o"
+                        invisible="allocation_count == 0">
+                    <div class="o_form_field o_stat_info">
+                        <span class="o_stat_text">
+                            <field name="allocation_count"/>
+                            <span> Allocated</span>
+                        </span>
+                    </div>
+                </button>
+            </xpath>
+
+            <!-- Allocation Type field, placed right after the amount -->
+            <xpath expr="//field[@name='date'][1]" position="before">
+                <field name="allocation_type" widget="radio" options="{'horizontal': True}"
+                       readonly="state != 'draft'"/>
+            </xpath>
+
+            <!-- Notebook page: Invoice Allocations -->
+            <xpath expr="//notebook[@name='payment_notebook']" position="inside">
+                <page string="Invoice Allocations" name="invoice_allocations"
+                      invisible="allocation_type != 'invoice'">
+                    <group>
+                        <group>
+                            <field name="amount" string="Payment Amount" readonly="1"/>
+                            <field name="total_allocated_amount" readonly="1"
+                                   decoration-success="allocation_status == 'full'"
+                                   decoration-warning="allocation_status == 'partial'"
+                                   decoration-danger="allocation_status == 'over'"/>
+                            <field name="remaining_unallocated_amount" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="allocation_line_ids"
+                           context="{'default_payment_id': id}">
+                        <list editable="bottom"
+                              decoration-success="allocation_state == 'full'"
+                              decoration-warning="allocation_state == 'partial'"
+                              decoration-danger="allocation_state == 'over'"
+                              decoration-muted="allocation_state == 'none'">
+                            <field name="sequence" widget="handle" readonly="parent.state != 'draft'"/>
+                            <field name="move_id"
+                                   readonly="parent.state != 'draft'"
+                                   domain="[('move_type', 'in', (parent.partner_type == 'customer' and ['out_invoice', 'out_refund']) or ['in_invoice', 'in_refund']), ('state', '=', 'posted'), ('payment_state', 'not in', ('paid', 'reversed')), ('amount_residual', '&gt;', 0), ('partner_id', '=', parent.partner_id)]"
+                                   context="{'default_partner_id': parent.partner_id}"/>
+                            <field name="invoice_date"/>
+                            <field name="invoice_due_date"/>
+                            <field name="invoice_total" readonly="1"/>
+                            <field name="residual_amount" readonly="1"/>
+                            <field name="allocation_method" widget="radio" options="{'horizontal': True}"
+                                   readonly="parent.state != 'draft'"/>
+                            <field name="allocated_percentage"
+                                   invisible="allocation_method != 'percentage'"
+                                   readonly="parent.state != 'draft'"/>
+                            <field name="allocated_amount" readonly="parent.state != 'draft'"/>
+                            <field name="remaining_after_allocation" readonly="1"/>
+                            <field name="is_reconciled" widget="boolean_toggle" readonly="1"/>
+                            <button name="action_reconcile_and_notify" type="object"
+                                    string="Reconcile" class="btn-link"
+                                    invisible="is_reconciled or not id or parent.state == 'draft'"/>
+                            <field name="currency_id" column_invisible="1"/>
+                            <field name="allocation_state" column_invisible="1"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>
