@@ -45,6 +45,9 @@
                 <button name="action_hr_approve" string="Approve (HR)" type="object" class="btn-primary"
                         invisible="not use_sale_approval_cycle or state != 'op_manager'" groups="raid_custom_approval_workflow.group_sale_hr" />
 
+                <button name="action_send_to_legal" string="Send to Legal" type="object" class="btn-secondary"
+                        invisible="not use_sale_approval_cycle or state != 'op_manager'" groups="raid_custom_approval_workflow.group_sale_hr" />
+
                 <button name="action_legal_approve" string="Approve (Legal)" type="object" class="btn-primary"
                         invisible="not use_sale_approval_cycle or state != 'hr'" groups="raid_custom_approval_workflow.group_sale_legal" />
 
@@ -54,12 +57,15 @@
                 <button name="action_audit_approve" string="Approve (Audit)" type="object" class="btn-primary"
                         invisible="not use_sale_approval_cycle or state != 'finance'" groups="raid_custom_approval_workflow.group_sale_audit" />
 
+                <button name="action_send_to_ceo" string="Send to CEO" type="object" class="btn-secondary"
+                        invisible="not use_sale_approval_cycle or state != 'finance'" groups="raid_custom_approval_workflow.group_sale_audit" />
+
                 <button name="action_ceo_approve" string="Approve (CEO)" type="object" class="btn-primary"
                         invisible="not use_sale_approval_cycle or state != 'audit'" groups="raid_custom_approval_workflow.group_sale_ceo" />
 
                 <!-- Reject Button -->
                 <button name="action_reject" string="Reject" type="object" class="btn-secondary"
-                        invisible="not use_sale_approval_cycle or state not in ['submitted', 'op_manager', 'hr', 'legal', 'finance', 'audit']"
+                        invisible="not use_sale_approval_cycle or state not in ['submitted', 'op_manager', 'hr', 'legal', 'finance', 'audit', 'ceo']"
                         groups="raid_custom_approval_workflow.group_sale_ops_manager,raid_custom_approval_workflow.group_sale_hr,raid_custom_approval_workflow.group_sale_legal,raid_custom_approval_workflow.group_sale_finance,raid_custom_approval_workflow.group_sale_audit,raid_custom_approval_workflow.group_sale_ceo" />
             </xpath>
 
