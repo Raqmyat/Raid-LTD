@@ -6,8 +6,8 @@
     'summary': 'Parallel multi-level approval cycle for Sales and Purchases with PO wizard.',
     'description': """
         This module implements a specific approval workflow for Sales and Purchase orders:
-        Sales: Draft -> Submitted -> Op Manager -> HR -> Finance -> Audit -> CEO -> Sale.
-        Purchase: Draft -> Submitted -> Op Manager -> Finance -> Audit -> CEO -> Purchase.
+        Sales: Draft -> Submitted -> Op Manager -> HR -> Audit -> CEO -> Sale.
+        Purchase: Draft -> Submitted -> Op Manager -> HR -> Legal -> Finance -> Audit -> CEO -> Purchase.
         Includes a wizard to create POs from SOs and a configuration to toggle the cycle.
     """,
     'author': 'Eng/Mohamed elgarhy',
