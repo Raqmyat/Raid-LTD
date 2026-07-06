@@ -12,8 +12,6 @@ class SaleOrder(models.Model):
         ('submitted', 'Submitted'),
         ('op_manager', 'Ops Manager Approval'),
         ('hr', 'HR Approval'),
-        ('legal', 'Legal Approval'),
-        ('finance', 'Finance Approval'),
         ('audit', 'Audit Approval'),
         ('ceo', 'CEO Approval'),
         ('sale', 'Sales Order'),
@@ -129,19 +127,19 @@ class SaleOrder(models.Model):
 
     def action_hr_approve(self):
         self.state = 'hr'
-        self._create_approval_activity('raid_custom_approval_workflow.group_sale_legal', _('Sales Order pending Legal Approval: %s', self.name))
-
-    def action_legal_approve(self):
-        self.state = 'legal'
-        self._create_approval_activity('raid_custom_approval_workflow.group_sale_finance', _('Sales Order pending Finance Approval: %s', self.name))
-
-    def action_finance_approve(self):
-        self.state = 'finance'
         self._create_approval_activity('raid_custom_approval_workflow.group_sale_audit', _('Sales Order pending Audit Approval: %s', self.name))
 
     def action_audit_approve(self):
+        self.state = 'ceo'
+        activity_type = self.env.ref('mail.mail_activity_data_todo')
+        self.activity_ids.filtered(lambda a: a.activity_type_id == activity_type).unlink()
+
+    def action_send_to_ceo(self):
         self.state = 'audit'
-        self._create_approval_activity('raid_custom_approval_workflow.group_sale_ceo', _('Sales Order pending CEO Approval: %s', self.name))
+        self._create_approval_activity(
+            'raid_custom_approval_workflow.group_sale_ceo',
+            _('Sales Order pending CEO Approval: %s', self.name),
+        )
 
     def action_ceo_approve(self):
         self.state = 'ceo'
