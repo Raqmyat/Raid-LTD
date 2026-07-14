@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<data>
+    <!-- Construction Module Category -->
+    <record id="module_category_construction" model="ir.module.category">
+        <field name="name">Construction</field>
+        <field name="description">Construction Management Module</field>
+        <field name="sequence">50</field>
+    </record>
+
+    <!-- Construction Privilege -->
+    <record id="res_groups_privilege_construction" model="res.groups.privilege">
+        <field name="name">Construction</field>
+        <field name="sequence">50</field>
+        <field name="category_id" ref="module_category_construction"/>
+    </record>
+
+    <!-- Construction User Group -->
+    <record id="group_construction_user" model="res.groups">
+        <field name="name">User</field>
+        <field name="sequence">10</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="privilege_id" ref="res_groups_privilege_construction"/>
+    </record>
+
+    <!-- Construction Manager Group -->
+    <record id="group_construction_manager" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="sequence">20</field>
+        <field name="implied_ids" eval="[(4, ref('group_construction_user'))]"/>
+        <field name="privilege_id" ref="res_groups_privilege_construction"/>
+        <field name="user_ids" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+    </record>
+</data>
+</odoo>
