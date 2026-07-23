@@ -4,6 +4,16 @@
         NOTE: ref "hr_payroll.hr_payslip_run_form" is the standard XML ID for
         the Payslips Batch form view. Update inherit_id if it differs on your
         instance.
+
+        This version does NOT assume a <field name="state"/> tag already
+        exists in the base arch (your instance's form apparently doesn't show
+        it), so we add our own field nodes anchored to <form> instead of
+        trying to locate an existing state field.
+
+        We also do NOT try to hide the stock "confirm/validate" button by
+        guessing its exact name - that enforcement is done safely in Python
+        (see HrPayslipRun.action_validate in models/hr_payslip.py), which
+        raises a clear error if someone clicks it before CEO approval.
     -->
     <record id="hr_payslip_run_form_inherit_raid_approval" model="ir.ui.view">
         <field name="name">hr.payslip.run.form.inherit.raid.approval</field>
@@ -11,17 +21,11 @@
         <field name="inherit_id" ref="hr_payroll.hr_payslip_run_form"/>
         <field name="arch" type="xml">
 
-            <xpath expr="//field[@name='state']" position="before">
+            <xpath expr="//form" position="inside">
                 <field name="use_payroll_approval_cycle" invisible="1"/>
-            </xpath>
-
-            <xpath expr="//field[@name='state']" position="after">
                 <field name="state" widget="statusbar"
                        statusbar_visible="draft,submitted,op_manager,hr,legal,finance,audit,ceo,close"
                        invisible="not use_payroll_approval_cycle"/>
-            </xpath>
-            <xpath expr="//field[@name='state'][1]" position="attributes">
-                <attribute name="invisible">use_payroll_approval_cycle</attribute>
             </xpath>
 
             <xpath expr="//header" position="inside">
@@ -63,15 +67,6 @@
                 <button name="action_reject" string="Reject" type="object" class="btn-secondary"
                         invisible="not use_payroll_approval_cycle or state not in ['submitted','op_manager','hr','legal','finance','audit','ceo']"
                         groups="raid_custom_approval_workflow.group_payroll_ops_manager,raid_custom_approval_workflow.group_payroll_hr,raid_custom_approval_workflow.group_payroll_legal,raid_custom_approval_workflow.group_payroll_finance,raid_custom_approval_workflow.group_payroll_audit,raid_custom_approval_workflow.group_payroll_ceo"/>
-            </xpath>
-
-            <!--
-                Guard the batch's own "confirm/generate" button. UPDATE
-                "action_validate" below to match the real button name used to
-                finalize/close the batch in your version.
-            -->
-            <xpath expr="//header/button[@name='action_validate']" position="attributes">
-                <attribute name="invisible">use_payroll_approval_cycle and state != 'ceo'</attribute>
             </xpath>
 
         </field>

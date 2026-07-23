@@ -2,8 +2,16 @@
 <odoo>
     <!--
         NOTE: ref "hr_payroll.view_hr_payslip_form" is the standard XML ID for
-        the Payslip form view in Odoo's payroll module. If your installation
-        uses a different module/technical name for payroll, update inherit_id.
+        the Payslip form view. Update inherit_id if it differs on your
+        instance.
+
+        Same defensive approach as hr_payslip_run_views.xml: we don't assume
+        a <field name="state"/> tag already exists in the base arch, we add
+        our own fields anchored to <form>. We also don't guess the exact name
+        of the stock "Confirm/Compute Sheet" button - the block is enforced
+        safely in Python (HrPayslip.action_payslip_done in
+        models/hr_payslip.py), which raises a clear error if clicked before
+        CEO approval.
     -->
     <record id="hr_payslip_form_inherit_raid_approval" model="ir.ui.view">
         <field name="name">hr.payslip.form.inherit.raid.approval</field>
@@ -11,20 +19,14 @@
         <field name="inherit_id" ref="hr_payroll.view_hr_payslip_form"/>
         <field name="arch" type="xml">
 
-            <xpath expr="//field[@name='state']" position="before">
+            <xpath expr="//form" position="inside">
                 <field name="use_payroll_approval_cycle" invisible="1"/>
                 <field name="payslip_run_id" invisible="1"/>
-            </xpath>
-
-            <!-- Full approval path status bar, only shown when the payslip is
-                 NOT part of a Batch (standalone payslip) and the cycle is on -->
-            <xpath expr="//field[@name='state']" position="after">
+                <!-- Full approval path status bar, only shown when the payslip
+                     is NOT part of a Batch (standalone payslip) and the cycle is on -->
                 <field name="state" widget="statusbar"
                        statusbar_visible="draft,submitted,op_manager,hr,legal,finance,audit,ceo,done,paid"
                        invisible="not use_payroll_approval_cycle or payslip_run_id"/>
-            </xpath>
-            <xpath expr="//field[@name='state'][1]" position="attributes">
-                <attribute name="invisible">use_payroll_approval_cycle and not payslip_run_id</attribute>
             </xpath>
 
             <xpath expr="//header" position="inside">
@@ -66,15 +68,6 @@
                 <button name="action_reject" string="Reject" type="object" class="btn-secondary"
                         invisible="not use_payroll_approval_cycle or payslip_run_id or state not in ['submitted','op_manager','hr','legal','finance','audit','ceo']"
                         groups="raid_custom_approval_workflow.group_payroll_ops_manager,raid_custom_approval_workflow.group_payroll_hr,raid_custom_approval_workflow.group_payroll_legal,raid_custom_approval_workflow.group_payroll_finance,raid_custom_approval_workflow.group_payroll_audit,raid_custom_approval_workflow.group_payroll_ceo"/>
-            </xpath>
-
-            <!--
-                Hide/guard the stock "Compute Sheet" / "Confirm" button until CEO
-                approval is done. UPDATE THE NAME "action_payslip_done" BELOW if
-                your version's button uses a different method/name for that button.
-            -->
-            <xpath expr="//header/button[@name='action_payslip_done']" position="attributes">
-                <attribute name="invisible">(use_payroll_approval_cycle and not payslip_run_id and state != 'ceo') or payslip_run_id</attribute>
             </xpath>
 
         </field>
