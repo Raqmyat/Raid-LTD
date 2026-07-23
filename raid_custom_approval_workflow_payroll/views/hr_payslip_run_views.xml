@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        NOTE: ref "hr_payroll.hr_payslip_run_form" is the standard XML ID for
+        the Payslips Batch form view. Update inherit_id if it differs on your
+        instance.
+    -->
+    <record id="hr_payslip_run_form_inherit_raid_approval" model="ir.ui.view">
+        <field name="name">hr.payslip.run.form.inherit.raid.approval</field>
+        <field name="model">hr.payslip.run</field>
+        <field name="inherit_id" ref="hr_payroll.hr_payslip_run_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='state']" position="before">
+                <field name="use_payroll_approval_cycle" invisible="1"/>
+            </xpath>
+
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="state" widget="statusbar"
+                       statusbar_visible="draft,submitted,op_manager,hr,legal,finance,audit,ceo,close"
+                       invisible="not use_payroll_approval_cycle"/>
+            </xpath>
+            <xpath expr="//field[@name='state'][1]" position="attributes">
+                <attribute name="invisible">use_payroll_approval_cycle</attribute>
+            </xpath>
+
+            <xpath expr="//header" position="inside">
+                <button name="action_submit_to_manager" string="Submit" type="object" class="btn-primary"
+                        invisible="not use_payroll_approval_cycle or state != 'draft'"/>
+
+                <button name="action_op_manager_approve" string="Approve (Ops Manager)" type="object" class="btn-primary"
+                        invisible="not use_payroll_approval_cycle or state != 'submitted'"
+                        groups="raid_custom_approval_workflow.group_payroll_ops_manager"/>
+
+                <button name="action_hr_approve" string="Approve (HR)" type="object" class="btn-primary"
+                        invisible="not use_payroll_approval_cycle or state != 'op_manager'"
+                        groups="raid_custom_approval_workflow.group_payroll_hr"/>
+
+                <button name="action_send_to_legal" string="Send to Legal" type="object" class="btn-secondary"
+                        invisible="not use_payroll_approval_cycle or state != 'op_manager'"
+                        groups="raid_custom_approval_workflow.group_payroll_hr"/>
+
+                <button name="action_legal_approve" string="Approve (Legal)" type="object" class="btn-primary"
+                        invisible="not use_payroll_approval_cycle or state != 'hr'"
+                        groups="raid_custom_approval_workflow.group_payroll_legal"/>
+
+                <button name="action_finance_approve" string="Approve (Finance)" type="object" class="btn-primary"
+                        invisible="not use_payroll_approval_cycle or state != 'legal'"
+                        groups="raid_custom_approval_workflow.group_payroll_finance"/>
+
+                <button name="action_audit_approve" string="Approve (Audit)" type="object" class="btn-primary"
+                        invisible="not use_payroll_approval_cycle or state != 'finance'"
+                        groups="raid_custom_approval_workflow.group_payroll_audit"/>
+
+                <button name="action_send_to_ceo" string="Send to CEO" type="object" class="btn-secondary"
+                        invisible="not use_payroll_approval_cycle or state != 'finance'"
+                        groups="raid_custom_approval_workflow.group_payroll_audit"/>
+
+                <button name="action_ceo_approve" string="Approve (CEO)" type="object" class="btn-primary"
+                        invisible="not use_payroll_approval_cycle or state != 'audit'"
+                        groups="raid_custom_approval_workflow.group_payroll_ceo"/>
+
+                <button name="action_reject" string="Reject" type="object" class="btn-secondary"
+                        invisible="not use_payroll_approval_cycle or state not in ['submitted','op_manager','hr','legal','finance','audit','ceo']"
+                        groups="raid_custom_approval_workflow.group_payroll_ops_manager,raid_custom_approval_workflow.group_payroll_hr,raid_custom_approval_workflow.group_payroll_legal,raid_custom_approval_workflow.group_payroll_finance,raid_custom_approval_workflow.group_payroll_audit,raid_custom_approval_workflow.group_payroll_ceo"/>
+            </xpath>
+
+            <!--
+                Guard the batch's own "confirm/generate" button. UPDATE
+                "action_validate" below to match the real button name used to
+                finalize/close the batch in your version.
+            -->
+            <xpath expr="//header/button[@name='action_validate']" position="attributes">
+                <attribute name="invisible">use_payroll_approval_cycle and state != 'ceo'</attribute>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>
