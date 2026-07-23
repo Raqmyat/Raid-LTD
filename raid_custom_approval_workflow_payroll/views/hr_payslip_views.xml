@@ -6,12 +6,11 @@
         instance.
 
         Same defensive approach as hr_payslip_run_views.xml: we don't assume
-        a <field name="state"/> tag already exists in the base arch, we add
-        our own fields anchored to <form>. We also don't guess the exact name
-        of the stock "Confirm/Compute Sheet" button - the block is enforced
-        safely in Python (HrPayslip.action_payslip_done in
-        models/hr_payslip.py), which raises a clear error if clicked before
-        CEO approval.
+        <field name="state"/> or <header> already exist in the base arch -
+        we add our own, anchored to <form> (which always exists).
+
+        Enforcement of "you can't confirm before CEO approval" is done in
+        Python (HrPayslip.action_payslip_done in models/hr_payslip.py).
     -->
     <record id="hr_payslip_form_inherit_raid_approval" model="ir.ui.view">
         <field name="name">hr.payslip.form.inherit.raid.approval</field>
@@ -22,52 +21,53 @@
             <xpath expr="//form" position="inside">
                 <field name="use_payroll_approval_cycle" invisible="1"/>
                 <field name="payslip_run_id" invisible="1"/>
-                <!-- Full approval path status bar, only shown when the payslip
-                     is NOT part of a Batch (standalone payslip) and the cycle is on -->
-                <field name="state" widget="statusbar"
-                       statusbar_visible="draft,submitted,op_manager,hr,legal,finance,audit,ceo,done,paid"
-                       invisible="not use_payroll_approval_cycle or payslip_run_id"/>
-            </xpath>
 
-            <xpath expr="//header" position="inside">
-                <button name="action_submit_to_manager" string="Submit" type="object" class="btn-primary"
-                        invisible="not use_payroll_approval_cycle or payslip_run_id or state != 'draft'"/>
+                <header>
+                    <!-- Full approval path status bar, only shown when the payslip
+                         is NOT part of a Batch (standalone payslip) and the cycle is on -->
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,op_manager,hr,legal,finance,audit,ceo,done,paid"
+                           invisible="not use_payroll_approval_cycle or payslip_run_id"/>
 
-                <button name="action_op_manager_approve" string="Approve (Ops Manager)" type="object" class="btn-primary"
-                        invisible="not use_payroll_approval_cycle or payslip_run_id or state != 'submitted'"
-                        groups="raid_custom_approval_workflow.group_payroll_ops_manager"/>
+                    <button name="action_submit_to_manager" string="Submit" type="object" class="btn-primary"
+                            invisible="not use_payroll_approval_cycle or payslip_run_id or state != 'draft'"/>
 
-                <button name="action_hr_approve" string="Approve (HR)" type="object" class="btn-primary"
-                        invisible="not use_payroll_approval_cycle or payslip_run_id or state != 'op_manager'"
-                        groups="raid_custom_approval_workflow.group_payroll_hr"/>
+                    <button name="action_op_manager_approve" string="Approve (Ops Manager)" type="object" class="btn-primary"
+                            invisible="not use_payroll_approval_cycle or payslip_run_id or state != 'submitted'"
+                            groups="raid_custom_approval_workflow.group_payroll_ops_manager"/>
 
-                <button name="action_send_to_legal" string="Send to Legal" type="object" class="btn-secondary"
-                        invisible="not use_payroll_approval_cycle or payslip_run_id or state != 'op_manager'"
-                        groups="raid_custom_approval_workflow.group_payroll_hr"/>
+                    <button name="action_hr_approve" string="Approve (HR)" type="object" class="btn-primary"
+                            invisible="not use_payroll_approval_cycle or payslip_run_id or state != 'op_manager'"
+                            groups="raid_custom_approval_workflow.group_payroll_hr"/>
 
-                <button name="action_legal_approve" string="Approve (Legal)" type="object" class="btn-primary"
-                        invisible="not use_payroll_approval_cycle or payslip_run_id or state != 'hr'"
-                        groups="raid_custom_approval_workflow.group_payroll_legal"/>
+                    <button name="action_send_to_legal" string="Send to Legal" type="object" class="btn-secondary"
+                            invisible="not use_payroll_approval_cycle or payslip_run_id or state != 'op_manager'"
+                            groups="raid_custom_approval_workflow.group_payroll_hr"/>
 
-                <button name="action_finance_approve" string="Approve (Finance)" type="object" class="btn-primary"
-                        invisible="not use_payroll_approval_cycle or payslip_run_id or state != 'legal'"
-                        groups="raid_custom_approval_workflow.group_payroll_finance"/>
+                    <button name="action_legal_approve" string="Approve (Legal)" type="object" class="btn-primary"
+                            invisible="not use_payroll_approval_cycle or payslip_run_id or state != 'hr'"
+                            groups="raid_custom_approval_workflow.group_payroll_legal"/>
 
-                <button name="action_audit_approve" string="Approve (Audit)" type="object" class="btn-primary"
-                        invisible="not use_payroll_approval_cycle or payslip_run_id or state != 'finance'"
-                        groups="raid_custom_approval_workflow.group_payroll_audit"/>
+                    <button name="action_finance_approve" string="Approve (Finance)" type="object" class="btn-primary"
+                            invisible="not use_payroll_approval_cycle or payslip_run_id or state != 'legal'"
+                            groups="raid_custom_approval_workflow.group_payroll_finance"/>
 
-                <button name="action_send_to_ceo" string="Send to CEO" type="object" class="btn-secondary"
-                        invisible="not use_payroll_approval_cycle or payslip_run_id or state != 'finance'"
-                        groups="raid_custom_approval_workflow.group_payroll_audit"/>
+                    <button name="action_audit_approve" string="Approve (Audit)" type="object" class="btn-primary"
+                            invisible="not use_payroll_approval_cycle or payslip_run_id or state != 'finance'"
+                            groups="raid_custom_approval_workflow.group_payroll_audit"/>
 
-                <button name="action_ceo_approve" string="Approve (CEO)" type="object" class="btn-primary"
-                        invisible="not use_payroll_approval_cycle or payslip_run_id or state != 'audit'"
-                        groups="raid_custom_approval_workflow.group_payroll_ceo"/>
+                    <button name="action_send_to_ceo" string="Send to CEO" type="object" class="btn-secondary"
+                            invisible="not use_payroll_approval_cycle or payslip_run_id or state != 'finance'"
+                            groups="raid_custom_approval_workflow.group_payroll_audit"/>
 
-                <button name="action_reject" string="Reject" type="object" class="btn-secondary"
-                        invisible="not use_payroll_approval_cycle or payslip_run_id or state not in ['submitted','op_manager','hr','legal','finance','audit','ceo']"
-                        groups="raid_custom_approval_workflow.group_payroll_ops_manager,raid_custom_approval_workflow.group_payroll_hr,raid_custom_approval_workflow.group_payroll_legal,raid_custom_approval_workflow.group_payroll_finance,raid_custom_approval_workflow.group_payroll_audit,raid_custom_approval_workflow.group_payroll_ceo"/>
+                    <button name="action_ceo_approve" string="Approve (CEO)" type="object" class="btn-primary"
+                            invisible="not use_payroll_approval_cycle or payslip_run_id or state != 'audit'"
+                            groups="raid_custom_approval_workflow.group_payroll_ceo"/>
+
+                    <button name="action_reject" string="Reject" type="object" class="btn-secondary"
+                            invisible="not use_payroll_approval_cycle or payslip_run_id or state not in ['submitted','op_manager','hr','legal','finance','audit','ceo']"
+                            groups="raid_custom_approval_workflow.group_payroll_ops_manager,raid_custom_approval_workflow.group_payroll_hr,raid_custom_approval_workflow.group_payroll_legal,raid_custom_approval_workflow.group_payroll_finance,raid_custom_approval_workflow.group_payroll_audit,raid_custom_approval_workflow.group_payroll_ceo"/>
+                </header>
             </xpath>
 
         </field>
