@@ -22,10 +22,21 @@
                     </setting>
                 </block>
             </xpath>
-            <!-- Payroll Settings -->
-            <!-- NOTE: verify the app name below (commonly "payroll") matches
-                 your installed payroll settings screen technical name. -->
-            <xpath expr="//form//app[@name='payroll']" position="inside">
+            <!--
+                Payroll Settings.
+                Your instance has no app[@name='payroll'] settings screen
+                (confirmed by the install error), so instead of guessing
+                another app name, we attach this block right next to the
+                Purchase Approvals block above (which we know exists because
+                it's inside app[@name='purchase'], already installed
+                successfully). It will simply show up on the
+                Settings > Purchase page alongside the purchase cycle toggle.
+                If you'd rather have it under a specific Payroll/HR settings
+                page, tell me the exact app name (Settings > Technical >
+                Views > search "res.config.settings" > find the <app> tag
+                name for your payroll app) and I'll move it there.
+            -->
+            <xpath expr="//block[@id='raid_purchase_approval_setting']" position="after">
                 <block title="Raid Payroll Approvals" id="raid_payroll_approval_setting">
                     <setting string="Payroll Approval Cycle" help="Enable multi-level approval for Payslips and Payslips Batches.">
                         <field name="use_payroll_approval_cycle"/>
