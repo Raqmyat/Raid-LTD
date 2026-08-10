@@ -10,11 +10,11 @@
                 (hr_payroll.view_hr_payslip_form) هو نفسه الموجود عندك في v19.
             -->
             <!--
-                ممكن الحقل يكون اسمه "contract_id" لسه (مع تغيير الموديل من
-                جوه) أو يبقى "version_id". لو حصل خطأ "field does not exist"،
-                غيّر الاسم هنا للي موجود فعليًا عندك.
+                بنحط الحقل بجوار employee_id لأنه موجود أكيد في كل نسخ
+                الفورم، بدل الاعتماد على اسم قد يكون اتغير (contract_id
+                أو version_id).
             -->
-            <field name="contract_id" position="after">
+            <field name="employee_id" position="after">
                 <field name="currency_id" options="{'no_create': True}"/>
             </field>
         </field>
