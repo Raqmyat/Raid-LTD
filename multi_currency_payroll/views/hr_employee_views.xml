@@ -1,36 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!--
-        في أودو 19، بيانات العقد بقت "نسخة" (hr.version) بتتعرض جوه تاب
-        Payroll في فورم الموظف نفسه (hr.employee)، مش شاشة منفصلة.
-
-        الطريقة الأضمن لإضافة الحقل هنا (زي ما أودو نفسه بيقترح في التوثيق):
-        من Developer Mode → Payroll app → Configuration/Technical →
-        Employee Records (ده بيفتحلك list/form على hr.version مباشرة)،
-        أو من Studio على كارت الموظف نفسه وتختار الموديل hr.version.
-
-        لو حابب تعمل الحقن عن طريق كود XML بدل Studio، لازم الأول تجيب
-        external id بتاع الـ view الفعلي اللي فيه تاب "Payroll" داخل فورم
-        hr.employee (من Developer Mode → Technical → Views → دور على
-        "hr.employee" وشوف اسم الـ view اللي فيه <page string="Payroll">)
-        وتحط قيمته في `ref` تحت بدل القيمة التقريبية دي.
-    -->
-    <!--
-        ⚠️ لازم تستبدل REPLACE_ME_VIEW_XMLID تحت بـ external id حقيقي قبل
-        التثبيت، وإلا هيفشل التثبيت بـ ValueError (external id not found).
-        هتلاقيه من: Developer Mode → Settings → Technical → Views → ابحث
-        عن "hr.employee" ودور على الـ view اللي فيه <page string="Payroll">.
+        بنورث من hr_payroll.payroll_hr_employee_view_form، وهو الـ view
+        المسؤول تحديدًا عن تاب Payroll جوه فورم الموظف (hr.employee)، وفيه
+        حقل wage اللي بنضيف بجانبه حقل العملة.
     -->
     <record id="hr_employee_payroll_currency_view" model="ir.ui.view">
         <field name="name">hr.employee.form.multi.currency</field>
         <field name="model">hr.employee</field>
-        <field name="inherit_id" ref="REPLACE_ME_VIEW_XMLID"/>
+        <field name="inherit_id" ref="hr_payroll.payroll_hr_employee_view_form"/>
         <field name="arch" type="xml">
-            <!--
-                استبدل "wage" هنا باسم أي حقل تاني متأكد إنه موجود فعليًا
-                جوه تاب الـ Payroll في نسختك (مثلاً wage أو contract_wage)
-                عشان نضيف حقل currency_id بجواره.
-            -->
             <field name="wage" position="after">
                 <field name="currency_id" options="{'no_create': True}"/>
             </field>

@@ -12,11 +12,8 @@ Payroll Multi-Currency (Odoo 19)
 - الـ payslip بياخد عملته تلقائي من عملة الـ version المرتبط بيه.
 - القيد المحاسبي الناتج عن الـ payslip بيتسجل بعملة الـ version (amount_currency) مع تحويل صحيح لعملة الشركة (سعر الصرف بتاريخ الصرف).
 
-⚠️ لازم قبل التثبيت:
-1. تستبدل REPLACE_ME_VIEW_XMLID في views/hr_employee_views.xml بـ external id
-   حقيقي لفورم hr.employee اللي فيه تاب Payroll (من Developer Mode).
-2. تتأكد إن حقل move_id وحقل contract_id/version_id في hr_payslip.py متطابقين
-   مع الموجود فعليًا في قاعدة بياناتك.
+⚠️ لو حصل خطأ عند التثبيت بخصوص move_id أو contract_id/version_id في
+hr_payslip.py، يبقى الاسم مختلف شوية عندك ومحتاج تعديل بسيط في الكود.
     """,
     'author': 'Custom Development',
     'license': 'LGPL-3',
