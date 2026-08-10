@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_payslip_form_currency_view" model="ir.ui.view">
+        <field name="name">hr.payslip.form.multi.currency</field>
+        <field name="model">hr.payslip</field>
+        <field name="inherit_id" ref="hr_payroll.view_hr_payslip_form"/>
+        <field name="arch" type="xml">
+            <!--
+                نفس الملاحظة: تأكد إن external id بتاع فورم الـ payslip الأساسي
+                (hr_payroll.view_hr_payslip_form) هو نفسه الموجود عندك في v19.
+            -->
+            <!--
+                ممكن الحقل يكون اسمه "contract_id" لسه (مع تغيير الموديل من
+                جوه) أو يبقى "version_id". لو حصل خطأ "field does not exist"،
+                غيّر الاسم هنا للي موجود فعليًا عندك.
+            -->
+            <field name="contract_id" position="after">
+                <field name="currency_id" options="{'no_create': True}"/>
+            </field>
+        </field>
+    </record>
+</odoo>
