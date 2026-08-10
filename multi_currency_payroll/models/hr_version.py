@@ -15,6 +15,14 @@ class HrVersion(models.Model):
         help='العملة اللي هيتحسب بيها راتب هذا الموظف/هذه النسخة (ممكن تختلف عن عملة الشركة).',
     )
 
+    # ⚠️ الجزء الأهم: حقل wage الأصلي معرّف في الأودو بحيث ياخد عملته من
+    # عملة الشركة (currency_field على الأرجح = 'company_currency_id' أو
+    # مشتق منها). إعادة تعريفه هنا بـ currency_field='currency_id' بتخلي
+    # أودو يعرض ويحسب المبلغ بعملة النسخة اللي احنا ضايفينها، مش عملة الشركة.
+    # نفس الفكرة تنطبق على أي حقل Monetary تاني مرتبط بالراتب لو موجود عندك
+    # (مثلاً hourly_wage لو الأجر بالساعة).
+    wage = fields.Monetary(currency_field='currency_id')
+
     @api.onchange('company_id')
     def _onchange_company_id_currency(self):
         for rec in self:
