@@ -8,9 +8,17 @@ class HrVersion(models.Model):
     # جوه تاب Payroll في كارت الموظف نفسه.
     _inherit = 'hr.version'
 
+    # حقل currency_id موجود أصلاً في hr.version كـ related field بياخد قيمته
+    # تلقائي من عملة الشركة (company_id.currency_id) ومقفول للتعديل. لازم
+    # نفصله عن الـ related صراحة بـ related=None، وإلا هيفضل يتصرف زي الأصل
+    # حتى لو غيرنا باقي الخصائص.
     currency_id = fields.Many2one(
         'res.currency',
         string='Salary Currency',
+        related=None,
+        compute=None,
+        store=True,
+        readonly=False,
         default=lambda self: self.env.company.currency_id,
         help='العملة اللي هيتحسب بيها راتب هذا الموظف/هذه النسخة (ممكن تختلف عن عملة الشركة).',
     )

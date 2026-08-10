@@ -10,6 +10,15 @@
         <field name="model">hr.employee</field>
         <field name="inherit_id" ref="hr_payroll.payroll_hr_employee_view_form"/>
         <field name="arch" type="xml">
+            <!--
+                بنضيف options جديدة على حقل wage نفسه عشان نجبره ياخد
+                عملته من currency_id بتاعنا، لأن أغلب الاحتمال إن الـ view
+                الأصلي بيحدد currency_field صراحة (زي company_currency_id)
+                جوه الـ widget options، وده بيتفوق على تعريف البايثون.
+            -->
+            <field name="wage" position="attributes">
+                <attribute name="options">{'currency_field': 'currency_id'}</attribute>
+            </field>
             <field name="wage" position="after">
                 <field name="currency_id" options="{'no_create': True}"/>
             </field>
