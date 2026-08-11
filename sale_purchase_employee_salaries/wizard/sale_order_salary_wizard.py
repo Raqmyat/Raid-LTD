@@ -46,6 +46,9 @@ class SaleOrderSalaryWizard(models.TransientModel):
         payslips = self._get_batch_payslips()
         new_lines = []
         for slip in payslips:
+            if not slip.employee_id:
+                # نتجاهل أي payslip من غير موظف مرتبط (حالة نادرة/بيانات ناقصة)
+                continue
             new_lines.append((0, 0, {
                 'employee_id': slip.employee_id.id,
                 'payslip_id': slip.id,
@@ -58,7 +61,7 @@ class SaleOrderSalaryWizard(models.TransientModel):
         self.ensure_one()
         SaleOrderLine = self.env['sale.order.line']
         sequence = (max(self.order_id.order_line.mapped('sequence')) + 1) if self.order_id.order_line else 10
-        for line in self.line_ids.filtered('to_include'):
+        for line in self.line_ids.filtered(lambda l: l.to_include and l.employee_id):
             SaleOrderLine.create({
                 'order_id': self.order_id.id,
                 'product_id': self.product_id.id,
@@ -77,8 +80,8 @@ class SaleOrderSalaryWizardLine(models.TransientModel):
     _description = 'سطر موظف في ويزارد المرتبات'
 
     wizard_id = fields.Many2one('sale.order.salary.wizard', required=True, ondelete='cascade')
-    employee_id = fields.Many2one('hr.employee', required=True, readonly=True)
-    payslip_id = fields.Many2one('hr.payslip', readonly=True)
+    employee_id = fields.Many2one('hr.employee', required=True)
+    payslip_id = fields.Many2one('hr.payslip')
     amount = fields.Monetary(
         string='إجمالي المدفوع',
         currency_field='currency_id',
