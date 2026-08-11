@@ -11,7 +11,7 @@
                     <field name="payslip_run_id" options="{'no_create': True}"/>
                 </group>
                 <field name="line_ids">
-                    <list editable="bottom">
+                    <list editable="bottom" create="false" delete="false">
                         <field name="employee_id"/>
                         <field name="amount"/>
                         <field name="currency_id" column_invisible="1"/>
