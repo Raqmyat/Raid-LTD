@@ -1,26 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!--
-        بنورث من hr_payroll.payroll_hr_employee_view_form، وهو الـ view
-        المسؤول تحديدًا عن تاب Payroll جوه فورم الموظف (hr.employee)، وفيه
-        حقل wage اللي بنضيف بجانبه حقل العملة.
-    -->
     <record id="hr_employee_payroll_currency_view" model="ir.ui.view">
         <field name="name">hr.employee.form.multi.currency</field>
         <field name="model">hr.employee</field>
         <field name="inherit_id" ref="hr_payroll.payroll_hr_employee_view_form"/>
         <field name="arch" type="xml">
-            <!--
-                بنضيف options جديدة على حقل wage نفسه عشان نجبره ياخد
-                عملته من currency_id بتاعنا، لأن أغلب الاحتمال إن الـ view
-                الأصلي بيحدد currency_field صراحة (زي company_currency_id)
-                جوه الـ widget options، وده بيتفوق على تعريف البايثون.
-            -->
             <field name="wage" position="attributes">
-                <attribute name="options">{'currency_field': 'currency_id'}</attribute>
+                <attribute name="invisible">currency_id and currency_id != company_currency_id</attribute>
             </field>
             <field name="wage" position="after">
+                <field name="company_currency_id" invisible="1"/>
                 <field name="currency_id" options="{'no_create': True}"/>
+                <field name="foreign_wage"
+                       invisible="not currency_id or currency_id == company_currency_id"/>
             </field>
         </field>
     </record>

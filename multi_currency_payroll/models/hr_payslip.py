@@ -7,75 +7,69 @@ class HrPayslip(models.Model):
 
     currency_id = fields.Many2one(
         'res.currency',
-        string='Currency',
-        compute='_compute_currency_id',
-        store=True,
-        readonly=False,
-        help='بتتحدد تلقائي من عملة الـ version (العقد سابقًا)، وتقدر تعدلها يدويًا لو لزم.',
+        string='عملة راتب الموظف',
+        compute='_compute_salary_currency_fields',
+        readonly=True,
+    )
+    foreign_wage = fields.Monetary(
+        string='الراتب المسجل بالعملة التانية',
+        currency_field='currency_id',
+        compute='_compute_salary_currency_fields',
+        readonly=True,
+        help='القيمة دي بتتقرأ تلقائي من كارت الموظف، للعرض بس (مش قابلة للتعديل من هنا).',
     )
 
     def _get_version(self):
         """
-        رجّع الـ hr.version المرتبط بالـ payslip.
-        بما إن hr.contract اتلغى وبقى hr.version في v19، الحقل اللي بيربط
-        الـ payslip بالنسخة ممكن يكون لسه اسمه `contract_id` (مع تغيير الموديل
-        اللي بيشاور عليه من جوه) أو ممكن يبقى اتسمى `version_id`.
-        هنا بنتأكد أوتوماتيك من الاسم الموجود عندك فعليًا.
+        بيرجع الـ hr.version (العقد سابقًا) المرتبط بالـ payslip. بنتأكد
+        أوتوماتيك من اسم الحقل لأنه ممكن يكون contract_id أو version_id.
         """
         self.ensure_one()
-        if 'version_id' in self._fields:
+        if 'version_id' in self._fields and self.version_id:
             return self.version_id
-        if 'contract_id' in self._fields:
+        if 'contract_id' in self._fields and self.contract_id:
             return self.contract_id
         return self.env['hr.version']
 
-    @api.depends('company_id')
-    def _compute_currency_id(self):
+    @api.depends('employee_id')
+    def _compute_salary_currency_fields(self):
         for slip in self:
             version = slip._get_version()
-            slip.currency_id = (
-                version.currency_id
-                if version and version.currency_id
-                else slip.company_id.currency_id
-            )
+            if version and version.currency_id:
+                slip.currency_id = version.currency_id
+                slip.foreign_wage = version.foreign_wage
+            else:
+                slip.currency_id = slip.company_id.currency_id
+                slip.foreign_wage = 0.0
 
-    def action_payslip_done(self):
+    def _apply_foreign_wage_override(self):
         """
-        بعد ما أودو يعمل الحساب والتأكيد وينشئ القيد المحاسبي بالشكل العادي
-        (بعملة الشركة)، بنصحح القيد ده عشان يعكس عملة الـ payslip الحقيقية
-        (amount_currency) مع تحويل صحيح لعملة الشركة بسعر الصرف في تاريخ الصرف.
-
-        ملحوظة: بنفترض إن فيه حقل `move_id` على hr.payslip بيشاور على قيد
-        account.move الناتج. لو الاسم مختلف عندك، غيّر `self.move_id` هنا.
+        بتقرأ الراتب بالعملة التانية من كارت الموظف، وتحوّله وتحطه في
+        حقل wage الأساسي (بعملة الشركة) قبل ما البايرول يحسب.
         """
-        res = super().action_payslip_done()
-
         for slip in self:
-            move = getattr(slip, 'move_id', False)
-            if not move or not slip.currency_id:
+            version = slip._get_version()
+            if not version or not version.currency_id or not slip.company_id:
                 continue
-            if slip.currency_id == slip.company_id.currency_id:
+            if version.currency_id == slip.company_id.currency_id:
+                # نفس عملة الشركة: مفيش أي override.
                 continue
-            if move.state != 'draft':
+            if not version.foreign_wage:
                 continue
+            date = slip.date_from or fields.Date.context_today(slip)
+            converted = version.currency_id._convert(
+                version.foreign_wage,
+                slip.company_id.currency_id,
+                slip.company_id,
+                date,
+            )
+            version.write({'wage': converted})
 
-            move.currency_id = slip.currency_id
-            date = move.date or fields.Date.context_today(slip)
-
-            for line in move.line_ids:
-                original_amount = line.debit - line.credit
-                company_currency = move.company_id.currency_id
-                converted_amount = slip.currency_id._convert(
-                    original_amount,
-                    company_currency,
-                    move.company_id,
-                    date,
-                )
-                line.write({
-                    'currency_id': slip.currency_id.id,
-                    'amount_currency': original_amount,
-                    'debit': converted_amount if converted_amount > 0 else 0.0,
-                    'credit': -converted_amount if converted_amount < 0 else 0.0,
-                })
-
-        return res
+    def compute_sheet(self):
+        """
+        قبل ما نحسب البايرول، بنعمل Override لحقل wage من القيمة المسجلة
+        بعملة الموظف. لو اسم الميثود دي مختلف عندك (زي action_compute_sheet
+        بدل compute_sheet)، خلي بالك تظبطها.
+        """
+        self._apply_foreign_wage_override()
+        return super().compute_sheet()

@@ -1,38 +1,30 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models
+from odoo import fields, models
 
 
 class HrVersion(models.Model):
-    # في أودو 19: hr.contract اتلغى وبقى hr.version (الجدول hr_contract بقى hr_version).
-    # الموديل ده هو اللي بيمثل "نسخة" بيانات الموظف (الراتب والعقد) اللي بتظهر
-    # جوه تاب Payroll في كارت الموظف نفسه.
     _inherit = 'hr.version'
 
-    # حقل currency_id موجود أصلاً في hr.version كـ related field بياخد قيمته
-    # تلقائي من عملة الشركة (company_id.currency_id) ومقفول للتعديل. لازم
-    # نفصله عن الـ related صراحة بـ related=None، وإلا هيفضل يتصرف زي الأصل
-    # حتى لو غيرنا باقي الخصائص.
     currency_id = fields.Many2one(
         'res.currency',
-        string='Salary Currency',
+        string='عملة راتب الموظف',
         related=None,
         compute=None,
         store=True,
         readonly=False,
         default=lambda self: self.env.company.currency_id,
-        help='العملة اللي هيتحسب بيها راتب هذا الموظف/هذه النسخة (ممكن تختلف عن عملة الشركة).',
+        domain="[('active', '=', True)]",
+        help='لو سبتها زي عملة الشركة، مفيش أي تأثير خالص.',
     )
-
-    # ⚠️ الجزء الأهم: حقل wage الأصلي معرّف في الأودو بحيث ياخد عملته من
-    # عملة الشركة (currency_field على الأرجح = 'company_currency_id' أو
-    # مشتق منها). إعادة تعريفه هنا بـ currency_field='currency_id' بتخلي
-    # أودو يعرض ويحسب المبلغ بعملة النسخة اللي احنا ضايفينها، مش عملة الشركة.
-    # نفس الفكرة تنطبق على أي حقل Monetary تاني مرتبط بالراتب لو موجود عندك
-    # (مثلاً hourly_wage لو الأجر بالساعة).
-    wage = fields.Monetary(currency_field='currency_id')
-
-    @api.onchange('company_id')
-    def _onchange_company_id_currency(self):
-        for rec in self:
-            if rec.company_id and not rec.currency_id:
-                rec.currency_id = rec.company_id.currency_id
+    company_currency_id = fields.Many2one(
+        related='company_id.currency_id', string='عملة الشركة', readonly=True
+    )
+    foreign_wage = fields.Monetary(
+        string='الراتب بالعملة التانية',
+        currency_field='currency_id',
+        help=(
+            'راتب الموظف بعملته (زي دولار مثلاً). القيمة دي بتتقرأ تلقائي '
+            'وقت عمل أي Payslip له، وبيتعمل منها Override لحقل الراتب '
+            'الأساسي (Wage) بعملة الشركة وقت الضغط على Compute Sheet.'
+        ),
+    )
