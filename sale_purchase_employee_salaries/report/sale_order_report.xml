@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        بنضيف اسم الموظف كسطر صغير تحت وصف المنتج مباشرة، بدل عمود منفصل،
+        عشان نتجنب أي مشاكل في مطابقة أعمدة الجدول اللي بتختلف بين النسخ.
+        الـ xpath ده بيدور على <span t-field="line.name"/> وهو موجود
+        بثبات في كل نسخ تقرير أمر البيع منذ سنين.
+        ⚠️ لو فشل التثبيت بسبب السطر ده، احذف الملف ده من الموديول مؤقتًا
+        (شيله من __manifest__.py data list) وثبّت الباقي عادي، وابعتلي
+        رسالة الخطأ عشان أظبطه.
+    -->
+    <template id="report_saleorder_document_employee_note" inherit_id="sale.report_saleorder_document">
+        <xpath expr="//span[@t-field='line.name']" position="after">
+            <div t-if="line.employee_id" class="text-muted" style="font-size: 0.85em;">
+                الموظف: <span t-field="line.employee_id.name"/>
+            </div>
+        </xpath>
+    </template>
+</odoo>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="sale_order_form_salaries_view" model="ir.ui.view">
+        <field name="name">sale.order.form.salaries</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']" position="before">
+                <group>
+                    <field name="is_salaries"/>
+                </group>
+                <button name="action_open_salary_wizard" type="object"
+                        string="توليد بنود المرتبات"
+                        class="btn-secondary mb-2"
+                        invisible="not is_salaries"/>
+            </xpath>
+            <!--
+                بنضيف عمود الموظف جوه لست بنود الأوردر. لو الهيكل عندك
+                مختلف شوية (list بدل tree أو العكس حسب نسخة أودو)، بنغطي
+                الاحتمالين.
+            -->
+            <xpath expr="//field[@name='order_line']//list//field[@name='product_id'] | //field[@name='order_line']//tree//field[@name='product_id']"
+                   position="after">
+                <field name="employee_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
