@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        هذا الـ xpath بيحاول يضيف الأزرار جنب أول زرار موجود في الـ header بتاع فورم hr.payslip.run.
+        لو الفورم عندك مختلف (لأنه Enterprise) وحصل خطأ عند التثبيت، افتح الفورم في وضع المطور،
+        شوف اسم الـ view الأصلي (Edit View: hr.payslip.run) وعدّل الـ xpath بحيث يشاور على
+        العنصر الصحيح عندك (مثلاً غيّر "//header/button[1]" لأي عنصر تاني موجود فعليًا).
+    -->
+    <record id="view_hr_payslip_run_form_custom_buttons" model="ir.ui.view">
+        <field name="name">hr.payslip.run.form.custom.buttons</field>
+        <field name="model">hr.payslip.run</field>
+        <field name="inherit_id" ref="hr_payroll.hr_payslip_run_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_open_generate_wizard" type="object"
+                        string="توليد رواتب (تحديد أيام العمل)"
+                        class="btn-secondary"/>
+                <button name="action_open_pay_wizard" type="object"
+                        string="Pay"
+                        class="btn-primary"
+                        invisible="state != 'close'"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

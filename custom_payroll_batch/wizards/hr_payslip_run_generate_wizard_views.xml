@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_hr_payslip_run_generate_wizard_form" model="ir.ui.view">
+        <field name="name">hr.payslip.run.generate.wizard.form</field>
+        <field name="model">hr.payslip.run.generate.wizard</field>
+        <field name="arch" type="xml">
+            <form string="توليد رواتب الباتش">
+                <group>
+                    <field name="payslip_run_id" invisible="1"/>
+                    <field name="structure_id"/>
+                    <field name="department_id"/>
+                </group>
+                <button name="action_load_employees" type="object"
+                        string="تحميل الموظفين حسب القسم" class="btn-secondary"/>
+                <field name="line_ids">
+                    <list editable="bottom">
+                        <field name="employee_id"/>
+                        <field name="department_id"/>
+                        <field name="selected"/>
+                        <field name="days_worked"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_confirm" type="object"
+                            string="توليد الرواتب" class="btn-primary"/>
+                    <button string="إلغاء" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

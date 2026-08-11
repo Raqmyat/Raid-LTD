@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_hr_payslip_run_generate_wizard,hr.payslip.run.generate.wizard,model_hr_payslip_run_generate_wizard,hr_payroll.group_hr_payroll_manager,1,1,1,1
+access_hr_payslip_run_generate_wizard_line,hr.payslip.run.generate.wizard.line,model_hr_payslip_run_generate_wizard_line,hr_payroll.group_hr_payroll_manager,1,1,1,1
+access_hr_payslip_run_pay_wizard,hr.payslip.run.pay.wizard,model_hr_payslip_run_pay_wizard,hr_payroll.group_hr_payroll_manager,1,1,1,1
+access_hr_payslip_run_pay_wizard_line,hr.payslip.run.pay.wizard.line,model_hr_payslip_run_pay_wizard_line,hr_payroll.group_hr_payroll_manager,1,1,1,1
