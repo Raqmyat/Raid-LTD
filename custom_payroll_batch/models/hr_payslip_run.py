@@ -19,12 +19,9 @@ class HrPayslipRun(models.Model):
 
     def write(self, vals):
         res = super().write(vals)
-        # =========================================================================
-        # مهم جدًا: افتح Developer Mode -> Technical -> Fields على موديل hr.payslip.run
-        # وشوف القيم الفعلية لحقل state عندك (draft/verify/close/done/...) وحدّث
-        # closing_states بالقيمة الصح اللي بتترحّل لها الحالة بعد الضغط على Validate.
-        # =========================================================================
-        closing_states = ('close', 'done', 'validated', 'verify')
+        # حالات hr.payslip.run عندك: 01_ready -> 02_close (Done) -> 03_paid (Paid) -> 04_cancel
+        # يبقى بعد الـ Validate/Confirm الحالة بتبقى 02_close - هنا بنعمل Post تلقائي للقيود.
+        closing_states = ('02_close',)
         if vals.get('state') in closing_states:
             for run in self:
                 moves = run.slip_ids.mapped('move_id').filtered(
