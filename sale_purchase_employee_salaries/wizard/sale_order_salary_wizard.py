@@ -95,29 +95,18 @@ class SaleOrderSalaryWizardLine(models.TransientModel):
     @api.model
     def _compute_default_amount(self, payslip):
         """
-        بنحاول نجيب "إجمالي التكلفة" مش الصافي بس، بترتيب أولويات:
-        1. سطر بكود GROSS لو موجود في هيكل الراتب.
-        2. مجموع كل الأسطر ماعدا الخصومات (DEDUCTION) والصافي (NET) نفسه،
-           عشان نتجنب double-count.
-        3. آخر حل: سطر NET (الصافي) لو مفيش غير كده.
-        النتيجة دي مجرد اقتراح مبدئي وقابلة للتعديل يدويًا في الويزارد قبل
-        التوليد، لأن مسميات وأكواد بنود الراتب بتختلف حسب هيكل الراتب
-        المستخدم عندك.
+        بنقرأ من حقل employer_cost مباشرة (نفس القيمة الظاهرة في عمود
+        "Employer Cost" في ليستة Pay Run Payslips) - وهو إجمالي تكلفة
+        الموظف على صاحب العمل، مش الصافي.
         """
+        if 'employer_cost' in payslip._fields:
+            return payslip.employer_cost
+        # fallback احتياطي لو الحقل مش موجود بنفس الاسم عندك لأي سبب
         lines = getattr(payslip, 'line_ids', payslip.env['hr.payslip.line'])
         if not lines:
             return 0.0
-
         gross_lines = lines.filtered(lambda l: l.code == 'GROSS')
         if gross_lines:
             return sum(gross_lines.mapped('total'))
-
-        other_lines = lines.filtered(
-            lambda l: l.code not in ('NET',)
-            and (not l.category_id or l.category_id.code != 'DEDUCTION')
-        )
-        if other_lines:
-            return sum(other_lines.mapped('total'))
-
         net_lines = lines.filtered(lambda l: l.code == 'NET')
         return sum(net_lines.mapped('total')) if net_lines else 0.0
