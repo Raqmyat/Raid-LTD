@@ -23,6 +23,14 @@
                    position="after">
                 <field name="employee_id" optional="show"/>
             </xpath>
+
+            <!-- تاب معاينة جدول تفاصيل المرتبات قبل الطباعة -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Salary Details" name="salary_details"
+                      invisible="not is_salaries or not payslip_run_id">
+                    <field name="salary_matrix_preview" nolabel="1"/>
+                </page>
+            </xpath>
         </field>
     </record>
 </odoo>

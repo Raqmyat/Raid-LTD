@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        تاب معاينة جدول تفاصيل المرتبات على فورم الفاتورة، قبل الطباعة.
+        بيظهر بس لو is_salaries وpayslip_run_id (اللي بيتوّرثوا تلقائي من
+        أمر البيع عند الفوترة).
+    -->
+    <record id="account_move_form_salary_details_view" model="ir.ui.view">
+        <field name="name">account.move.form.salary.details</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Salary Details" name="salary_details"
+                      invisible="not is_salaries or not payslip_run_id">
+                    <field name="salary_matrix_preview" nolabel="1"/>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

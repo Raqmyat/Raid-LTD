@@ -26,6 +26,7 @@ Sale/Purchase Employee Salaries
         'wizard/sale_order_salary_wizard_views.xml',
         'views/sale_order_views.xml',
         'views/purchase_order_views.xml',
+        'views/account_move_views.xml',
         'report/sale_order_report.xml',
         'report/invoice_report.xml',
     ],
