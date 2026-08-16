@@ -1,18 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!--
-        بنضيف اسم الموظف كسطر صغير تحت وصف المنتج مباشرة، بدل عمود منفصل،
-        عشان نتجنب أي مشاكل في مطابقة أعمدة الجدول اللي بتختلف بين النسخ.
-        الـ xpath ده بيدور على <span t-field="line.name"/> وهو موجود
-        بثبات في كل نسخ تقرير أمر البيع منذ سنين.
-        ⚠️ لو فشل التثبيت بسبب السطر ده، احذف الملف ده من الموديول مؤقتًا
-        (شيله من __manifest__.py data list) وثبّت الباقي عادي، وابعتلي
-        رسالة الخطأ عشان أظبطه.
+        1) اسم الموظف تحت وصف بند الأوردر (زي ما كان).
+        2) جدول تفصيلي (Employee x Rule) بيظهر في آخر الصفحة، بس لو
+           Is Salaries مفعّل وفيه Pay Run مرتبط. بنحطه بـ position="inside"
+           على <div class="page"> عشان يتضاف في آخر المحتوى من غير ما نحتاج
+           نعرف مكان جدول الإجماليات بالظبط (بيختلف بين النسخ).
+        ⚠️ لو فشل التثبيت بسبب أي سطر هنا، احذف الملف ده مؤقتًا من
+        __manifest__.py وثبّت الباقي، وابعتلي رسالة الخطأ.
     -->
     <template id="report_saleorder_document_employee_note" inherit_id="sale.report_saleorder_document">
         <xpath expr="//span[@t-field='line.name']" position="after">
             <div t-if="line.employee_id" class="text-muted" style="font-size: 0.85em;">
                 الموظف: <span t-field="line.employee_id.name"/>
+            </div>
+        </xpath>
+
+        <xpath expr="//div[hasclass('page')]" position="inside">
+            <div t-if="doc.is_salaries and doc.payslip_run_id" class="mt-4">
+                <h4>تفاصيل المرتبات</h4>
+                <t t-set="matrix" t-value="doc._get_salary_matrix()"/>
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>الموظف</th>
+                            <t t-foreach="matrix['columns']" t-as="col">
+                                <th><t t-esc="col['name']"/></th>
+                            </t>
+                            <th>إجمالي تكلفة الموظف</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="matrix['rows']" t-as="row">
+                            <td><t t-esc="row['employee']"/></td>
+                            <t t-foreach="row['values']" t-as="val">
+                                <td class="text-end"><t t-esc="'%.2f' % val"/></td>
+                            </t>
+                            <td class="text-end"><t t-esc="'%.2f' % row['employee_cost']"/></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </xpath>
     </template>

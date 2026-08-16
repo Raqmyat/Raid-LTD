@@ -1,18 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!--
-        بنعمل نفس اللي عملناه في تقرير أمر البيع بالظبط: نضيف اسم الموظف
-        كسطر صغير تحت وصف بند الفاتورة، عن طريق البحث على
-        <span t-field="line.name"/> اللي موجود بثبات في قالب فاتورة أودو
-        الأساسي (account.report_invoice_document) من سنين طويلة.
-        ⚠️ لو فشل التثبيت بسبب السطر ده، احذف الملف ده من الموديول مؤقتًا
-        (شيله من __manifest__.py data list) وثبّت الباقي عادي، وابعتلي
-        رسالة الخطأ عشان أظبطه بنفس الطريقة اللي ظبطنا بيها الـ views قبل كده.
-    -->
+    <!-- نفس المنطق بالظبط لكن على قالب فاتورة أودو الأساسي. -->
     <template id="report_invoice_document_employee_note" inherit_id="account.report_invoice_document">
         <xpath expr="//span[@t-field='line.name']" position="after">
             <div t-if="line.employee_id" class="text-muted" style="font-size: 0.85em;">
                 الموظف: <span t-field="line.employee_id.name"/>
+            </div>
+        </xpath>
+
+        <xpath expr="//div[hasclass('page')]" position="inside">
+            <div t-if="doc.is_salaries and doc.payslip_run_id" class="mt-4">
+                <h4>تفاصيل المرتبات</h4>
+                <t t-set="matrix" t-value="doc._get_salary_matrix()"/>
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>الموظف</th>
+                            <t t-foreach="matrix['columns']" t-as="col">
+                                <th><t t-esc="col['name']"/></th>
+                            </t>
+                            <th>إجمالي تكلفة الموظف</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="matrix['rows']" t-as="row">
+                            <td><t t-esc="row['employee']"/></td>
+                            <t t-foreach="row['values']" t-as="val">
+                                <td class="text-end"><t t-esc="'%.2f' % val"/></td>
+                            </t>
+                            <td class="text-end"><t t-esc="'%.2f' % row['employee_cost']"/></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </xpath>
     </template>

@@ -9,12 +9,10 @@
                     <field name="order_id" invisible="1"/>
                     <field name="product_id" options="{'no_create': True}"/>
                     <field name="payslip_run_id" options="{'no_create': True}"/>
-                    <field name="generation_mode"/>
                 </group>
                 <field name="line_ids">
                     <list editable="bottom" create="false" delete="false">
                         <field name="employee_id" readonly="1" force_save="1"/>
-                        <field name="name" readonly="1" force_save="1" string="البند"/>
                         <field name="amount"/>
                         <field name="currency_id" column_invisible="1"/>
                         <field name="to_include"/>
@@ -23,7 +21,7 @@
                 <footer>
                     <button name="action_generate_lines" type="object"
                             string="توليد البنود" class="btn-primary"
-                            confirm="هيتضاف سطر لكل بند متعلّم بعلامة 'يتضاف؟'. متأكد؟"/>
+                            confirm="هيتضاف سطر لكل موظف متعلّم بعلامة 'يتضاف؟'. متأكد؟"/>
                     <button string="إلغاء" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
