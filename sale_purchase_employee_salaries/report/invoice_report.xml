@@ -1,38 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- نفس المنطق بالظبط لكن على قالب فاتورة أودو الأساسي - كله بالإنجليزي. -->
+    <!--
+        بنضيف أعمدة تفاصيل المرتبات جوه نفس جدول البنود (invoice_line_table)،
+        مش في جدول منفصل. المتغير الصحيح لسجل الفاتورة في التمبلت ده هو "o"
+        مش "doc" (ده كان سبب الخطأ اللي فات).
+
+        - قبل الجدول: بنجهز salary_matrix مرة واحدة (متاحة بعد كده جوه
+          الـ thead والـ tbody لأن متغيرات t-set بتفضل متاحة لباقي الـ template).
+        - بعد th_subtotal: نضيف عمود لكل رول + عمود "Total Employee Cost".
+        - بعد td_subtotal (في صف البند العادي is_product): نفس عدد الأعمدة
+          بالقيم الخاصة بموظف السطر ده.
+
+        ⚠️ ده بيغطي بس الصفوف العادية (is_product). لو عندك Section/Note lines
+        في نفس الفاتورة، الأعمدة ممكن تتزحلق. لو حصل خطأ تثبيت، احذف الملف ده
+        من __manifest__.py وابعتلي رسالة الخطأ.
+    -->
     <template id="report_invoice_document_employee_note" inherit_id="account.report_invoice_document">
-        <xpath expr="//span[@t-field='line.name']" position="after">
-            <div t-if="line.employee_id" class="text-muted" style="font-size: 0.85em;">
-                Employee: <span t-field="line.employee_id.name"/>
-            </div>
+        <xpath expr="//table[@name='invoice_line_table']" position="before">
+            <t t-set="salary_matrix"
+               t-value="o._get_salary_matrix() if o.is_salaries and o.payslip_run_id else {'columns': [], 'rows': []}"/>
         </xpath>
 
-        <xpath expr="//div[hasclass('page')]" position="inside">
-            <div t-if="doc.is_salaries and doc.payslip_run_id" class="mt-4">
-                <h4>Salary Details</h4>
-                <t t-set="matrix" t-value="doc._get_salary_matrix()"/>
-                <table class="table table-sm table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Employee</th>
-                            <t t-foreach="matrix['columns']" t-as="col">
-                                <th><t t-esc="col['name']"/></th>
-                            </t>
-                            <th>Total Employee Cost</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr t-foreach="matrix['rows']" t-as="row">
-                            <td><t t-esc="row['employee']"/></td>
-                            <t t-foreach="row['values']" t-as="val">
-                                <td class="text-end"><t t-esc="'%.2f' % val"/></td>
-                            </t>
-                            <td class="text-end"><strong><t t-esc="'%.2f' % row['employee_cost']"/></strong></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        <xpath expr="//th[@name='th_subtotal']" position="after">
+            <t t-if="o.is_salaries and o.payslip_run_id">
+                <t t-foreach="salary_matrix['columns']" t-as="col">
+                    <th class="text-end"><span t-esc="col['name']"/></th>
+                </t>
+                <th class="text-end"><span>Total Employee Cost</span></th>
+            </t>
+        </xpath>
+
+        <xpath expr="//td[@name='td_subtotal']" position="after">
+            <t t-if="o.is_salaries and o.payslip_run_id and line.employee_id">
+                <t t-set="emp_row"
+                   t-value="next((r for r in salary_matrix['rows'] if r['employee_id'] == line.employee_id.id), None)"/>
+                <t t-if="emp_row">
+                    <t t-foreach="emp_row['values']" t-as="val">
+                        <td class="text-end"><span t-esc="'%.2f' % val"/></td>
+                    </t>
+                    <td class="text-end"><strong><span t-esc="'%.2f' % emp_row['employee_cost']"/></strong></td>
+                </t>
+                <t t-else="">
+                    <t t-foreach="salary_matrix['columns']" t-as="col"><td/></t>
+                    <td/>
+                </t>
+            </t>
+            <t t-elif="o.is_salaries and o.payslip_run_id">
+                <t t-foreach="salary_matrix['columns']" t-as="col"><td/></t>
+                <td/>
+            </t>
         </xpath>
     </template>
 </odoo>

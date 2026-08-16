@@ -3,11 +3,6 @@ from odoo import api, fields, models
 
 
 class SalaryMatrixMixin(models.AbstractModel):
-    """
-    Mixin مشترك بين sale.order و account.move: بيوفر حقل الربط بباتش
-    الرواتب (Pay Run)، وميثود بناء جدول التفصيل (Employee x Rule) اللي
-    بيتطبع في التقرير وبيتعرض في الفورم فيو، مش بنود فعلية في الأوردر/الفاتورة.
-    """
     _name = 'salary.matrix.mixin'
     _description = 'Provides salary detail matrix data for print & form preview'
 
@@ -15,7 +10,7 @@ class SalaryMatrixMixin(models.AbstractModel):
     payslip_run_id = fields.Many2one(
         'hr.payslip.run',
         string='Pay Run',
-        help='The batch used to build the salary detail matrix on print/preview.',
+        help='The batch used to build the salary detail columns on print/preview.',
     )
     salary_matrix_preview = fields.Html(
         string='Salary Details',
@@ -32,10 +27,9 @@ class SalaryMatrixMixin(models.AbstractModel):
 
     def _get_salary_matrix(self):
         """
-        بيرجع dict: {'columns': [{'code','name'}, ...], 'rows': [{'employee','values':[...], 'employee_cost'}, ...]}
-        الأعمدة بتتبني ديناميكيًا من *كل* رولز الرواتب (كل الفئات: Basic,
-        Allowance, Deduction, Employer Cost, Net...) بنفس ترتيبها في تبويب
-        Salary Computation - من غير أي فلترة.
+        {'columns': [{'code','name'}, ...],
+         'rows': [{'employee_id', 'employee', 'values': [...], 'employee_cost'}, ...]}
+        كل رولز الرواتب بترتيب ظهورها في تبويب Salary Computation، من غير أي فلترة.
         """
         self.ensure_one()
         result = {'columns': [], 'rows': []}
@@ -64,6 +58,7 @@ class SalaryMatrixMixin(models.AbstractModel):
                 key = rl.code or rl.name
                 values_map[key] = rl.total
             rows.append({
+                'employee_id': slip.employee_id.id,
                 'employee': slip.employee_id.name,
                 'values': [values_map.get(col['code'], 0.0) for col in columns],
                 'employee_cost': slip.employer_cost if 'employer_cost' in slip._fields else 0.0,
@@ -74,7 +69,7 @@ class SalaryMatrixMixin(models.AbstractModel):
         return result
 
     def _render_salary_matrix_html(self):
-        """بيبني نفس الجدول كـ HTML عشان يتعرض في الفورم فيو قبل الطباعة."""
+        """نسخة HTML من نفس الجدول، تُعرض في الفورم فيو (تاب Salary Details) قبل الطباعة."""
         self.ensure_one()
         matrix = self._get_salary_matrix()
         if not matrix['columns']:
