@@ -7,6 +7,9 @@ from odoo.fields import Command
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
+    combo_product_id = fields.Many2one(
+        'product.product', string='Combo Product', copy=False, index=True,
+    )
     combo_item_id = fields.Many2one(
         'product.combo.item', string='Combo Item', copy=False,
         index=True, ondelete='cascade',
@@ -61,7 +64,10 @@ class PurchaseOrderLine(models.Model):
 
     def _get_combo_items(self):
         self.ensure_one()
-        return self.product_id.product_tmpl_id.combo_ids.combo_item_ids.filtered(
+        combo_product = self.combo_product_id or self.product_id
+        if not combo_product or combo_product.type != 'combo':
+            return self.env['product.combo.item']
+        return combo_product.product_tmpl_id.combo_ids.combo_item_ids.filtered(
             lambda item: item.product_id.active
         )
 
@@ -81,15 +87,28 @@ class PurchaseOrderLine(models.Model):
         }
 
     def _expand_combo_lines(self):
-        """Create the component PO lines directly after the combo line."""
-        for line in self.filtered(lambda l: l.product_id.type == 'combo'):
+        """Turn a selected combo into a section and put its products underneath."""
+        for line in self.filtered(lambda l: l.product_id and l.product_id.type == 'combo'):
             if not line.order_id:
+                # The actual onchange will return the section state; no child rows can
+                # be created until the purchase order line has an order.
+                line.combo_product_id = line.product_id
+                line.name = line.product_id.display_name
+                line.display_type = 'line_section'
+                line.product_id = False
                 continue
+
+            combo_product = line.product_id
+            line.combo_product_id = combo_product
+            line.name = combo_product.display_name
+            line.display_type = 'line_section'
+            line.product_id = False
+            line.product_qty = line.product_qty or 1.0
+            line.price_unit = 0.0
 
             children = line._get_combo_children()
             combo_items = line._get_combo_items()
 
-            # Remove children from a previous combo selection.
             commands = [Command.delete(child._origin.id) for child in children if child._origin]
             unsaved_children = children.filtered(lambda l: not l._origin)
             if unsaved_children:
@@ -98,12 +117,6 @@ class PurchaseOrderLine(models.Model):
             if not combo_items:
                 continue
 
-            line.product_qty = line.product_qty or 1.0
-            # The combo parent itself carries no purchase price; the actual products do.
-            line.price_unit = 0.0
-
-            # Make room for the component lines instead of giving them the same sequence
-            # as unrelated lines that already exist below the combo.
             component_count = len(combo_items)
             updates = [
                 Command.update(other.id, {'sequence': other.sequence + component_count})
@@ -120,29 +133,61 @@ class PurchaseOrderLine(models.Model):
     @api.onchange('product_id')
     def _onchange_product_id_combo_expand(self):
         for line in self:
-            if not line.order_id:
+            if line.product_id and line.product_id.type == 'combo':
+                # Keep the selected combo in a helper field, then turn this row into
+                # the section header. The actual combo products are the rows below it.
+                line.combo_product_id = line.product_id
+                line.name = line.product_id.display_name
+                line.display_type = 'line_section'
+                combo_product = line.product_id
+                line.product_id = False
+                line._expand_combo_lines_from_product(combo_product)
                 continue
 
-            if line.product_id.type != 'combo':
+            # If a combo section is changed/cleared, remove its generated children.
+            if line.combo_product_id and line.display_type == 'line_section':
                 children = line._get_combo_children()
                 saved = [Command.delete(child._origin.id) for child in children if child._origin]
                 unsaved = children.filtered(lambda l: not l._origin)
-                if unsaved:
+                if unsaved and line.order_id:
                     line.order_id.order_line -= unsaved
-                if saved:
+                if saved and line.order_id:
                     line.order_id.order_line = saved
-                continue
+                line.combo_product_id = False
 
-            line._expand_combo_lines()
+    def _expand_combo_lines_from_product(self, combo_product):
+        """Create component rows for a section line whose selected combo was captured."""
+        for line in self:
+            if not line.order_id:
+                return
+            children = line._get_combo_children()
+            combo_items = combo_product.product_tmpl_id.combo_ids.combo_item_ids.filtered(
+                lambda item: item.product_id.active
+            )
+            if not combo_items:
+                return
+
+            line.product_qty = line.product_qty or 1.0
+            component_count = len(combo_items)
+            updates = [
+                Command.update(other.id, {'sequence': other.sequence + component_count})
+                for other in line.order_id.order_line
+                if other.id != line.id and other.sequence > line.sequence
+            ]
+            creates = [
+                Command.create(line._combo_child_vals(item, line.sequence, index))
+                for index, item in enumerate(combo_items, start=1)
+            ]
+            line.order_id.order_line = creates + updates
 
     @api.onchange('product_qty')
     def _onchange_combo_quantity(self):
-        for line in self.filtered(lambda l: l.product_id.type == 'combo'):
+        for line in self.filtered(lambda l: l.combo_product_id and l.display_type == 'line_section'):
             line._get_combo_children().product_qty = line.product_qty
 
     @api.onchange('sequence')
     def _onchange_combo_sequence(self):
-        for line in self.filtered(lambda l: l.product_id.type == 'combo'):
+        for line in self.filtered(lambda l: l.combo_product_id and l.display_type == 'line_section'):
             for index, child in enumerate(line._get_combo_children().sorted('sequence'), start=1):
                 child.sequence = line.sequence + index
 
@@ -155,13 +200,18 @@ class PurchaseOrderLine(models.Model):
             parent = self.search([
                 ('order_id', '=', child.order_id.id),
                 ('virtual_id', '=', child.linked_virtual_id),
-                ('product_id.type', '=', 'combo'),
+                ('combo_product_id', '!=', False),
             ], limit=1)
             if parent:
                 child.linked_line_id = parent.id
 
         # Also handle combos created through import/API where onchange is not executed.
         for line in lines.filtered(lambda l: l.product_id.type == 'combo'):
+            combo_product = line.product_id
+            line.combo_product_id = combo_product
+            line.name = combo_product.display_name
+            line.display_type = 'line_section'
+            line.product_id = False
             line._create_combo_components_if_missing()
         return lines
 
@@ -183,7 +233,7 @@ class PurchaseOrderLine(models.Model):
     def write(self, vals):
         result = super().write(vals)
         if 'product_qty' in vals:
-            self.filtered(lambda l: l.product_id.type == 'combo')._get_combo_children().write(
-                {'product_qty': vals['product_qty']}
-            )
+            self.filtered(
+                lambda l: l.combo_product_id and l.display_type == 'line_section'
+            )._get_combo_children().write({'product_qty': vals['product_qty']})
         return result
