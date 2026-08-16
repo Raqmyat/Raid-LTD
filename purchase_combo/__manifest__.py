@@ -1,16 +1,18 @@
 {
     'name': 'Purchase Combo Products',
-    'version': '1.0',
+    'version': '19.0.2.0.0',
     'category': 'Purchases',
-    'summary': "Allow selecting Combo products directly on Purchase Order lines",
+    'summary': 'Allow Combo products in Purchase Orders with linked component lines',
     'description': """
-        Lets a user pick a Combo-type product directly in the normal
-        "Add a product" field of a Purchase Order line (core Odoo hides
-        Combo products there by default since they are usually not
-        purchase_ok). As soon as a Combo product is selected, all of its
-        components are automatically added as separate lines (with their
-        own cost and quantity), linked back to the parent Combo line.
-        No manual choice/dialog is involved.
+        Odoo 19 Purchase Combo support.
+
+        - Allows selecting Combo products on Purchase Orders.
+        - Automatically expands the Combo into its component products.
+        - Keeps the Combo parent and component lines linked.
+        - Preserves existing Purchase Order lines.
+        - Uses virtual linkage for unsaved parent/child lines.
+        - Synchronizes component quantities with the Combo quantity.
+        - Persists components when a Combo PO line is created through API/import.
     """,
     'depends': ['purchase', 'product'],
     'data': [
@@ -18,4 +20,5 @@
     ],
     'installable': True,
     'application': False,
+    'license': 'LGPL-3',
 }

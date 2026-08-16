@@ -1,12 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_purchase_order_form_inherit_combo_domain" model="ir.ui.view">
-        <field name="name">purchase.order.form.inherit.combo.domain</field>
+    <record id="view_purchase_order_form_inherit_combo" model="ir.ui.view">
+        <field name="name">purchase.order.form.inherit.combo</field>
         <field name="model">purchase.order</field>
         <field name="inherit_id" ref="purchase.purchase_order_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='order_line']//field[@name='product_id']" position="attributes">
                 <attribute name="domain">['|', ('purchase_ok', '=', True), ('type', '=', 'combo')]</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='order_line']//field[@name='product_id']" position="before">
+                <field name="combo_item_id" column_invisible="True"/>
+                <field name="linked_line_id" column_invisible="True"/>
+                <field name="linked_virtual_id" column_invisible="True"/>
+                <field name="virtual_id" column_invisible="True"/>
+            </xpath>
+
+            <!-- Visually indent combo components like Odoo Sales combo lines. -->
+            <xpath expr="//field[@name='order_line']//field[@name='name']" position="attributes">
+                <attribute name="widget">text</attribute>
             </xpath>
         </field>
     </record>
