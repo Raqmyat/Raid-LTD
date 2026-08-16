@@ -2,20 +2,18 @@
     'name': 'Purchase Combo Products',
     'version': '1.0',
     'category': 'Purchases',
-    'summary': "Add Combo products to Purchase Orders via a choice wizard",
+    'summary': "Allow selecting Combo products directly on Purchase Order lines",
     'description': """
-        Lets a user add a Combo-type product to a Purchase Order. A wizard
-        ("Add Combo Product") lets them pick which item to buy for each
-        combo choice, then automatically creates the corresponding
-        purchase order lines (one parent line for the combo, one line per
-        chosen item, linked back to the parent line).
+        Lets a user pick a Combo-type product directly in the normal
+        "Add a product" field of a Purchase Order line (core Odoo hides
+        Combo products there by default since they are usually not
+        purchase_ok). As soon as a Combo product is selected, all of its
+        components are automatically added as separate lines (with their
+        own cost and quantity), linked back to the parent Combo line.
+        No manual choice/dialog is involved.
     """,
     'depends': ['purchase', 'product'],
-    'data': [
-        'security/ir.model.access.csv',
-        'wizards/purchase_combo_configurator_views.xml',
-        'views/purchase_order_views.xml',
-    ],
+    'data': [],
     'installable': True,
     'application': False,
 }
