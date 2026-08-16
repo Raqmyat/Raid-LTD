@@ -1,22 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!--
-        نفس فكرة تقرير الفاتورة بالظبط. المتغير هنا برضه "o".
-        ⚠️ الأسماء th_subtotal/td_subtotal/sale_order_line_table مبنية على
-        نفس تسمية قالب الفاتورة (اللي أكدناها من الـ Technical View عندك)
-        لكن معندناش تأكيد 100% إنها نفس الأسماء في sale.report_saleorder_document.
-        لو فشل تثبيت الملف ده، احذفه من __manifest__.py مؤقتًا وثبّت الباقي،
-        وابعتلي رسالة الخطأ (أو انسخلي arch الـ view زي ما عملنا مع الفاتورة)
-        وهظبطه فورًا.
+        تقرير أمر البيع بيستخدم "doc" (مش "o" زي الفاتورة)، والجدول من غير
+        name attribute، وعمود الإجمالي اسمه td_product_subtotal (مش
+        td_subtotal). الأسماء دي متأكدين منها 100% من الـ arch الحقيقي.
     -->
     <template id="report_saleorder_document_employee_note" inherit_id="sale.report_saleorder_document">
-        <xpath expr="//table[@name='sale_order_line_table']" position="before">
+        <xpath expr="//table[hasclass('o_main_table')]" position="before">
             <t t-set="salary_matrix"
-               t-value="o._get_salary_matrix() if o.is_salaries and o.payslip_run_id else {'columns': [], 'rows': []}"/>
+               t-value="doc._get_salary_matrix() if doc.is_salaries and doc.payslip_run_id else {'columns': [], 'rows': []}"/>
         </xpath>
 
         <xpath expr="//th[@name='th_subtotal']" position="after">
-            <t t-if="o.is_salaries and o.payslip_run_id">
+            <t t-if="doc.is_salaries and doc.payslip_run_id">
                 <t t-foreach="salary_matrix['columns']" t-as="col">
                     <th class="text-end"><span t-esc="col['name']"/></th>
                 </t>
@@ -24,8 +20,8 @@
             </t>
         </xpath>
 
-        <xpath expr="//td[@name='td_subtotal']" position="after">
-            <t t-if="o.is_salaries and o.payslip_run_id and line.employee_id">
+        <xpath expr="//td[@name='td_product_subtotal']" position="after">
+            <t t-if="doc.is_salaries and doc.payslip_run_id and line.employee_id">
                 <t t-set="emp_row"
                    t-value="next((r for r in salary_matrix['rows'] if r['employee_id'] == line.employee_id.id), None)"/>
                 <t t-if="emp_row">
@@ -39,7 +35,7 @@
                     <td/>
                 </t>
             </t>
-            <t t-elif="o.is_salaries and o.payslip_run_id">
+            <t t-elif="doc.is_salaries and doc.payslip_run_id">
                 <t t-foreach="salary_matrix['columns']" t-as="col"><td/></t>
                 <td/>
             </t>
