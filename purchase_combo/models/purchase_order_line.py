@@ -42,16 +42,21 @@ class PurchaseOrderLine(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        """Support API/import creation while respecting Odoo 19 Section constraints."""
+        """Create purchase lines without expanding combos a second time.
+
+        Combo expansion is handled by purchase.order._onchange_combo_order_line
+        in the UI so components appear immediately. On save, Odoo creates the
+        section and its already-generated component lines; expanding here would
+        create duplicates. We still convert a combo product into a valid section
+        for API/import flows, but we intentionally do not create child lines here.
+        """
         prepared = []
-        combo_products = []
 
         for vals in vals_list:
             vals = dict(vals)
             product = self.env['product.product'].browse(vals.get('product_id')).exists()
             if product and product.type == 'combo' and not vals.get('display_type'):
                 combo_qty = vals.get('product_qty') or 1.0
-                combo_products.append((product, combo_qty))
                 vals.update({
                     'display_type': 'line_section',
                     'combo_product_id': product.id,
@@ -67,31 +72,7 @@ class PurchaseOrderLine(models.Model):
                 })
             prepared.append(vals)
 
-        lines = super().create(prepared)
-
-        for line in lines.filtered(lambda l: l.display_type == 'line_section' and l.combo_product_id):
-            combo_product = line.combo_product_id
-            items = combo_product.product_tmpl_id.combo_ids.combo_item_ids.filtered(
-                lambda item: item.product_id.active
-            )
-            for index, item in enumerate(items, start=1):
-                product = item.product_id
-                vals = self._prepare_purchase_order_line(
-                    product_id=product,
-                    product_qty=line.combo_qty or 1.0,
-                    product_uom=product.uom_id,
-                    company_id=line.order_id.company_id.id,
-                    partner_id=line.order_id.partner_id,
-                    po=line.order_id,
-                )
-                vals.update({
-                    'combo_item_id': item.id,
-                    'linked_line_id': line.id,
-                    'sequence': line.sequence + index,
-                })
-                self.create(vals)
-
-        return lines
+        return super().create(prepared)
 
     def write(self, vals):
         result = super().write(vals)
