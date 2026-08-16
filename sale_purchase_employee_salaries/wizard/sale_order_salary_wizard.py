@@ -11,15 +11,19 @@ class SaleOrderSalaryWizard(models.TransientModel):
         'product.product',
         string='المنتج',
         required=True,
-        help='المنتج اللي هيتكرر لكل موظف في بنود الأوردر.',
+        help='المنتج اللي هيتكرر في بنود الأوردر.',
     )
     payslip_run_id = fields.Many2one(
         'hr.payslip.run',
         string='شهر المرتبات (Pay Run)',
         required=True,
     )
+    generation_mode = fields.Selection([
+        ('detailed', 'تفصيلي - بند منفصل لكل عنصر أجر (رول) لكل موظف'),
+        ('total', 'إجمالي - بند واحد لكل موظف'),
+    ], string='طريقة التوليد', default='detailed', required=True)
     line_ids = fields.One2many(
-        'sale.order.salary.wizard.line', 'wizard_id', string='الموظفين'
+        'sale.order.salary.wizard.line', 'wizard_id', string='البنود'
     )
 
     def _get_batch_payslips(self):
@@ -33,12 +37,11 @@ class SaleOrderSalaryWizard(models.TransientModel):
         for field_name in ('slip_ids', 'payslip_ids'):
             if field_name in run._fields:
                 return run[field_name]
-        # fallback: نبحث مباشرة في hr.payslip
         if 'payslip_run_id' in self.env['hr.payslip']._fields:
             return self.env['hr.payslip'].search([('payslip_run_id', '=', run.id)])
         return self.env['hr.payslip']
 
-    @api.onchange('payslip_run_id')
+    @api.onchange('payslip_run_id', 'generation_mode')
     def _onchange_payslip_run_id(self):
         self.line_ids = [(5, 0, 0)]
         if not self.payslip_run_id:
@@ -49,13 +52,38 @@ class SaleOrderSalaryWizard(models.TransientModel):
             if not slip.employee_id:
                 # نتجاهل أي payslip من غير موظف مرتبط (حالة نادرة/بيانات ناقصة)
                 continue
-            new_lines.append((0, 0, {
+            if self.generation_mode == 'detailed':
+                new_lines += self._build_detailed_lines(slip)
+            else:
+                new_lines.append((0, 0, {
+                    'employee_id': slip.employee_id.id,
+                    'payslip_id': slip.id,
+                    'name': 'إجمالي',
+                    'amount': self.env['sale.order.salary.wizard.line']._compute_default_total(slip),
+                    'to_include': True,
+                }))
+        self.line_ids = new_lines
+
+    def _build_detailed_lines(self, slip):
+        """بند منفصل لكل عنصر أجر (Salary Rule) ظاهر في القسيمة - الأساسي، البدلات،
+        الخصومات...، حسب ما هو معرّف فعليًا في هيكل الراتب."""
+        lines = []
+        rule_lines = getattr(slip, 'line_ids', self.env['hr.payslip.line'])
+        for rl in rule_lines:
+            # appears_on_payslip بيفلتر بنود العرض فقط (زي الإجماليات الوسيطة) لو الحقل موجود
+            if 'appears_on_payslip' in rl._fields and not rl.appears_on_payslip:
+                continue
+            if not rl.total:
+                continue
+            lines.append((0, 0, {
                 'employee_id': slip.employee_id.id,
                 'payslip_id': slip.id,
-                'amount': self.env['sale.order.salary.wizard.line']._compute_default_amount(slip),
+                'payslip_line_id': rl.id,
+                'name': rl.name,
+                'amount': rl.total,
                 'to_include': True,
             }))
-        self.line_ids = new_lines
+        return lines
 
     def action_generate_lines(self):
         self.ensure_one()
@@ -65,7 +93,7 @@ class SaleOrderSalaryWizard(models.TransientModel):
             SaleOrderLine.create({
                 'order_id': self.order_id.id,
                 'product_id': self.product_id.id,
-                'name': f"{self.product_id.name} - {line.employee_id.name}",
+                'name': f"{self.product_id.name} - {line.employee_id.name} - {line.name}",
                 'product_uom_qty': 1,
                 'price_unit': line.amount,
                 'employee_id': line.employee_id.id,
@@ -77,15 +105,17 @@ class SaleOrderSalaryWizard(models.TransientModel):
 
 class SaleOrderSalaryWizardLine(models.TransientModel):
     _name = 'sale.order.salary.wizard.line'
-    _description = 'سطر موظف في ويزارد المرتبات'
+    _description = 'سطر بند مرتب في ويزارد المرتبات'
 
     wizard_id = fields.Many2one('sale.order.salary.wizard', required=True, ondelete='cascade')
     employee_id = fields.Many2one('hr.employee', required=True)
     payslip_id = fields.Many2one('hr.payslip')
+    payslip_line_id = fields.Many2one('hr.payslip.line')
+    name = fields.Char(string='البند', default='إجمالي')
     amount = fields.Monetary(
-        string='إجمالي المدفوع',
+        string='القيمة',
         currency_field='currency_id',
-        help='إجمالي التكلفة (مش الصافي بس) - قابل للتعديل يدويًا لو الحساب التلقائي مش مطابق.',
+        help='قابلة للتعديل يدويًا لو الحساب التلقائي مش مطابق.',
     )
     currency_id = fields.Many2one(
         'res.currency', default=lambda self: self.env.company.currency_id
@@ -93,15 +123,14 @@ class SaleOrderSalaryWizardLine(models.TransientModel):
     to_include = fields.Boolean(string='يتضاف؟', default=True)
 
     @api.model
-    def _compute_default_amount(self, payslip):
+    def _compute_default_total(self, payslip):
         """
         بنقرأ من حقل employer_cost مباشرة (نفس القيمة الظاهرة في عمود
         "Employer Cost" في ليستة Pay Run Payslips) - وهو إجمالي تكلفة
-        الموظف على صاحب العمل، مش الصافي.
+        الموظف على صاحب العمل، مش الصافي. بيُستخدم فقط في وضع 'إجمالي'.
         """
         if 'employer_cost' in payslip._fields:
             return payslip.employer_cost
-        # fallback احتياطي لو الحقل مش موجود بنفس الاسم عندك لأي سبب
         lines = getattr(payslip, 'line_ids', payslip.env['hr.payslip.line'])
         if not lines:
             return 0.0
