@@ -10,12 +10,13 @@
             </xpath>
 
             <xpath expr="//field[@name='order_line']//list//field[@name='product_id']" position="before">
-                <field name="combo_product_id" column_invisible="True"/>
                 <field name="combo_item_id" column_invisible="True"/>
                 <field name="linked_line_id" column_invisible="True"/>
                 <field name="linked_virtual_id" column_invisible="True"/>
                 <field name="virtual_id" column_invisible="True"/>
                 <field name="is_combo_component" column_invisible="True"/>
+                <field name="combo_product_id" column_invisible="True"/>
+                <field name="combo_qty" column_invisible="True"/>
             </xpath>
 
             <!-- Combo component rows are real purchase lines, like the component rows
