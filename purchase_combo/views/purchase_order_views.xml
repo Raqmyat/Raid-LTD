@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_purchase_order_form_inherit_combo" model="ir.ui.view">
+        <field name="name">purchase.order.form.inherit.combo</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <!-- Additive only: appends a new button, does not touch any existing element -->
+            <xpath expr="//header" position="inside">
+                <button name="action_open_combo_configurator"
+                        string="Add Combo Product"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="state not in ('draft', 'sent')"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
