@@ -79,4 +79,8 @@ class PurchaseOrderLine(models.Model):
         if 'combo_qty' in vals:
             for line in self.filtered(lambda l: l.display_type == 'line_section' and l.combo_product_id):
                 line.linked_line_ids.write({'product_qty': vals['combo_qty'] or 1.0})
+        if 'employee_id' in vals:
+            for line in self.filtered(lambda l: l.display_type == 'line_section' and l.combo_product_id):
+                if line.linked_line_ids and 'employee_id' in line.linked_line_ids._fields:
+                    line.linked_line_ids.write({'employee_id': vals['employee_id']})
         return result
