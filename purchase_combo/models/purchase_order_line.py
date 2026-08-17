@@ -40,6 +40,21 @@ class PurchaseOrderLine(models.Model):
         'product.product', domain=lambda self: self._get_product_id_domain(),
     )
 
+
+    @api.onchange('employee_id')
+    def _onchange_combo_line_employee(self):
+        """Keep the employee synchronized across a combo's component lines."""
+        for line in self:
+            if not line.employee_id:
+                continue
+            if line.display_type == 'line_section' and line.combo_product_id:
+                line.name = f"{line.combo_product_id.display_name} - {line.employee_id.name}"
+                line.linked_line_ids.employee_id = line.employee_id
+            elif line.combo_item_id and line.linked_line_id:
+                parent = line.linked_line_id
+                parent.name = f"{parent.combo_product_id.display_name} - {line.employee_id.name}"
+                parent.linked_line_ids.employee_id = line.employee_id
+
     @api.model_create_multi
     def create(self, vals_list):
         """Create purchase lines without expanding combos a second time.

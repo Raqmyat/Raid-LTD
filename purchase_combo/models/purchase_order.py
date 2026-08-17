@@ -5,29 +5,6 @@ from odoo.fields import Command
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
 
-    def _combo_employee_name(self, employee):
-        return employee.name if employee else False
-
-    def _update_combo_employee(self):
-        """Propagate the PO employee to combo sections/components immediately."""
-        for order in self:
-            employee = order.employee_id if 'employee_id' in order._fields else False
-            for section in order.order_line.filtered(
-                lambda l: l.display_type == 'line_section' and l.combo_product_id
-            ):
-                if employee:
-                    section.name = f"{section.combo_product_id.display_name} - {employee.name}"
-                    if 'employee_id' in section.linked_line_ids._fields:
-                        section.linked_line_ids.employee_id = employee
-                else:
-                    section.name = section.combo_product_id.display_name
-                    if 'employee_id' in section.linked_line_ids._fields:
-                        section.linked_line_ids.employee_id = False
-
-    @api.onchange('employee_id')
-    def _onchange_combo_employee(self):
-        self._update_combo_employee()
-
     @api.onchange('order_line')
     def _onchange_combo_order_line(self):
         """Expand combo products immediately in the purchase order UI.
@@ -42,10 +19,9 @@ class PurchaseOrder(models.Model):
 
             commands = []
             lines = order.order_line.sorted(key=lambda l: (l.sequence, l.id or 0))
-            employee = order.employee_id if 'employee_id' in order._fields else False
-
             for line in lines:
                 if line.display_type == 'line_section' and line.combo_product_id:
+                    employee = line.employee_id if 'employee_id' in line._fields else False
                     if employee and 'employee_id' in line.linked_line_ids._fields:
                         line.linked_line_ids.employee_id = employee
                     if employee:
@@ -55,13 +31,16 @@ class PurchaseOrder(models.Model):
                 if not line.product_id or line.product_id.type != 'combo':
                     continue
 
-                # Do not expand until an employee has been selected. This gives
-                # the user a clear prompt instead of creating orphan components.
+                # Employee belongs to the purchase order line in the user's
+                # customization. Capture it BEFORE changing the combo line into
+                # a section, because the section itself is non-accountable.
+                employee = line.employee_id if 'employee_id' in line._fields else False
+
                 if not employee:
                     return {
                         'warning': {
                             'title': 'Employee Required',
-                            'message': 'Please select an Employee on the Purchase Order before selecting a Combo product.',
+                            'message': 'Please select an Employee on the Combo line before selecting the Combo product.',
                         }
                     }
 
@@ -82,6 +61,8 @@ class PurchaseOrder(models.Model):
                 line.date_planned = False
                 line.tax_ids = False
                 line.discount = 0.0
+                if 'employee_id' in line._fields:
+                    line.employee_id = False
 
                 old_children = order.order_line.filtered(
                     lambda child: (
