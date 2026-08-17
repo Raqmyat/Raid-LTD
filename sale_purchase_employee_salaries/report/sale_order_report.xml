@@ -1,26 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!--
-        تقرير أمر البيع بيستخدم "doc" (مش "o" زي الفاتورة)، والجدول من غير
-        name attribute، وعمود الإجمالي اسمه td_product_subtotal (مش
-        td_subtotal). الأسماء دي متأكدين منها 100% من الـ arch الحقيقي.
+        - أعمدة رولز الرواتب بتتحط قبل عمود Amount (th_subtotal/td_product_subtotal)
+          عشان Amount يفضل آخر عمود.
+        - عمود Unit Price بيتخفي بـ CSS بس لما is_salaries يبقى مفعّل (مش حذف
+          فعلي من الـ DOM عشان منكسرش أي colspan لو فيه Section lines).
+        - بادينج/فونت أصغر لما is_salaries عشان الجدول يتظبط في صفحة الطباعة.
+        - كل ده بيتفعّل بس لو doc.is_salaries and doc.payslip_run_id، فالبيع
+          العادي (مش مرتبات) يفضل زي ما هو بالظبط من غير أي تغيير.
     -->
     <template id="report_saleorder_document_employee_note" inherit_id="sale.report_saleorder_document">
         <xpath expr="//table[hasclass('o_main_table')]" position="before">
             <t t-set="salary_matrix"
-               t-value="doc._get_salary_matrix() if doc.is_salaries and doc.payslip_run_id else {'columns': [], 'rows': []}"/>
+               t-value="doc._get_salary_matrix() if doc.is_salaries and doc.payslip_run_id else {'columns': [], 'rows': [], 'rows_by_employee': {}}"/>
+            <style t-if="doc.is_salaries and doc.payslip_run_id">
+                [name='th_priceunit'], [name='td_product_priceunit'] { display: none; }
+                .o_main_table th, .o_main_table td { padding: 3px 4px !important; font-size: 10px; }
+            </style>
         </xpath>
 
-        <xpath expr="//th[@name='th_subtotal']" position="after">
+        <xpath expr="//th[@name='th_subtotal']" position="before">
             <t t-if="doc.is_salaries and doc.payslip_run_id">
                 <t t-foreach="salary_matrix['columns']" t-as="col">
                     <th class="text-end"><span t-esc="col['name']"/></th>
                 </t>
-                <th class="text-end"><span>Total Employee Cost</span></th>
             </t>
         </xpath>
 
-        <xpath expr="//td[@name='td_product_subtotal']" position="after">
+        <xpath expr="//td[@name='td_product_subtotal']" position="before">
             <t t-if="doc.is_salaries and doc.payslip_run_id and line.employee_id">
                 <t t-set="emp_row"
                    t-value="salary_matrix['rows_by_employee'].get(line.employee_id.id)"/>
@@ -28,16 +35,13 @@
                     <t t-foreach="emp_row['values']" t-as="val">
                         <td class="text-end"><span t-esc="'%.2f' % val"/></td>
                     </t>
-                    <td class="text-end"><strong><span t-esc="'%.2f' % emp_row['employee_cost']"/></strong></td>
                 </t>
                 <t t-else="">
                     <t t-foreach="salary_matrix['columns']" t-as="col"><td/></t>
-                    <td/>
                 </t>
             </t>
             <t t-elif="doc.is_salaries and doc.payslip_run_id">
                 <t t-foreach="salary_matrix['columns']" t-as="col"><td/></t>
-                <td/>
             </t>
         </xpath>
     </template>
