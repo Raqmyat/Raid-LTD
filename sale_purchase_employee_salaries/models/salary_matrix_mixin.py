@@ -28,11 +28,14 @@ class SalaryMatrixMixin(models.AbstractModel):
     def _get_salary_matrix(self):
         """
         {'columns': [{'code','name'}, ...],
-         'rows': [{'employee_id', 'employee', 'values': [...], 'employee_cost'}, ...]}
+         'rows': [{'employee_id', 'employee', 'values': [...], 'employee_cost'}, ...],
+         'rows_by_employee': {employee_id: row, ...}}
         كل رولز الرواتب بترتيب ظهورها في تبويب Salary Computation، من غير أي فلترة.
+        rows_by_employee موجود عشان نتجنب استخدام next() جوه القوالب (مش
+        متاح في بيئة QWeb المحدودة).
         """
         self.ensure_one()
-        result = {'columns': [], 'rows': []}
+        result = {'columns': [], 'rows': [], 'rows_by_employee': {}}
         run = self.payslip_run_id
         if not run:
             return result
@@ -66,6 +69,7 @@ class SalaryMatrixMixin(models.AbstractModel):
 
         result['columns'] = columns
         result['rows'] = rows
+        result['rows_by_employee'] = {row['employee_id']: row for row in rows}
         return result
 
     def _render_salary_matrix_html(self):

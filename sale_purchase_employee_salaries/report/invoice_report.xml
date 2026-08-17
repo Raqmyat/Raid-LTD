@@ -33,7 +33,7 @@
         <xpath expr="//td[@name='td_subtotal']" position="after">
             <t t-if="o.is_salaries and o.payslip_run_id and line.employee_id">
                 <t t-set="emp_row"
-                   t-value="next((r for r in salary_matrix['rows'] if r['employee_id'] == line.employee_id.id), None)"/>
+                   t-value="salary_matrix['rows_by_employee'].get(line.employee_id.id)"/>
                 <t t-if="emp_row">
                     <t t-foreach="emp_row['values']" t-as="val">
                         <td class="text-end"><span t-esc="'%.2f' % val"/></td>
