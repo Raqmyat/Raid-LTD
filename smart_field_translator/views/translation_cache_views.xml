@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_translation_cache_list" model="ir.ui.view">
+        <field name="name">translation.cache.list</field>
+        <field name="model">translation.cache</field>
+        <field name="arch" type="xml">
+            <list string="كاش الترجمة" editable="bottom">
+                <field name="source_text"/>
+                <field name="source_lang"/>
+                <field name="target_lang"/>
+                <field name="translated_text"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_translation_cache" model="ir.actions.act_window">
+        <field name="name">كاش الترجمة</field>
+        <field name="res_model">translation.cache</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smart_help">
+                هنا الترجمات اللي جوجل رجّعها وتم تخزينها عشان مانطلبش نفس
+                النص من جوجل تاني. لو لاقيت ترجمة غلط، عدّل السطر مباشرة من
+                هنا أو امسحه عشان الموديول يطلب ترجمة جديدة من جوجل في المرة الجاية،
+                أو استخدم زرار "مسح كل الكاش" لو عايز تصفير شامل.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_translation_cache_clear" model="ir.actions.server">
+        <field name="name">مسح كل كاش الترجمة</field>
+        <field name="model_id" ref="model_translation_cache"/>
+        <field name="binding_model_id" ref="model_translation_cache"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">model.action_clear_cache()</field>
+    </record>
+
+</odoo>

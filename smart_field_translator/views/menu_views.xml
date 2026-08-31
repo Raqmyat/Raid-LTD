@@ -24,4 +24,10 @@
               action="action_translate_existing_wizard"
               sequence="30"/>
 
+    <menuitem id="menu_translation_cache"
+              name="كاش الترجمة"
+              parent="menu_smart_translator_root"
+              action="action_translation_cache"
+              sequence="40"/>
+
 </odoo>

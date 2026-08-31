@@ -1,11 +1,20 @@
 # -*- coding: utf-8 -*-
+import logging
 import re
+
+import requests
 
 from odoo import api, models
 
+_logger = logging.getLogger(__name__)
+
 ARABIC_RANGE = re.compile(r'[\u0600-\u06FF]')
 
-# خريطة تحويل الحروف العربية إلى لاتينية (Transliteration) - تقريبية
+GOOGLE_TRANSLATE_URL = 'https://translate.googleapis.com/translate_a/single'
+REQUEST_TIMEOUT = 6
+
+# خريطة تحويل الحروف العربية إلى لاتينية (Transliteration) - تستخدم فقط
+# كـ fallback محلي لو تعذّر الاتصال بجوجل (مفيش إنترنت / السيرفر واقع مؤقتًا)
 AR_TO_LATIN = {
     'ا': 'a', 'أ': 'a', 'إ': 'i', 'آ': 'aa', 'ب': 'b', 'ت': 't', 'ث': 'th',
     'ج': 'j', 'ح': 'h', 'خ': 'kh', 'د': 'd', 'ذ': 'th', 'ر': 'r', 'ز': 'z',
@@ -13,20 +22,16 @@ AR_TO_LATIN = {
     'غ': 'gh', 'ف': 'f', 'ق': 'q', 'ك': 'k', 'ل': 'l', 'م': 'm', 'ن': 'n',
     'ه': 'h', 'و': 'w', 'ي': 'y', 'ى': 'a', 'ة': 'a', 'ء': '', 'ئ': 'e',
     'ؤ': 'o', 'لا': 'la',
-    # تشكيل - يُتجاهل
     '\u064B': '', '\u064C': '', '\u064D': '', '\u064E': '', '\u064F': '',
     '\u0650': '', '\u0651': '', '\u0652': '',
 }
-
-# كلمات بادئة شائعة قبل الأسماء يتم حذفها من الـ transliteration الحرفي
-# (الدمج يتم عبر القاموس لو المستخدم ضاف كلمة is_proper_name)
 
 PUNCT_RE = re.compile(r'^([\W_]*)(.*?)([\W_]*)$', re.UNICODE)
 
 
 class TranslationEngine(models.AbstractModel):
     _name = 'translation.engine'
-    _description = 'محرك الترجمة المحلي المجاني'
+    _description = 'محرك الترجمة (Google Translate مجاني + قاموس استثناءات)'
 
     # ------------------------------------------------------------------
     # أدوات مساعدة عامة
@@ -40,95 +45,128 @@ class TranslationEngine(models.AbstractModel):
 
     @api.model
     def _split_token(self, token):
-        """يفصل علامات الترقيم الملتصقة بالكلمة عن الكلمة نفسها."""
         match = PUNCT_RE.match(token)
         if match:
             return match.group(1), match.group(2), match.group(3)
         return '', token, ''
 
     # ------------------------------------------------------------------
-    # وضع الترجمة العامة (Dictionary) - للمنتجات والفئات وما شابه
+    # طبقة الاستثناءات: القاموس اليدوي (الأدمن هو اللي بيتحكم فيها)
+    # لو النص (كامل - مش كلمة كلمة) موجود في القاموس، بناخد قيمته على طول
+    # من غير ما نكلم جوجل أصلاً. ده بيدي الأدمن سيطرة كاملة على أي حالة
+    # عايز يفرض ترجمة معينة ليها (اسم شركة، مصطلح داخلي، غلطة جوجل...).
     # ------------------------------------------------------------------
     @api.model
-    def translate_text(self, text, source_lang, target_lang):
-        """ترجمة كلمة بكلمة بالاعتماد على القاموس. يرجع None لو محدش الكلمات
-        الأساسية موجودة في القاموس (يعني مفيش فايدة نكتب نص مطابق للأصل)."""
+    def _dictionary_override(self, text, source_lang):
         if not text:
             return None
         en_to_ar, ar_to_en = self.env['translation.dictionary']._get_dictionary_maps()
-        tokens = text.split(' ')
-        translated_tokens = []
-        found_any = False
-        for token in tokens:
-            prefix, word, suffix = self._split_token(token)
-            if not word:
-                translated_tokens.append(token)
-                continue
-            if source_lang == 'ar':
-                translated_word = ar_to_en.get(word)
-            else:
-                translated_word = en_to_ar.get(word.lower())
-            if translated_word:
-                found_any = True
-                translated_tokens.append(f'{prefix}{translated_word}{suffix}')
-            else:
-                # ما لقيناش ترجمة للكلمة دي - نسيبها زي ما هي
-                translated_tokens.append(token)
-        if not found_any:
-            return None
-        return ' '.join(translated_tokens)
+        stripped = text.strip()
+        if source_lang == 'ar':
+            return ar_to_en.get(stripped)
+        return en_to_ar.get(stripped.lower())
 
     # ------------------------------------------------------------------
-    # وضع النقحرة (Transliteration) - لأسماء الأشخاص
+    # Google Translate (النسخة المجانية غير الرسمية - بدون API Key)
+    # مع كاش دائم في translation.cache عشان:
+    #   1) نقلل عدد الطلبات المرسلة لجوجل (أداء + تقليل احتمال الحظر المؤقت)
+    #   2) نفس النص ميتترجمش تاني كل مرة، حتى بعد ريستارت السيرفر
+    # ------------------------------------------------------------------
+    @api.model
+    def _google_translate(self, text, source_lang, target_lang):
+        if not text or not text.strip():
+            return None
+
+        Cache = self.env['translation.cache']
+        cached = Cache._get_cached(text, source_lang, target_lang)
+        if cached is not None:
+            return cached or None
+
+        translated = self._google_translate_http(text, source_lang, target_lang)
+        # بنخزن في الكاش حتى لو النتيجة None (يعني جوجل فشل/رجع فاضي) بقيمة
+        # فاضية عشان مانضربش نفس الطلب كل شوية
+        Cache._set_cached(text, source_lang, target_lang, translated or '')
+        return translated
+
+    @api.model
+    def _google_translate_http(self, text, source_lang, target_lang):
+        try:
+            response = requests.get(
+                GOOGLE_TRANSLATE_URL,
+                params={
+                    'client': 'gtx',
+                    'sl': source_lang,
+                    'tl': target_lang,
+                    'dt': 't',
+                    'q': text,
+                },
+                timeout=REQUEST_TIMEOUT,
+                headers={'User-Agent': 'Mozilla/5.0'},
+            )
+            response.raise_for_status()
+            data = response.json()
+            translated = ''.join(chunk[0] for chunk in data[0] if chunk and chunk[0])
+            translated = translated.strip()
+            if not translated or translated.strip().lower() == text.strip().lower():
+                # جوجل رجّع نفس النص أو مفيش حاجة - يعني مش لاقي ترجمة حقيقية
+                return None
+            return translated
+        except Exception:
+            _logger.warning(
+                'فشل الاتصال بـ Google Translate (sl=%s, tl=%s) للنص: %s',
+                source_lang, target_lang, text, exc_info=True,
+            )
+            return None
+
+    # ------------------------------------------------------------------
+    # وضع الترجمة العامة (Dictionary mode) - للمنتجات والفئات وما شابه
+    # ------------------------------------------------------------------
+    @api.model
+    def translate_text(self, text, source_lang, target_lang):
+        if not text:
+            return None
+        override = self._dictionary_override(text, source_lang)
+        if override:
+            return override
+        return self._google_translate(text, source_lang, target_lang)
+
+    # ------------------------------------------------------------------
+    # وضع النقحرة (Transliteration mode) - لأسماء الأشخاص
     # ------------------------------------------------------------------
     @api.model
     def transliterate_text(self, text, source_lang, target_lang):
         if not text:
             return None
-        en_to_ar, ar_to_en = self.env['translation.dictionary']._get_dictionary_maps()
 
+        override = self._dictionary_override(text, source_lang)
+        if override:
+            return override
+
+        translated = self._google_translate(text, source_lang, target_lang)
+        if translated:
+            return translated
+
+        # فشل الاتصال بجوجل (مفيش إنترنت مثلًا) - نرجع لنقحرة محلية تقريبية
+        # كـ fallback بدل ما نسيب الحقل من غير ترجمة خالص
         if source_lang == 'ar' and target_lang == 'en':
-            words = text.split(' ')
-            result_words = []
-            for word in words:
-                prefix, core, suffix = self._split_token(word)
-                if not core:
-                    result_words.append(word)
-                    continue
-                # لو الاسم موجود جاهز في القاموس بالنقحرة الصحيحة، استخدمه
-                dict_hit = ar_to_en.get(core)
-                if dict_hit:
-                    result_words.append(f'{prefix}{dict_hit}{suffix}')
-                    continue
-                result_words.append(f'{prefix}{self._transliterate_arabic_word(core)}{suffix}')
-            return ' '.join(w for w in result_words if w).strip().title()
-
-        if source_lang == 'en' and target_lang == 'ar':
-            # النقحرة العكسية (إنجليزي -> عربي) غير موثوقة بخوارزمية بسيطة،
-            # فبنعتمد فقط على القاموس (أسماء جاهزة أضافها الأدمن)
-            words = text.split(' ')
-            result_words = []
-            found_any = False
-            for word in words:
-                prefix, core, suffix = self._split_token(word)
-                if not core:
-                    result_words.append(word)
-                    continue
-                dict_hit = en_to_ar.get(core.lower())
-                if dict_hit:
-                    found_any = True
-                    result_words.append(f'{prefix}{dict_hit}{suffix}')
-                else:
-                    result_words.append(word)
-            if not found_any:
-                return None
-            return ' '.join(result_words)
-
+            return self._local_transliterate_ar_to_en(text)
         return None
 
     @api.model
+    def _local_transliterate_ar_to_en(self, text):
+        words = text.split(' ')
+        result_words = []
+        for word in words:
+            prefix, core, suffix = self._split_token(word)
+            if not core:
+                result_words.append(word)
+                continue
+            result_words.append(f'{prefix}{self._transliterate_arabic_word(core)}{suffix}')
+        result = ' '.join(w for w in result_words if w).strip().title()
+        return result or None
+
+    @api.model
     def _transliterate_arabic_word(self, word):
-        # معالجة خاصة لـ "ال" التعريف
         result = []
         i = 0
         length = len(word)
@@ -142,6 +180,5 @@ class TranslationEngine(models.AbstractModel):
             result.append(AR_TO_LATIN.get(char, char))
             i += 1
         latin = ''.join(result)
-        # تنظيف تكرار الحروف الناتج عن الدمج
         latin = re.sub(r'(.)\1{2,}', r'\1\1', latin)
         return latin

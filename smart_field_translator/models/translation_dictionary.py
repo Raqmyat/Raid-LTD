@@ -7,12 +7,17 @@ class TranslationDictionary(models.Model):
     _description = 'قاموس الترجمة التلقائية (عربي / إنجليزي)'
     _rec_name = 'word_en'
 
-    word_en = fields.Char(string='English Word', required=True, index=True)
-    word_ar = fields.Char(string='الكلمة بالعربي', required=True, index=True)
+    word_en = fields.Char(
+        string='English Word / Phrase', required=True, index=True,
+        help='ممكن تكون كلمة واحدة أو جملة كاملة (مثلاً اسم موظف أو منتج بالكامل).',
+    )
+    word_ar = fields.Char(
+        string='الكلمة أو الجملة بالعربي', required=True, index=True,
+    )
     is_proper_name = fields.Boolean(
         string='اسم علم (Proper Name)',
-        help='فعّل هذا الخيار لو الكلمة اسم شخص جاهز ترجمته (transliteration) '
-             'بدل ما يعتمد على الخوارزمية التلقائية.',
+        help='فعّل هذا الخيار لو الكلمة اسم شخص، للتوثيق فقط - مش بيأثر على '
+             'آلية الترجمة نفسها.',
     )
     active = fields.Boolean(default=True)
 
