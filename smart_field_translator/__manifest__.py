@@ -24,7 +24,7 @@ Smart Field Auto Translator
     'category': 'Technical',
     'author': 'Custom Development',
     'license': 'LGPL-3',
-    'depends': ['base', 'hr', 'product'],
+    'depends': ['base'],
     'data': [
         'security/ir.model.access.csv',
         'data/dictionary_seed_data.xml',
@@ -32,7 +32,6 @@ Smart Field Auto Translator
         'views/translation_dictionary_views.xml',
         'wizard/translate_existing_wizard_views.xml',
         'views/menu_views.xml',
-        'data/translation_rules_data.xml',
     ],
     'installable': True,
     'application': False,
