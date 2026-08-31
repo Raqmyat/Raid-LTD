@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class HrEmployee(models.Model):
@@ -12,6 +12,7 @@ class HrEmployee(models.Model):
     name_ar = fields.Char(string='الاسم بالعربي', copy=False)
     name_en = fields.Char(string='Name (English)', copy=False)
 
+    @api.depends('name', 'name_ar', 'name_en')
     def _compute_display_name(self):
         super()._compute_display_name()
         lang = self.env.user.lang or ''
@@ -20,3 +21,11 @@ class HrEmployee(models.Model):
             target_name = employee.name_ar if is_arabic_user else employee.name_en
             if target_name:
                 employee.display_name = target_name
+
+    def write(self, vals):
+        res = super().write(vals)
+        if {'name_ar', 'name_en'} & set(vals.keys()):
+            # نجبر display_name يتحسب من جديد فورًا بدل ما يفضل القيمة
+            # القديمة كاش لحد ما يحصل ريكوست جديد
+            self.invalidate_recordset(['display_name'])
+        return res
