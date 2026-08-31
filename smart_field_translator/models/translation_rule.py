@@ -32,17 +32,17 @@ class TranslationRule(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
-        self.clear_caches()
+        self.env.registry.clear_cache()
         return records
 
     def write(self, vals):
         res = super().write(vals)
-        self.clear_caches()
+        self.env.registry.clear_cache()
         return res
 
     def unlink(self):
         res = super().unlink()
-        self.clear_caches()
+        self.env.registry.clear_cache()
         return res
 
     @api.model
