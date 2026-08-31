@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_smart_translator_root"
+              name="الترجمة التلقائية"
+              sequence="99"
+              groups="base.group_system"/>
+
+    <menuitem id="menu_translation_rule"
+              name="قواعد الترجمة"
+              parent="menu_smart_translator_root"
+              action="action_translation_rule"
+              sequence="10"/>
+
+    <menuitem id="menu_translation_dictionary"
+              name="قاموس الترجمة"
+              parent="menu_smart_translator_root"
+              action="action_translation_dictionary"
+              sequence="20"/>
+
+    <menuitem id="menu_translate_existing_wizard"
+              name="ترجمة البيانات الموجودة"
+              parent="menu_smart_translator_root"
+              action="action_translate_existing_wizard"
+              sequence="30"/>
+
+</odoo>

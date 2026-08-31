@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="dict_office" model="translation.dictionary">
+        <field name="word_en">Office</field>
+        <field name="word_ar">مكتب</field>
+    </record>
+    <record id="dict_chair" model="translation.dictionary">
+        <field name="word_en">Chair</field>
+        <field name="word_ar">كرسي</field>
+    </record>
+    <record id="dict_desk" model="translation.dictionary">
+        <field name="word_en">Desk</field>
+        <field name="word_ar">مكتب</field>
+    </record>
+    <record id="dict_table" model="translation.dictionary">
+        <field name="word_en">Table</field>
+        <field name="word_ar">طاولة</field>
+    </record>
+    <record id="dict_door" model="translation.dictionary">
+        <field name="word_en">Door</field>
+        <field name="word_ar">باب</field>
+    </record>
+    <record id="dict_window" model="translation.dictionary">
+        <field name="word_en">Window</field>
+        <field name="word_ar">شباك</field>
+    </record>
+    <record id="dict_steel" model="translation.dictionary">
+        <field name="word_en">Steel</field>
+        <field name="word_ar">حديد</field>
+    </record>
+    <record id="dict_wood" model="translation.dictionary">
+        <field name="word_en">Wood</field>
+        <field name="word_ar">خشب</field>
+    </record>
+    <record id="dict_wooden" model="translation.dictionary">
+        <field name="word_en">Wooden</field>
+        <field name="word_ar">خشبي</field>
+    </record>
+    <record id="dict_plastic" model="translation.dictionary">
+        <field name="word_en">Plastic</field>
+        <field name="word_ar">بلاستيك</field>
+    </record>
+    <record id="dict_glass" model="translation.dictionary">
+        <field name="word_en">Glass</field>
+        <field name="word_ar">زجاج</field>
+    </record>
+    <record id="dict_lamp" model="translation.dictionary">
+        <field name="word_en">Lamp</field>
+        <field name="word_ar">لمبة</field>
+    </record>
+    <record id="dict_cabinet" model="translation.dictionary">
+        <field name="word_en">Cabinet</field>
+        <field name="word_ar">خزانة</field>
+    </record>
+    <record id="dict_shelf" model="translation.dictionary">
+        <field name="word_en">Shelf</field>
+        <field name="word_ar">رف</field>
+    </record>
+    <record id="dict_bag" model="translation.dictionary">
+        <field name="word_en">Bag</field>
+        <field name="word_ar">شنطة</field>
+    </record>
+    <record id="dict_box" model="translation.dictionary">
+        <field name="word_en">Box</field>
+        <field name="word_ar">صندوق</field>
+    </record>
+    <record id="dict_printer" model="translation.dictionary">
+        <field name="word_en">Printer</field>
+        <field name="word_ar">طابعة</field>
+    </record>
+    <record id="dict_computer" model="translation.dictionary">
+        <field name="word_en">Computer</field>
+        <field name="word_ar">كمبيوتر</field>
+    </record>
+    <record id="dict_screen" model="translation.dictionary">
+        <field name="word_en">Screen</field>
+        <field name="word_ar">شاشة</field>
+    </record>
+    <record id="dict_keyboard" model="translation.dictionary">
+        <field name="word_en">Keyboard</field>
+        <field name="word_ar">كيبورد</field>
+    </record>
+
+    <record id="dict_manager" model="translation.dictionary">
+        <field name="word_en">Manager</field>
+        <field name="word_ar">مدير</field>
+    </record>
+    <record id="dict_engineer" model="translation.dictionary">
+        <field name="word_en">Engineer</field>
+        <field name="word_ar">مهندس</field>
+    </record>
+    <record id="dict_accountant" model="translation.dictionary">
+        <field name="word_en">Accountant</field>
+        <field name="word_ar">محاسب</field>
+    </record>
+    <record id="dict_sales" model="translation.dictionary">
+        <field name="word_en">Sales</field>
+        <field name="word_ar">مبيعات</field>
+    </record>
+    <record id="dict_purchase" model="translation.dictionary">
+        <field name="word_en">Purchase</field>
+        <field name="word_ar">مشتريات</field>
+    </record>
+    <record id="dict_supervisor" model="translation.dictionary">
+        <field name="word_en">Supervisor</field>
+        <field name="word_ar">مشرف</field>
+    </record>
+    <record id="dict_technician" model="translation.dictionary">
+        <field name="word_en">Technician</field>
+        <field name="word_ar">فني</field>
+    </record>
+    <record id="dict_driver" model="translation.dictionary">
+        <field name="word_en">Driver</field>
+        <field name="word_ar">سائق</field>
+    </record>
+    <record id="dict_assistant" model="translation.dictionary">
+        <field name="word_en">Assistant</field>
+        <field name="word_ar">مساعد</field>
+    </record>
+    <record id="dict_hr" model="translation.dictionary">
+        <field name="word_en">HR</field>
+        <field name="word_ar">موارد بشرية</field>
+    </record>
+
+</odoo>

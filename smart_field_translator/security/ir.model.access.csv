@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_translation_rule_system,translation.rule.system,model_translation_rule,base.group_system,1,1,1,1
+access_translation_dictionary_system,translation.dictionary.system,model_translation_dictionary,base.group_system,1,1,1,1
+access_translation_dictionary_user,translation.dictionary.user,model_translation_dictionary,base.group_user,1,0,0,0
+access_translate_existing_wizard_system,translate.existing.wizard.system,model_translate_existing_wizard,base.group_system,1,1,1,1

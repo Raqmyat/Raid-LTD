@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_translation_rule_list" model="ir.ui.view">
+        <field name="name">translation.rule.list</field>
+        <field name="model">translation.rule</field>
+        <field name="arch" type="xml">
+            <list string="قواعد الترجمة التلقائية">
+                <field name="model_id"/>
+                <field name="model_name"/>
+                <field name="field_ids" widget="many2many_tags"/>
+                <field name="translate_mode"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_translation_rule_form" model="ir.ui.view">
+        <field name="name">translation.rule.form</field>
+        <field name="model">translation.rule</field>
+        <field name="arch" type="xml">
+            <form string="قاعدة ترجمة تلقائية">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="model_id" options="{'no_create': True}"/>
+                            <field name="model_name" invisible="1"/>
+                            <field name="translate_mode"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="field_ids" widget="many2many_tags"
+                                   options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="note" placeholder="ملاحظات اختيارية..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_translation_rule" model="ir.actions.act_window">
+        <field name="name">قواعد الترجمة التلقائية</field>
+        <field name="res_model">translation.rule</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smart_help">
+                أضف قاعدة جديدة لتحديد أي موديل وأي حقل تحب يترجم تلقائيًا،
+                مثلًا: hr.employee → name، أو product.template → name.
+            </p>
+        </field>
+    </record>
+
+</odoo>

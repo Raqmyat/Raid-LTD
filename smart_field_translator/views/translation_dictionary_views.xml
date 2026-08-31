@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_translation_dictionary_list" model="ir.ui.view">
+        <field name="name">translation.dictionary.list</field>
+        <field name="model">translation.dictionary</field>
+        <field name="arch" type="xml">
+            <list string="قاموس الترجمة" editable="bottom">
+                <field name="word_en"/>
+                <field name="word_ar"/>
+                <field name="is_proper_name"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_translation_dictionary" model="ir.actions.act_window">
+        <field name="name">قاموس الترجمة</field>
+        <field name="res_model">translation.dictionary</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smart_help">
+                أضف هنا أي كلمة أو اسم عايز الموديول يترجمه بشكل دقيق بدل الاعتماد
+                على الخوارزمية التلقائية فقط. كل ما زوّدت القاموس، كل ما الترجمة بقت أدق.
+            </p>
+        </field>
+    </record>
+
+</odoo>

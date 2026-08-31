@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_translate_existing_wizard_form" model="ir.ui.view">
+        <field name="name">translate.existing.wizard.form</field>
+        <field name="model">translate.existing.wizard</field>
+        <field name="arch" type="xml">
+            <form string="ترجمة البيانات الموجودة بالفعل">
+                <group>
+                    <field name="rule_ids" widget="many2many_tags"/>
+                    <field name="overwrite_existing"/>
+                </group>
+                <group invisible="not result_message">
+                    <field name="result_message" nolabel="1" readonly="1"/>
+                </group>
+                <footer>
+                    <button name="action_translate_now" type="object"
+                            string="ابدأ الترجمة الآن" class="btn-primary"/>
+                    <button string="إغلاق" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_translate_existing_wizard" model="ir.actions.act_window">
+        <field name="name">ترجمة البيانات الموجودة</field>
+        <field name="res_model">translate.existing.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>
