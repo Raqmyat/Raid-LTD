@@ -14,9 +14,11 @@ class TranslationRule(models.Model):
     model_name = fields.Char(related='model_id.model', store=True, readonly=True, string='Technical Name')
     field_ids = fields.Many2many(
         'ir.model.fields', string='الحقول المطلوب ترجمتها',
-        domain="[('model_id', '=', model_id), ('translate', '=', True), "
-               "('ttype', 'in', ['char', 'text'])]",
-        help='لازم الحقل يكون Translatable (translate=True) في تعريفه.',
+        domain="[('model_id', '=', model_id), ('ttype', 'in', ['char', 'text'])]",
+        help='في وضع Dictionary لازم الحقل يكون Translatable (translate=True). '
+             'في وضع Transliteration الحقل يفضل زي ما هو، وبيتحط جانبه '
+             'تلقائيًا حقلين <field>_ar و <field>_en (لازم تكون متعرّفة '
+             'على الموديل مسبقًا عن طريق _inherit).',
     )
     translate_mode = fields.Selection([
         ('dictionary', 'ترجمة عامة (Dictionary) - مناسب للمنتجات، الفئات، إلخ'),

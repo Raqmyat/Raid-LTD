@@ -35,7 +35,7 @@ class Base(models.AbstractModel):
 
     # ------------------------------------------------------------------
     def _auto_translate_fields(self, only_fields=None, force=False):
-        """يترجم تلقائيًا الحقول المهيأة لهذا الموديل لكل السجلات في self."""
+        """يوزّع الترجمة حسب mode القاعدة المهيأة لهذا الموديل."""
         if self._name in EXCLUDED_MODELS or self._transient:
             return
         config = self.env['translation.rule']._get_translation_map().get(self._name)
@@ -45,22 +45,80 @@ class Base(models.AbstractModel):
         target_fields = only_fields or config['fields']
         mode = config['mode']
 
+        if mode == 'transliteration':
+            self._auto_translate_side_fields(target_fields, force)
+        else:
+            self._auto_translate_core_translation(target_fields, force)
+
+    # ------------------------------------------------------------------
+    # وضع Transliteration: بيكتب في حقلين جانبيين <field>_ar / <field>_en
+    # وبيسيب الحقل الأصلي زي ما هو (آمن 100% ومفيهوش أي تعديل على الداتابيز)
+    # ------------------------------------------------------------------
+    def _auto_translate_side_fields(self, target_fields, force):
+        engine = self.env['translation.engine']
+        for record in self:
+            for fname in target_fields:
+                if fname not in record._fields:
+                    continue
+                ar_field = f'{fname}_ar'
+                en_field = f'{fname}_en'
+                if ar_field not in record._fields or en_field not in record._fields:
+                    # الحقلين الجانبيين مش متعرّفين على الموديل ده - تجاهل
+                    continue
+
+                source_value = record[fname]
+                if not source_value:
+                    continue
+
+                src_lang = engine.detect_lang(source_value)
+                vals = {}
+
+                if src_lang == 'ar':
+                    if force or not record[ar_field]:
+                        vals[ar_field] = source_value
+                    if force or not record[en_field]:
+                        translated = engine.transliterate_text(source_value, 'ar', 'en')
+                        if translated:
+                            vals[en_field] = translated
+                else:
+                    if force or not record[en_field]:
+                        vals[en_field] = source_value
+                    if force or not record[ar_field]:
+                        translated = engine.transliterate_text(source_value, 'en', 'ar')
+                        if translated:
+                            vals[ar_field] = translated
+
+                if vals:
+                    try:
+                        record.with_context(skip_auto_translate=True).write(vals)
+                    except Exception:
+                        _logger.exception(
+                            'فشلت ترجمة (نقحرة) الحقل %s للسجل %s (%s)',
+                            fname, record.id, self._name,
+                        )
+
+    # ------------------------------------------------------------------
+    # وضع Dictionary: بيستخدم نظام الترجمة الأصلي في أودو (translate=True)
+    # مناسب بس للحقول اللي أصلاً Translatable زي product.template.name
+    # ------------------------------------------------------------------
+    def _auto_translate_core_translation(self, target_fields, force):
         langs = self.env['res.lang'].sudo().search([('active', '=', True)])
         ar_codes = [lang.code for lang in langs if lang.code.startswith('ar')]
         en_codes = [lang.code for lang in langs if lang.code.startswith('en')]
         if not ar_codes or not en_codes:
-            # لازم اللغتين مفعّلتين في Settings > Translations عشان الميكانيزم يشتغل
             return
 
         engine = self.env['translation.engine']
-        translator_func = (
-            engine.transliterate_text if mode == 'transliteration' else engine.translate_text
-        )
 
         for record in self:
             for fname in target_fields:
                 if fname not in record._fields:
                     continue
+                field_def = record._fields[fname]
+                if not getattr(field_def, 'translate', False):
+                    # الحقل مش Translatable أصلًا - متروجمش فيه بالطريقة دي
+                    continue
+
                 source_value = record[fname]
                 if not source_value:
                     continue
@@ -75,7 +133,7 @@ class Base(models.AbstractModel):
                         if existing:
                             continue
                     try:
-                        translated = translator_func(source_value, src_code, dst_code)
+                        translated = engine.translate_text(source_value, src_code, dst_code)
                     except Exception:
                         _logger.exception(
                             'فشلت ترجمة الحقل %s للسجل %s (%s)', fname, record.id, self._name
@@ -83,6 +141,12 @@ class Base(models.AbstractModel):
                         continue
                     if not translated:
                         continue
-                    record.with_context(
-                        lang=lang_code, skip_auto_translate=True
-                    ).write({fname: translated})
+                    try:
+                        record.with_context(
+                            lang=lang_code, skip_auto_translate=True
+                        ).write({fname: translated})
+                    except Exception:
+                        _logger.exception(
+                            'فشلت كتابة ترجمة الحقل %s للسجل %s (%s)',
+                            fname, record.id, self._name,
+                        )
