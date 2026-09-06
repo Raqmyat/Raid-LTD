@@ -132,25 +132,61 @@ class TranslationEngine(models.AbstractModel):
 
     # ------------------------------------------------------------------
     # وضع النقحرة (Transliteration mode) - لأسماء الأشخاص
+    #
+    # الأسماء بطبيعتها بتتكوّن من أجزاء مستقلة (اسم أول + تاني + عائلة)،
+    # فبدل ما نحاول نلاقي "الجملة كاملة" في القاموس (شبه مستحيل)، بنفكك
+    # الاسم لأجزاء ونجرب كل جزء لوحده، مع محاولة مركّبات من كلمتين الأول
+    # (زي "عبد الرحمن") قبل ما نرجع لكلمة واحدة.
     # ------------------------------------------------------------------
     @api.model
     def transliterate_text(self, text, source_lang, target_lang):
         if not text:
             return None
 
-        override = self._dictionary_override(text, source_lang)
-        if override:
-            return override
+        full_override = self._dictionary_override(text, source_lang)
+        if full_override:
+            return full_override
 
-        translated = self._google_translate(text, source_lang, target_lang)
-        if translated:
-            return translated
+        words = [w for w in text.strip().split(' ') if w]
+        if not words:
+            return None
 
-        # فشل الاتصال بجوجل (مفيش إنترنت مثلًا) - نرجع لنقحرة محلية تقريبية
-        # كـ fallback بدل ما نسيب الحقل من غير ترجمة خالص
-        if source_lang == 'ar' and target_lang == 'en':
-            return self._local_transliterate_ar_to_en(text)
-        return None
+        en_to_ar, ar_to_en = self.env['translation.dictionary']._get_dictionary_maps()
+        dictionary_map = ar_to_en if source_lang == 'ar' else en_to_ar
+
+        result_parts = []
+        i = 0
+        while i < len(words):
+            matched = False
+            # جرب مركّب من كلمتين الأول (زي "عبد الرحمن")
+            if i + 1 < len(words):
+                two_word_key = f'{words[i]} {words[i + 1]}'
+                lookup_key = two_word_key if source_lang == 'ar' else two_word_key.lower()
+                hit = dictionary_map.get(lookup_key)
+                if hit:
+                    result_parts.append(hit)
+                    i += 2
+                    matched = True
+            if matched:
+                continue
+
+            # جرب الكلمة لوحدها
+            one_word = words[i]
+            lookup_key = one_word if source_lang == 'ar' else one_word.lower()
+            hit = dictionary_map.get(lookup_key)
+            if hit:
+                result_parts.append(hit)
+            else:
+                # مفيش حاجة في القاموس - جرب جوجل، ولو فشل ارجع للنقحرة المحلية
+                fallback = self._google_translate(one_word, source_lang, target_lang)
+                if not fallback and source_lang == 'ar' and target_lang == 'en':
+                    fallback = self._local_transliterate_ar_to_en(one_word)
+                result_parts.append(fallback or one_word)
+            i += 1
+
+        if not result_parts:
+            return None
+        return ' '.join(result_parts).strip()
 
     @api.model
     def _local_transliterate_ar_to_en(self, text):

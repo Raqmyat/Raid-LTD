@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- ===================== أسماء رجالي شائعة ===================== -->
+    <record id="name_mohamed" model="translation.dictionary"><field name="word_en">Mohamed</field><field name="word_ar">محمد</field></record>
+    <record id="name_ahmed" model="translation.dictionary"><field name="word_en">Ahmed</field><field name="word_ar">أحمد</field></record>
+    <record id="name_mahmoud" model="translation.dictionary"><field name="word_en">Mahmoud</field><field name="word_ar">محمود</field></record>
+    <record id="name_mostafa" model="translation.dictionary"><field name="word_en">Mostafa</field><field name="word_ar">مصطفى</field></record>
+    <record id="name_ibrahim" model="translation.dictionary"><field name="word_en">Ibrahim</field><field name="word_ar">إبراهيم</field></record>
+    <record id="name_ismail" model="translation.dictionary"><field name="word_en">Ismail</field><field name="word_ar">إسماعيل</field></record>
+    <record id="name_youssef" model="translation.dictionary"><field name="word_en">Youssef</field><field name="word_ar">يوسف</field></record>
+    <record id="name_khaled" model="translation.dictionary"><field name="word_en">Khaled</field><field name="word_ar">خالد</field></record>
+    <record id="name_hassan" model="translation.dictionary"><field name="word_en">Hassan</field><field name="word_ar">حسن</field></record>
+    <record id="name_hussein" model="translation.dictionary"><field name="word_en">Hussein</field><field name="word_ar">حسين</field></record>
+    <record id="name_ali" model="translation.dictionary"><field name="word_en">Ali</field><field name="word_ar">علي</field></record>
+    <record id="name_omar" model="translation.dictionary"><field name="word_en">Omar</field><field name="word_ar">عمر</field></record>
+    <record id="name_othman" model="translation.dictionary"><field name="word_en">Othman</field><field name="word_ar">عثمان</field></record>
+    <record id="name_amr" model="translation.dictionary"><field name="word_en">Amr</field><field name="word_ar">عمرو</field></record>
+    <record id="name_tarek" model="translation.dictionary"><field name="word_en">Tarek</field><field name="word_ar">طارق</field></record>
+    <record id="name_walid" model="translation.dictionary"><field name="word_en">Walid</field><field name="word_ar">وليد</field></record>
+    <record id="name_sherif" model="translation.dictionary"><field name="word_en">Sherif</field><field name="word_ar">شريف</field></record>
+    <record id="name_karim" model="translation.dictionary"><field name="word_en">Karim</field><field name="word_ar">كريم</field></record>
+    <record id="name_hisham" model="translation.dictionary"><field name="word_en">Hisham</field><field name="word_ar">هشام</field></record>
+    <record id="name_sameh" model="translation.dictionary"><field name="word_en">Sameh</field><field name="word_ar">سامح</field></record>
+    <record id="name_wael" model="translation.dictionary"><field name="word_en">Wael</field><field name="word_ar">وائل</field></record>
+    <record id="name_maged" model="translation.dictionary"><field name="word_en">Maged</field><field name="word_ar">ماجد</field></record>
+    <record id="name_ashraf" model="translation.dictionary"><field name="word_en">Ashraf</field><field name="word_ar">أشرف</field></record>
+    <record id="name_amir" model="translation.dictionary"><field name="word_en">Amir</field><field name="word_ar">أمير</field></record>
+    <record id="name_yasser" model="translation.dictionary"><field name="word_en">Yasser</field><field name="word_ar">ياسر</field></record>
+    <record id="name_ayman" model="translation.dictionary"><field name="word_en">Ayman</field><field name="word_ar">أيمن</field></record>
+    <record id="name_essam" model="translation.dictionary"><field name="word_en">Essam</field><field name="word_ar">عصام</field></record>
+    <record id="name_gamal" model="translation.dictionary"><field name="word_en">Gamal</field><field name="word_ar">جمال</field></record>
+    <record id="name_adel" model="translation.dictionary"><field name="word_en">Adel</field><field name="word_ar">عادل</field></record>
+    <record id="name_alaa" model="translation.dictionary"><field name="word_en">Alaa</field><field name="word_ar">علاء</field></record>
+    <record id="name_mohsen" model="translation.dictionary"><field name="word_en">Mohsen</field><field name="word_ar">محسن</field></record>
+    <record id="name_medhat" model="translation.dictionary"><field name="word_en">Medhat</field><field name="word_ar">مدحت</field></record>
+    <record id="name_fathy" model="translation.dictionary"><field name="word_en">Fathy</field><field name="word_ar">فتحي</field></record>
+    <record id="name_ragab" model="translation.dictionary"><field name="word_en">Ragab</field><field name="word_ar">رجب</field></record>
+    <record id="name_saad" model="translation.dictionary"><field name="word_en">Saad</field><field name="word_ar">سعد</field></record>
+    <record id="name_said" model="translation.dictionary"><field name="word_en">Said</field><field name="word_ar">سعيد</field></record>
+    <record id="name_sayed" model="translation.dictionary"><field name="word_en">Sayed</field><field name="word_ar">السيد</field></record>
+    <record id="name_nasser" model="translation.dictionary"><field name="word_en">Nasser</field><field name="word_ar">ناصر</field></record>
+    <record id="name_reda" model="translation.dictionary"><field name="word_en">Reda</field><field name="word_ar">رضا</field></record>
+    <record id="name_ramadan" model="translation.dictionary"><field name="word_en">Ramadan</field><field name="word_ar">رمضان</field></record>
+    <record id="name_atef" model="translation.dictionary"><field name="word_en">Atef</field><field name="word_ar">عاطف</field></record>
+    <record id="name_fady" model="translation.dictionary"><field name="word_en">Fady</field><field name="word_ar">فادي</field></record>
+    <record id="name_mina" model="translation.dictionary"><field name="word_en">Mina</field><field name="word_ar">مينا</field></record>
+    <record id="name_george" model="translation.dictionary"><field name="word_en">George</field><field name="word_ar">جورج</field></record>
+    <record id="name_peter" model="translation.dictionary"><field name="word_en">Peter</field><field name="word_ar">بطرس</field></record>
+    <record id="name_magdy" model="translation.dictionary"><field name="word_en">Magdy</field><field name="word_ar">مجدي</field></record>
+    <record id="name_emad" model="translation.dictionary"><field name="word_en">Emad</field><field name="word_ar">عماد</field></record>
+    <record id="name_hazem" model="translation.dictionary"><field name="word_en">Hazem</field><field name="word_ar">حازم</field></record>
+    <record id="name_haitham" model="translation.dictionary"><field name="word_en">Haitham</field><field name="word_ar">هيثم</field></record>
+    <record id="name_bassem" model="translation.dictionary"><field name="word_en">Bassem</field><field name="word_ar">باسم</field></record>
+    <record id="name_ehab" model="translation.dictionary"><field name="word_en">Ehab</field><field name="word_ar">إيهاب</field></record>
+    <record id="name_medo" model="translation.dictionary"><field name="word_en">Sabry</field><field name="word_ar">صبري</field></record>
+    <record id="name_mokhtar" model="translation.dictionary"><field name="word_en">Mokhtar</field><field name="word_ar">مختار</field></record>
+    <record id="name_fouad" model="translation.dictionary"><field name="word_en">Fouad</field><field name="word_ar">فؤاد</field></record>
+    <record id="name_zaki" model="translation.dictionary"><field name="word_en">Zaki</field><field name="word_ar">زكي</field></record>
+    <record id="name_kamal" model="translation.dictionary"><field name="word_en">Kamal</field><field name="word_ar">كمال</field></record>
+    <record id="name_naguib" model="translation.dictionary"><field name="word_en">Naguib</field><field name="word_ar">نجيب</field></record>
+    <record id="name_shaaban" model="translation.dictionary"><field name="word_en">Shaaban</field><field name="word_ar">شعبان</field></record>
+    <record id="name_anwar" model="translation.dictionary"><field name="word_en">Anwar</field><field name="word_ar">أنور</field></record>
+    <record id="name_moataz" model="translation.dictionary"><field name="word_en">Moataz</field><field name="word_ar">معتز</field></record>
+    <record id="name_nabil" model="translation.dictionary"><field name="word_en">Nabil</field><field name="word_ar">نبيل</field></record>
+    <record id="name_farouk" model="translation.dictionary"><field name="word_en">Farouk</field><field name="word_ar">فاروق</field></record>
+    <record id="name_ezzat" model="translation.dictionary"><field name="word_en">Ezzat</field><field name="word_ar">عزت</field></record>
+
+    <!-- ===================== أسماء ستاتي شائعة ===================== -->
+    <record id="name_fatma" model="translation.dictionary"><field name="word_en">Fatma</field><field name="word_ar">فاطمة</field></record>
+    <record id="name_mariam" model="translation.dictionary"><field name="word_en">Mariam</field><field name="word_ar">مريم</field></record>
+    <record id="name_aya" model="translation.dictionary"><field name="word_en">Aya</field><field name="word_ar">آية</field></record>
+    <record id="name_nour" model="translation.dictionary"><field name="word_en">Nour</field><field name="word_ar">نور</field></record>
+    <record id="name_salma" model="translation.dictionary"><field name="word_en">Salma</field><field name="word_ar">سلمى</field></record>
+    <record id="name_yasmin" model="translation.dictionary"><field name="word_en">Yasmin</field><field name="word_ar">ياسمين</field></record>
+    <record id="name_rana" model="translation.dictionary"><field name="word_en">Rana</field><field name="word_ar">رنا</field></record>
+    <record id="name_dina" model="translation.dictionary"><field name="word_en">Dina</field><field name="word_ar">دينا</field></record>
+    <record id="name_hala" model="translation.dictionary"><field name="word_en">Hala</field><field name="word_ar">هالة</field></record>
+    <record id="name_heba" model="translation.dictionary"><field name="word_en">Heba</field><field name="word_ar">هبة</field></record>
+    <record id="name_reham" model="translation.dictionary"><field name="word_en">Reham</field><field name="word_ar">ريهام</field></record>
+    <record id="name_rania" model="translation.dictionary"><field name="word_en">Rania</field><field name="word_ar">رانيا</field></record>
+    <record id="name_mona" model="translation.dictionary"><field name="word_en">Mona</field><field name="word_ar">منى</field></record>
+    <record id="name_amal" model="translation.dictionary"><field name="word_en">Amal</field><field name="word_ar">أمل</field></record>
+    <record id="name_iman" model="translation.dictionary"><field name="word_en">Iman</field><field name="word_ar">إيمان</field></record>
+    <record id="name_shaimaa" model="translation.dictionary"><field name="word_en">Shaimaa</field><field name="word_ar">شيماء</field></record>
+    <record id="name_asmaa" model="translation.dictionary"><field name="word_en">Asmaa</field><field name="word_ar">أسماء</field></record>
+    <record id="name_marwa" model="translation.dictionary"><field name="word_en">Marwa</field><field name="word_ar">مروة</field></record>
+    <record id="name_nadia" model="translation.dictionary"><field name="word_en">Nadia</field><field name="word_ar">نادية</field></record>
+    <record id="name_samar" model="translation.dictionary"><field name="word_en">Samar</field><field name="word_ar">سمر</field></record>
+    <record id="name_dalia" model="translation.dictionary"><field name="word_en">Dalia</field><field name="word_ar">داليا</field></record>
+    <record id="name_ghada" model="translation.dictionary"><field name="word_en">Ghada</field><field name="word_ar">غادة</field></record>
+    <record id="name_nesreen" model="translation.dictionary"><field name="word_en">Nesreen</field><field name="word_ar">نسرين</field></record>
+    <record id="name_walaa" model="translation.dictionary"><field name="word_en">Walaa</field><field name="word_ar">ولاء</field></record>
+    <record id="name_esraa" model="translation.dictionary"><field name="word_en">Esraa</field><field name="word_ar">إسراء</field></record>
+    <record id="name_alaa_f" model="translation.dictionary"><field name="word_en">Radwa</field><field name="word_ar">رضوى</field></record>
+    <record id="name_habiba" model="translation.dictionary"><field name="word_en">Habiba</field><field name="word_ar">حبيبة</field></record>
+    <record id="name_farida" model="translation.dictionary"><field name="word_en">Farida</field><field name="word_ar">فريدة</field></record>
+    <record id="name_malak" model="translation.dictionary"><field name="word_en">Malak</field><field name="word_ar">ملك</field></record>
+    <record id="name_jana" model="translation.dictionary"><field name="word_en">Jana</field><field name="word_ar">جنى</field></record>
+    <record id="name_sara" model="translation.dictionary"><field name="word_en">Sara</field><field name="word_ar">سارة</field></record>
+    <record id="name_lobna" model="translation.dictionary"><field name="word_en">Lobna</field><field name="word_ar">لبنى</field></record>
+    <record id="name_hend" model="translation.dictionary"><field name="word_en">Hend</field><field name="word_ar">هند</field></record>
+    <record id="name_dowaa" model="translation.dictionary"><field name="word_en">Doaa</field><field name="word_ar">دعاء</field></record>
+    <record id="name_mai" model="translation.dictionary"><field name="word_en">Mai</field><field name="word_ar">مي</field></record>
+    <record id="name_wafaa" model="translation.dictionary"><field name="word_en">Wafaa</field><field name="word_ar">وفاء</field></record>
+    <record id="name_zeinab" model="translation.dictionary"><field name="word_en">Zeinab</field><field name="word_ar">زينب</field></record>
+    <record id="name_maryam2" model="translation.dictionary"><field name="word_en">Meriam</field><field name="word_ar">ميريام</field></record>
+
+    <!-- ============ كلمات/ألقاب مركّبة شائعة قبل أسماء الأشخاص ============ -->
+    <record id="name_abdelrahman" model="translation.dictionary"><field name="word_en">Abdelrahman</field><field name="word_ar">عبد الرحمن</field></record>
+    <record id="name_abdallah" model="translation.dictionary"><field name="word_en">Abdallah</field><field name="word_ar">عبد الله</field></record>
+    <record id="name_abdelaziz" model="translation.dictionary"><field name="word_en">Abdelaziz</field><field name="word_ar">عبد العزيز</field></record>
+    <record id="name_abdelhamid" model="translation.dictionary"><field name="word_en">Abdelhamid</field><field name="word_ar">عبد الحميد</field></record>
+    <record id="name_abdelkarim" model="translation.dictionary"><field name="word_en">Abdelkarim</field><field name="word_ar">عبد الكريم</field></record>
+    <record id="name_abdelmoneim" model="translation.dictionary"><field name="word_en">Abdelmoneim</field><field name="word_ar">عبد المنعم</field></record>
+    <record id="name_abdelghany" model="translation.dictionary"><field name="word_en">Abdelghany</field><field name="word_ar">عبد الغني</field></record>
+    <record id="name_abdelfattah" model="translation.dictionary"><field name="word_en">Abdelfattah</field><field name="word_ar">عبد الفتاح</field></record>
+    <record id="name_abdelnasser" model="translation.dictionary"><field name="word_en">Abdelnasser</field><field name="word_ar">عبد الناصر</field></record>
+    <record id="name_abdelsalam" model="translation.dictionary"><field name="word_en">Abdelsalam</field><field name="word_ar">عبد السلام</field></record>
+    <record id="name_abdelmotaleb" model="translation.dictionary"><field name="word_en">Abdelmotaleb</field><field name="word_ar">عبد المطلب</field></record>
+    <record id="name_abdelbaset" model="translation.dictionary"><field name="word_en">Abdelbaset</field><field name="word_ar">عبد الباسط</field></record>
+    <record id="name_abdelbary" model="translation.dictionary"><field name="word_en">Abdelbary</field><field name="word_ar">عبد الباري</field></record>
+    <record id="name_abdelhafez" model="translation.dictionary"><field name="word_en">Abdelhafez</field><field name="word_ar">عبد الحافظ</field></record>
+    <record id="name_abdelwahab" model="translation.dictionary"><field name="word_en">Abdelwahab</field><field name="word_ar">عبد الوهاب</field></record>
+    <record id="name_saifeldin" model="translation.dictionary"><field name="word_en">Saif Eldin</field><field name="word_ar">سيف الدين</field></record>
+    <record id="name_alaeldin" model="translation.dictionary"><field name="word_en">Alaa Eldin</field><field name="word_ar">علاء الدين</field></record>
+    <record id="name_nooreldin" model="translation.dictionary"><field name="word_en">Nour Eldin</field><field name="word_ar">نور الدين</field></record>
+    <record id="name_ezzeldin" model="translation.dictionary"><field name="word_en">Ezz Eldin</field><field name="word_ar">عز الدين</field></record>
+    <record id="name_salaheldin" model="translation.dictionary"><field name="word_en">Salah Eldin</field><field name="word_ar">صلاح الدين</field></record>
+    <record id="name_gamaleldin" model="translation.dictionary"><field name="word_en">Gamal Eldin</field><field name="word_ar">جمال الدين</field></record>
+    <record id="name_taha" model="translation.dictionary"><field name="word_en">Taha</field><field name="word_ar">طه</field></record>
+    <record id="name_salah" model="translation.dictionary"><field name="word_en">Salah</field><field name="word_ar">صلاح</field></record>
+    <record id="name_sayed_alnas" model="translation.dictionary"><field name="word_en">El Sayed</field><field name="word_ar">السيد</field></record>
+
+</odoo>

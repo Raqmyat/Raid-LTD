@@ -130,7 +130,13 @@ class Base(models.AbstractModel):
                 for lang_code in target_codes:
                     if not force:
                         existing = record.with_context(lang=lang_code)[fname]
-                        if existing:
+                        # ملحوظة مهمة: أودو بيرجّع القيمة الأصلية كـ fallback
+                        # لو مفيش ترجمة محفوظة فعليًا للغة المطلوبة (بدل ما
+                        # يرجع فاضي). فلو القيمة الراجعة مطابقة تمامًا للقيمة
+                        # المصدر، ده معناه لسه معندناش ترجمة حقيقية، ولازم
+                        # نكمل ونترجم. لو مختلفة فعلاً، يبقى فيه ترجمة حقيقية
+                        # موجودة بالفعل ومنلمسهاش.
+                        if existing and existing != source_value:
                             continue
                     try:
                         translated = engine.translate_text(source_value, src_code, dst_code)

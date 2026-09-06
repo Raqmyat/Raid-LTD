@@ -41,6 +41,7 @@ Smart Field Auto Translator
     'data': [
         'security/ir.model.access.csv',
         'data/dictionary_seed_data.xml',
+        'data/names_dictionary_seed_data.xml',
         'views/translation_rule_views.xml',
         'views/translation_dictionary_views.xml',
         'views/translation_cache_views.xml',
