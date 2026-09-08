@@ -9,6 +9,14 @@ class PurchaseOrder(models.Model):
     raid_linked_so_id = fields.Many2one('sale.order', string="Linked Sales Order")
     use_purchase_approval_cycle = fields.Boolean(compute='_compute_use_purchase_approval_cycle')
 
+    # Tracks which branch of the approval cycle this order took after the HR
+    # Manager's decision, purely so the status bar can show only the relevant
+    # path instead of mixing both branches together.
+    approval_path = fields.Selection(selection=[
+        ('finance', 'Finance'),
+        ('legal', 'Legal'),
+    ], copy=False)
+
     def _compute_use_purchase_approval_cycle(self):
         enabled = self.env['ir.config_parameter'].sudo().get_param('raid_custom_approval_workflow.use_purchase_approval_cycle')
         for order in self:
@@ -102,6 +110,7 @@ class PurchaseOrder(models.Model):
     # ------------------------------------------------------------------
     def action_hr_send_to_finance(self):
         self.state = 'to_finance'
+        self.approval_path = 'finance'
         self._create_approval_activity(
             'raid_custom_approval_workflow.group_purchase_finance',
             _('Purchase Order pending Finance Approval: %s', self.name)
@@ -109,6 +118,7 @@ class PurchaseOrder(models.Model):
 
     def action_hr_send_to_legal(self):
         self.state = 'to_legal'
+        self.approval_path = 'legal'
         self._create_approval_activity(
             'raid_custom_approval_workflow.group_purchase_legal',
             _('Purchase Order pending Legal Approval: %s', self.name)
