@@ -26,18 +26,18 @@ class PurchaseOrder(models.Model):
         ('sent', 'RFQ Sent'),
         ('to approve', 'To Approve'),
         # --- Custom purchase approval cycle ---
-        ('submitted', 'Pending Ops Manager Approval'),
-        ('to_hr', 'Pending HR Manager Decision'),
-        ('to_finance', 'Pending Finance Approval'),
-        ('to_ceo_finance', 'Pending CEO Approval'),
-        ('finance_done', 'Finance Approved - Ready for Payment'),
-        ('ceo_done_finance', 'CEO Approved - Ready for Payment'),
-        ('to_legal', 'Pending Legal Approval'),
-        ('to_audit', 'Pending Audit Approval'),
-        ('to_cfo', 'Pending Finance Approval'),
-        ('to_ceo_cfo', 'Pending CEO Approval'),
-        ('cfo_done', 'Finance Approved - Ready for Purchase Order'),
-        ('ceo_done_cfo', 'CEO Approved - Ready for Purchase Order'),
+        ('submitted', 'Ops Manager'),
+        ('to_hr', 'HR Manager'),
+        ('to_finance', 'Finance'),
+        ('to_ceo_finance', 'CEO'),
+        ('finance_done', 'Ready for Payment'),
+        ('ceo_done_finance', 'CEO Approved'),
+        ('to_legal', 'Legal'),
+        ('to_audit', 'Audit'),
+        ('to_cfo', 'Finance'),
+        ('to_ceo_cfo', 'CEO'),
+        ('cfo_done', 'Ready for PO'),
+        ('ceo_done_cfo', 'CEO Approved'),
         # --- Standard Odoo states ---
         ('purchase', 'Purchase Order'),
         ('done', 'Locked'),
@@ -167,11 +167,50 @@ class PurchaseOrder(models.Model):
         self._clear_approval_activities()
 
     # ------------------------------------------------------------------
-    # Reject - available at any pending stage, sends back to draft.
+    # Reject - sends the order back exactly one step, to whoever made the
+    # previous decision (not to Draft), and re-notifies them with a new
+    # "To-do" activity so they know it came back.
     # ------------------------------------------------------------------
+    _REJECT_MAP = {
+        'submitted': ('draft', None, 'Purchase Order returned to Draft for correction: %s'),
+        'to_hr': ('submitted', 'raid_custom_approval_workflow.group_purchase_ops_manager',
+                  'Purchase Order returned - pending Ops Manager Approval: %s'),
+        'to_finance': ('to_hr', 'raid_custom_approval_workflow.group_purchase_hr',
+                       'Purchase Order returned - pending HR Manager Decision: %s'),
+        'to_ceo_finance': ('to_finance', 'raid_custom_approval_workflow.group_purchase_finance',
+                            'Purchase Order returned - pending Finance Approval: %s'),
+        'to_legal': ('to_hr', 'raid_custom_approval_workflow.group_purchase_hr',
+                     'Purchase Order returned - pending HR Manager Decision: %s'),
+        'to_audit': ('to_legal', 'raid_custom_approval_workflow.group_purchase_legal',
+                     'Purchase Order returned - pending Legal Approval: %s'),
+        'to_cfo': ('to_audit', 'raid_custom_approval_workflow.group_purchase_audit',
+                   'Purchase Order returned - pending Audit Approval: %s'),
+        'to_ceo_cfo': ('to_cfo', 'raid_custom_approval_workflow.group_purchase_finance',
+                       'Purchase Order returned - pending Finance Approval: %s'),
+    }
+
     def action_reject(self):
-        self.state = 'draft'
-        self._clear_approval_activities()
+        for order in self:
+            mapping = order._REJECT_MAP.get(order.state)
+            if not mapping:
+                # Unknown/unmapped state - fall back to the old safe behavior.
+                order.state = 'draft'
+                order._clear_approval_activities()
+                continue
+
+            previous_state, group_xml_id, summary = mapping
+            order.state = previous_state
+            if group_xml_id:
+                order._create_approval_activity(group_xml_id, _(summary, order.name))
+            else:
+                # No group for Draft - notify whoever originally created it.
+                order._clear_approval_activities()
+                if order.create_uid:
+                    order.activity_schedule(
+                        'mail.mail_activity_data_todo',
+                        summary=_(summary, order.name),
+                        user_id=order.create_uid.id,
+                    )
 
     # ------------------------------------------------------------------
     # Final confirmation - only allowed once fully approved via either path.
