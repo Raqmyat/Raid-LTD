@@ -24,7 +24,7 @@
             <!-- When approval is enabled, show full approval path -->
             <xpath expr="//field[@name='state']" position="after">
                 <field name="state" widget="statusbar"
-                       statusbar_visible="draft,sent,submitted,to_hr,to_finance,to_ceo_finance,finance_done,to_legal,to_audit,to_cfo,to_ceo_cfo,cfo_done,purchase"
+                       statusbar_visible="draft,sent,submitted,to_hr,to_finance,to_ceo_finance,finance_done,ceo_done_finance,to_legal,to_audit,to_cfo,to_ceo_cfo,cfo_done,ceo_done_cfo,purchase"
                        invisible="not use_purchase_approval_cycle"
                        readonly="1"/>
             </xpath>
@@ -67,7 +67,7 @@
                 <button name="action_audit_approve" string="Approve (Audit)" type="object" class="btn-primary"
                         invisible="not use_purchase_approval_cycle or state != 'to_audit'" groups="raid_custom_approval_workflow.group_purchase_audit" />
 
-                <button name="action_cfo_approve" string="Approve &amp; Close (CFO)" type="object" class="btn-primary"
+                <button name="action_cfo_approve" string="Approve &amp; Close (Finance)" type="object" class="btn-primary"
                         invisible="not use_purchase_approval_cycle or state != 'to_cfo'" groups="raid_custom_approval_workflow.group_purchase_finance" />
 
                 <button name="action_cfo_send_to_ceo" string="Send to CEO" type="object" class="btn-secondary"
@@ -84,7 +84,7 @@
 
             <!-- Confirm button visibility -->
             <xpath expr="//header/button[@name='button_confirm'][1]" position="attributes">
-                <attribute name="invisible">(use_purchase_approval_cycle and state not in ['finance_done', 'cfo_done']) or (not use_purchase_approval_cycle and state != 'draft')</attribute>
+                <attribute name="invisible">(use_purchase_approval_cycle and state not in ['finance_done', 'cfo_done', 'ceo_done_finance', 'ceo_done_cfo']) or (not use_purchase_approval_cycle and state != 'draft')</attribute>
             </xpath>
             <xpath expr="//header/button[@name='button_confirm'][2]" position="attributes">
                 <attribute name="invisible">use_purchase_approval_cycle or (not use_purchase_approval_cycle and state != 'sent')</attribute>

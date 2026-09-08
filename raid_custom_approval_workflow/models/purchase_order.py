@@ -29,13 +29,15 @@ class PurchaseOrder(models.Model):
         ('submitted', 'Pending Ops Manager Approval'),
         ('to_hr', 'Pending HR Manager Decision'),
         ('to_finance', 'Pending Finance Approval'),
-        ('to_ceo_finance', 'Pending CEO Approval (Finance path)'),
+        ('to_ceo_finance', 'Pending CEO Approval'),
         ('finance_done', 'Finance Approved - Ready for Payment'),
+        ('ceo_done_finance', 'CEO Approved - Ready for Payment'),
         ('to_legal', 'Pending Legal Approval'),
         ('to_audit', 'Pending Audit Approval'),
-        ('to_cfo', 'Pending CFO Approval'),
-        ('to_ceo_cfo', 'Pending CEO Approval (CFO path)'),
-        ('cfo_done', 'CFO Approved - Ready for Purchase Order'),
+        ('to_cfo', 'Pending Finance Approval'),
+        ('to_ceo_cfo', 'Pending CEO Approval'),
+        ('cfo_done', 'Finance Approved - Ready for Purchase Order'),
+        ('ceo_done_cfo', 'CEO Approved - Ready for Purchase Order'),
         # --- Standard Odoo states ---
         ('purchase', 'Purchase Order'),
         ('done', 'Locked'),
@@ -44,7 +46,7 @@ class PurchaseOrder(models.Model):
 
     # States from which the order is fully approved and only needs the final
     # "Confirm" click to turn into an actual Purchase Order.
-    _READY_TO_CONFIRM_STATES = ('finance_done', 'cfo_done')
+    _READY_TO_CONFIRM_STATES = ('finance_done', 'cfo_done', 'ceo_done_finance', 'ceo_done_cfo')
 
     # All "pending approval" states - used to show/hide the Reject button.
     _PENDING_STATES = ('submitted', 'to_hr', 'to_finance', 'to_ceo_finance', 'to_legal', 'to_audit', 'to_cfo', 'to_ceo_cfo')
@@ -128,7 +130,7 @@ class PurchaseOrder(models.Model):
         )
 
     def action_ceo_approve_from_finance(self):
-        self.state = 'finance_done'
+        self.state = 'ceo_done_finance'
         self._clear_approval_activities()
 
     # ------------------------------------------------------------------
@@ -146,7 +148,7 @@ class PurchaseOrder(models.Model):
         self.state = 'to_cfo'
         self._create_approval_activity(
             'raid_custom_approval_workflow.group_purchase_finance',
-            _('Purchase Order pending CFO Approval: %s', self.name)
+            _('Purchase Order pending Finance Approval: %s', self.name)
         )
 
     def action_cfo_approve(self):
@@ -161,7 +163,7 @@ class PurchaseOrder(models.Model):
         )
 
     def action_ceo_approve_from_cfo(self):
-        self.state = 'cfo_done'
+        self.state = 'ceo_done_cfo'
         self._clear_approval_activities()
 
     # ------------------------------------------------------------------
