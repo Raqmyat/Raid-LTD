@@ -9,6 +9,7 @@ _logger = logging.getLogger(__name__)
 EXCLUDED_MODELS = {
     'translation.rule', 'translation.dictionary', 'translation.engine',
     'ir.model', 'ir.model.fields', 'ir.translation', 'res.lang',
+    'ir.module.module',
 }
 
 
@@ -26,7 +27,19 @@ class Base(models.AbstractModel):
         res = super().write(vals)
         if self.env.context.get('skip_auto_translate'):
             return res
-        config = self.env['translation.rule']._get_translation_map().get(self._name)
+        # منمنعش عملية الـ write الأساسية تفشل بسبب منطق الترجمة، خصوصًا وقت
+        # عمليات install/uninstall لأي موديل (بما فيه ir.module.module نفسه)
+        # أو لو جدول translation_rule لسه مش موجود لأي سبب.
+        if self._name in EXCLUDED_MODELS:
+            return res
+        try:
+            config = self.env['translation.rule']._get_translation_map().get(self._name)
+        except Exception:
+            _logger.exception(
+                'تعذّر قراءة translation_rule أثناء write على %s - تم تجاهل الترجمة التلقائية',
+                self._name,
+            )
+            return res
         if config:
             changed_fields = set(config['fields']) & set(vals.keys())
             if changed_fields:
@@ -38,7 +51,14 @@ class Base(models.AbstractModel):
         """يوزّع الترجمة حسب mode القاعدة المهيأة لهذا الموديل."""
         if self._name in EXCLUDED_MODELS or self._transient:
             return
-        config = self.env['translation.rule']._get_translation_map().get(self._name)
+        try:
+            config = self.env['translation.rule']._get_translation_map().get(self._name)
+        except Exception:
+            _logger.exception(
+                'تعذّر قراءة translation_rule أثناء _auto_translate_fields على %s',
+                self._name,
+            )
+            return
         if not config:
             return
 
