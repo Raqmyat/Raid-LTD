@@ -39,11 +39,12 @@ class DeeplTranslationEngine(models.AbstractModel):
         # المفاتيح المجانية بتنتهي بـ ":fx" وبتستخدم endpoint مختلف عن المدفوع
         url = DEEPL_FREE_URL if api_key.strip().endswith(':fx') else DEEPL_PRO_URL
 
+        headers = {'Authorization': 'DeepL-Auth-Key %s' % api_key}
         try:
             response = requests.post(
                 url,
+                headers=headers,
                 data={
-                    'auth_key': api_key,
                     'text': text,
                     'source_lang': source_lang,
                     'target_lang': target_lang,
@@ -71,12 +72,13 @@ class DeeplTranslationEngine(models.AbstractModel):
 
         url = DEEPL_FREE_URL if api_key.strip().endswith(':fx') else DEEPL_PRO_URL
         masked_key = (api_key[:6] + '...' + api_key[-4:]) if len(api_key) > 12 else '***'
+        headers = {'Authorization': 'DeepL-Auth-Key %s' % api_key}
 
         try:
             response = requests.post(
                 url,
+                headers=headers,
                 data={
-                    'auth_key': api_key,
                     'text': text,
                     'source_lang': source_lang,
                     'target_lang': target_lang,
