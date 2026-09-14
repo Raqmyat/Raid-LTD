@@ -31,6 +31,9 @@
     'category': 'Localization',
     'author': 'Custom',
     'depends': ['base', 'contacts', 'hr', 'product', 'account'],
+    'data': [
+        'views/res_partner_views.xml',
+    ],
     'external_dependencies': {'python': ['requests']},
     'installable': True,
     'application': False,
