@@ -41,6 +41,7 @@ def auto_translate_field(env, record, field_name):
     deepl_target = 'EN-US' if source_is_arabic else 'AR'
 
     engine = env['deepl.translation.engine']
+    touched = False
 
     for lang_code in target_codes:
         try:
@@ -73,5 +74,45 @@ def auto_translate_field(env, record, field_name):
         except Exception:
             _logger.exception(
                 'فشل حفظ الترجمة التلقائية للحقل %s للسجل %s (%s)',
+                field_name, record.id, record._name,
+            )
+            continue
+
+        touched = True
+
+        # نجبر إعادة القراءة من قاعدة البيانات في كل الكونتكستات، عشان
+        # الترجمة تظهر فورًا في الليست فيو من غير ما نحتاج نفتح الكارت
+        # (بدون كده ممكن الكاش يفضل شايل القيمة القديمة اللي اتقرت قبل
+        # ما الترجمة تتحفظ، لحد ما حاجة تانية - زي فتح الفورم - تعمل
+        # قراءة جديدة تجبر الكاش يتحدّث).
+        try:
+            record.invalidate_recordset([field_name])
+        except Exception:
+            _logger.exception(
+                'فشل تفريغ الكاش بعد ترجمة الحقل %s للسجل %s (%s)',
+                field_name, record.id, record._name,
+            )
+
+    if touched:
+        # مشكلة مهمة: حقول زي complete_name (اللي بتظهر في الليست فيو
+        # بدل name) مش translate=True - أودو بيخزّنها كقيمة واحدة بس
+        # (مش نسخة لكل لغة)، وبتتحسب باللغة اللي حصل فيها آخر write.
+        # يعني لما إحنا كتبنا الترجمة بلغة تانية (with_context(lang=..))
+        # فوق، ده بيعيد حساب complete_name بتاع اللغة دي ويكتبها فوق
+        # القيمة القديمة - فلو المستخدم شغال بلغة مختلفة عن لغة آخر
+        # ترجمة اتكتبت، هيلاقي الليست فيو (اللي بيعرض complete_name)
+        # لسه شايل قيمة قديمة أو بلغة غلط، لحد ما يفتح الكارت (اللي
+        # بيقرا name نفسها - وده translate=True فعلاً وبيتظبط صح).
+        #
+        # الحل: بعد ما نخلص كل لغات الترجمة، نجبر إعادة حساب أي حقل
+        # مشتق (زي complete_name) في الـ context الأصلي بتاع الـ record
+        # (يعني لغة المستخدم اللي عمل الحفظ فعلاً)، ونكتبها فورًا.
+        try:
+            record.modified([field_name])
+            record.flush_recordset()
+        except Exception:
+            _logger.exception(
+                'فشل تحديث الحقول المشتقة (زي complete_name) بعد ترجمة '
+                'الحقل %s للسجل %s (%s)',
                 field_name, record.id, record._name,
             )
