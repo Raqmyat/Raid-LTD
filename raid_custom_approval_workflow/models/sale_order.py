@@ -14,6 +14,10 @@ class SaleOrder(models.Model):
         ('hr', 'HR Approval'),
         ('audit', 'Audit Approval'),
         ('ceo', 'CEO Approval'),
+        # --- Alternate path: HR sends straight to Finance, which closes
+        # the cycle directly (skips Audit/CEO entirely) ---
+        ('to_finance', 'Finance Approval'),
+        ('finance_done', 'Finance Approved - Ready to Confirm'),
         ('sale', 'Sales Order'),
         ('done', 'Locked'),
         ('cancel', 'Cancelled'),
@@ -27,6 +31,14 @@ class SaleOrder(models.Model):
         compute_sudo=True,
     )
     use_sale_approval_cycle = fields.Boolean(compute='_compute_use_sale_approval_cycle')
+
+    # Tracks which branch was taken at the HR decision point, purely so the
+    # status bar can show only the relevant path (same idea as the Purchase
+    # Order approval_path field).
+    approval_path = fields.Selection(selection=[
+        ('full', 'Full Cycle (Audit/CEO)'),
+        ('finance', 'Finance (Approve & Close)'),
+    ], copy=False)
 
     def _build_link_domain_for_field(self, po_model, field_name):
         """Build a compatible domain for different field types."""
@@ -127,7 +139,24 @@ class SaleOrder(models.Model):
 
     def action_hr_approve(self):
         self.state = 'hr'
+        self.approval_path = 'full'
         self._create_approval_activity('raid_custom_approval_workflow.group_sale_audit', _('Sales Order pending Audit Approval: %s', self.name))
+
+    # ------------------------------------------------------------------
+    # Alternate path: HR sends straight to Finance instead of Audit. Once
+    # Finance approves, the Sales Order closes directly - no Audit/CEO step.
+    # ------------------------------------------------------------------
+    def action_hr_send_to_finance(self):
+        self.state = 'to_finance'
+        self.approval_path = 'finance'
+        self._create_approval_activity(
+            'raid_custom_approval_workflow.group_sale_finance',
+            _('Sales Order pending Finance Approval: %s', self.name))
+
+    def action_finance_approve(self):
+        self.state = 'finance_done'
+        activity_type = self.env.ref('mail.mail_activity_data_todo')
+        self.activity_ids.filtered(lambda a: a.activity_type_id == activity_type).unlink()
 
     def action_audit_approve(self):
         self.state = 'ceo'
@@ -190,8 +219,8 @@ class SaleOrder(models.Model):
         return self.action_view_raid_purchase_orders()
 
     def action_confirm(self):
-        if self._get_approval_setting() and self.state != 'ceo':
-            raise UserError(_("You cannot confirm this order until it is approved by the CEO."))
+        if self._get_approval_setting() and self.state not in ('ceo', 'finance_done'):
+            raise UserError(_("You cannot confirm this order until it is fully approved."))
         # Temporarily reset to 'draft' so Odoo's standard confirm check passes
         if self._get_approval_setting():
             self.sudo().write({'state': 'draft'})
