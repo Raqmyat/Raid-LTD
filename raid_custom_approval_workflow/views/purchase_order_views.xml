@@ -24,20 +24,16 @@
 
             <!-- When approval is enabled, show ONLY the branch actually taken.
                  Before the HR Manager decides, approval_path is empty and the
-                 Finance bar is shown by default (all three branches share the
-                 same early steps up to that point). -->
+                 Finance bar is shown by default (both bars share the same
+                 early steps up to that point). -->
             <xpath expr="//field[@name='state']" position="after">
                 <field name="state" widget="statusbar"
                        statusbar_visible="draft,sent,submitted,to_hr,to_finance,to_ceo_finance,finance_done,ceo_done_finance,purchase"
-                       invisible="not use_purchase_approval_cycle or approval_path in ('legal', 'hr')"
+                       invisible="not use_purchase_approval_cycle or approval_path == 'legal'"
                        readonly="1"/>
                 <field name="state" widget="statusbar"
                        statusbar_visible="draft,sent,submitted,to_hr,to_legal,to_audit,to_cfo,to_ceo_cfo,cfo_done,ceo_done_cfo,purchase"
                        invisible="not use_purchase_approval_cycle or approval_path != 'legal'"
-                       readonly="1"/>
-                <field name="state" widget="statusbar"
-                       statusbar_visible="draft,sent,submitted,to_hr,hr_done,purchase"
-                       invisible="not use_purchase_approval_cycle or approval_path != 'hr'"
                        readonly="1"/>
             </xpath>
             <xpath expr="//field[@name='state'][1]" position="attributes">
@@ -54,14 +50,11 @@
                 <button name="action_op_manager_approve" string="Approve (Ops Manager)" type="object" class="btn-primary"
                         invisible="not use_purchase_approval_cycle or state != 'submitted'" groups="raid_custom_approval_workflow.group_purchase_ops_manager" />
 
-                <!-- Step 3: HR Manager decision - exactly 3 options -->
+                <!-- Step 3: HR Manager decision - exactly 2 options -->
                 <button name="action_hr_send_to_finance" string="Send to Finance" type="object" class="btn-primary"
                         invisible="not use_purchase_approval_cycle or state != 'to_hr'" groups="raid_custom_approval_workflow.group_purchase_hr" />
 
                 <button name="action_hr_send_to_legal" string="Send to Legal" type="object" class="btn-secondary"
-                        invisible="not use_purchase_approval_cycle or state != 'to_hr'" groups="raid_custom_approval_workflow.group_purchase_hr" />
-
-                <button name="action_hr_approve_close" string="Approve &amp; Close (HR)" type="object" class="btn-secondary"
                         invisible="not use_purchase_approval_cycle or state != 'to_hr'" groups="raid_custom_approval_workflow.group_purchase_hr" />
 
                 <!-- Path A: Finance approves directly -> done, ready for payment
@@ -99,7 +92,7 @@
 
             <!-- Confirm button visibility -->
             <xpath expr="//header/button[@name='button_confirm'][1]" position="attributes">
-                <attribute name="invisible">(use_purchase_approval_cycle and state not in ['hr_done', 'finance_done', 'cfo_done', 'ceo_done_finance', 'ceo_done_cfo']) or (not use_purchase_approval_cycle and state != 'draft')</attribute>
+                <attribute name="invisible">(use_purchase_approval_cycle and state not in ['finance_done', 'cfo_done', 'ceo_done_finance', 'ceo_done_cfo']) or (not use_purchase_approval_cycle and state != 'draft')</attribute>
             </xpath>
             <xpath expr="//header/button[@name='button_confirm'][2]" position="attributes">
                 <attribute name="invisible">use_purchase_approval_cycle or (not use_purchase_approval_cycle and state != 'sent')</attribute>
