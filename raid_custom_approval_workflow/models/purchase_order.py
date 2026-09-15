@@ -13,14 +13,14 @@ class PurchaseOrder(models.Model):
     # Manager's decision, purely so the status bar can show only the relevant
     # path instead of mixing both branches together.
     approval_path = fields.Selection(selection=[
-        ('hr', 'HR (Approve & Close)'),
         ('finance', 'Finance'),
         ('legal', 'Legal'),
     ], copy=False)
 
     def _compute_use_purchase_approval_cycle(self):
+        enabled = self.env['ir.config_parameter'].sudo().get_param('raid_custom_approval_workflow.use_purchase_approval_cycle')
         for order in self:
-            order.use_purchase_approval_cycle = order.company_id.purchase_approval_cycle_type not in (False, 'none')
+            order.use_purchase_approval_cycle = bool(enabled)
 
     # NOTE ON STATE NAMES:
     # Every state below is named after what actually happened / what is actually
@@ -36,7 +36,6 @@ class PurchaseOrder(models.Model):
         # --- Custom purchase approval cycle ---
         ('submitted', 'Ops Manager'),
         ('to_hr', 'HR Manager'),
-        ('hr_done', 'Ready for Invoicing'),
         ('to_finance', 'Finance'),
         ('to_ceo_finance', 'CEO'),
         ('finance_done', 'Ready for Payment'),
@@ -55,13 +54,13 @@ class PurchaseOrder(models.Model):
 
     # States from which the order is fully approved and only needs the final
     # "Confirm" click to turn into an actual Purchase Order.
-    _READY_TO_CONFIRM_STATES = ('hr_done', 'finance_done', 'cfo_done', 'ceo_done_finance', 'ceo_done_cfo')
+    _READY_TO_CONFIRM_STATES = ('finance_done', 'cfo_done', 'ceo_done_finance', 'ceo_done_cfo')
 
     # All "pending approval" states - used to show/hide the Reject button.
     _PENDING_STATES = ('submitted', 'to_hr', 'to_finance', 'to_ceo_finance', 'to_legal', 'to_audit', 'to_cfo', 'to_ceo_cfo')
 
     def _get_approval_setting(self):
-        return self.company_id.purchase_approval_cycle_type not in (False, 'none')
+        return self.env['ir.config_parameter'].sudo().get_param('raid_custom_approval_workflow.use_purchase_approval_cycle')
 
     def _create_approval_activity(self, group_xml_id, summary):
         group = self.env.ref(group_xml_id, raise_if_not_found=False)
@@ -124,16 +123,6 @@ class PurchaseOrder(models.Model):
             'raid_custom_approval_workflow.group_purchase_legal',
             _('Purchase Order pending Legal Approval: %s', self.name)
         )
-
-    # ------------------------------------------------------------------
-    # Path C: HR Manager approves and closes the cycle right away -> the
-    # order skips Finance/Legal entirely and is immediately ready for the
-    # final "Confirm" click, which makes it ready for invoicing.
-    # ------------------------------------------------------------------
-    def action_hr_approve_close(self):
-        self.state = 'hr_done'
-        self.approval_path = 'hr'
-        self._clear_approval_activities()
 
     # ------------------------------------------------------------------
     # Path A: Finance approves directly -> DONE, ready for payment.
