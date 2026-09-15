@@ -9,15 +9,24 @@ class SaleOrder(models.Model):
     state = fields.Selection(selection=[
         ('draft', 'Quotation'),
         ('sent', 'Quotation Sent'),
+        # --- Full cycle: Ops Manager -> HR -> Audit -> (optional CEO) ---
         ('submitted', 'Submitted'),
         ('op_manager', 'Ops Manager Approval'),
         ('hr', 'HR Approval'),
         ('audit', 'Audit Approval'),
         ('ceo', 'CEO Approval'),
+        # --- Finance cycle: Finance approval only ---
+        ('finance_approved', 'Finance Approved'),
+        # --- Standard Odoo states ---
         ('sale', 'Sales Order'),
         ('done', 'Locked'),
         ('cancel', 'Cancelled'),
     ], string='Status', readonly=True, copy=False, index=True, tracking=3, default='draft')
+
+    # Which cycle applies to this order, taken from its company. Exposed on
+    # the record so the view can show the right status bar / buttons.
+    sale_approval_cycle_type = fields.Selection(
+        related='company_id.sale_approval_cycle_type', string='Approval Cycle Type', readonly=True)
 
     # Stored field - updated directly from wizard when PO is created
     purchase_order_ids = fields.One2many('purchase.order', 'raid_linked_so_id', string='Purchase Orders')
@@ -89,12 +98,11 @@ class SaleOrder(models.Model):
             order.purchase_order_count = len(order._get_related_purchase_orders())
 
     def _compute_use_sale_approval_cycle(self):
-        enabled = self.env['ir.config_parameter'].sudo().get_param('raid_custom_approval_workflow.use_sale_approval_cycle')
         for order in self:
-            order.use_sale_approval_cycle = bool(enabled)
+            order.use_sale_approval_cycle = order.company_id.sale_approval_cycle_type not in (False, 'none')
 
     def _get_approval_setting(self):
-        return self.env['ir.config_parameter'].sudo().get_param('raid_custom_approval_workflow.use_sale_approval_cycle')
+        return self.company_id.sale_approval_cycle_type not in (False, 'none')
 
     def _create_approval_activity(self, group_xml_id, summary):
         group = self.env.ref(group_xml_id, raise_if_not_found=False)
@@ -115,11 +123,19 @@ class SaleOrder(models.Model):
 
     def action_submit_to_manager(self):
         self.ensure_one()
-        if not self._get_approval_setting():
+        cycle = self.company_id.sale_approval_cycle_type
+        if cycle == 'none':
             return super(SaleOrder, self).action_confirm()
 
         self.state = 'submitted'
-        self._create_approval_activity('raid_custom_approval_workflow.group_sale_ops_manager', _('Sales Order pending Ops Manager Approval: %s', self.name))
+        if cycle == 'finance':
+            self._create_approval_activity(
+                'raid_custom_approval_workflow.group_sale_finance',
+                _('Sales Order pending Finance Approval: %s', self.name))
+        else:
+            self._create_approval_activity(
+                'raid_custom_approval_workflow.group_sale_ops_manager',
+                _('Sales Order pending Ops Manager Approval: %s', self.name))
 
     def action_op_manager_approve(self):
         self.state = 'op_manager'
@@ -128,6 +144,15 @@ class SaleOrder(models.Model):
     def action_hr_approve(self):
         self.state = 'hr'
         self._create_approval_activity('raid_custom_approval_workflow.group_sale_audit', _('Sales Order pending Audit Approval: %s', self.name))
+
+    # ------------------------------------------------------------------
+    # Finance cycle: a single Finance approval closes the cycle - the order
+    # goes straight to "ready to confirm", no Ops Manager/HR/Audit/CEO steps.
+    # ------------------------------------------------------------------
+    def action_finance_approve(self):
+        self.state = 'finance_approved'
+        activity_type = self.env.ref('mail.mail_activity_data_todo')
+        self.activity_ids.filtered(lambda a: a.activity_type_id == activity_type).unlink()
 
     def action_audit_approve(self):
         self.state = 'ceo'
@@ -190,9 +215,13 @@ class SaleOrder(models.Model):
         return self.action_view_raid_purchase_orders()
 
     def action_confirm(self):
-        if self._get_approval_setting() and self.state != 'ceo':
-            raise UserError(_("You cannot confirm this order until it is approved by the CEO."))
-        # Temporarily reset to 'draft' so Odoo's standard confirm check passes
-        if self._get_approval_setting():
-            self.sudo().write({'state': 'draft'})
+        for order in self:
+            cycle = order.company_id.sale_approval_cycle_type
+            if cycle == 'full' and order.state != 'ceo':
+                raise UserError(_("You cannot confirm this order until it is approved by the CEO."))
+            if cycle == 'finance' and order.state != 'finance_approved':
+                raise UserError(_("You cannot confirm this order until it is approved by Finance."))
+            if cycle not in (False, 'none'):
+                # Temporarily reset to 'draft' so Odoo's standard confirm check passes
+                order.sudo().write({'state': 'draft'})
         return super(SaleOrder, self).action_confirm()

@@ -9,16 +9,18 @@
             <!-- Sales Settings -->
             <xpath expr="//form//app[@name='sale_management']" position="inside">
                 <block title="Raid Sales Approvals" id="raid_sale_approval_setting">
-                    <setting string="Sales Approval Cycle" help="Enable multi-level approval for Sales Orders.">
-                        <field name="use_sale_approval_cycle"/>
+                    <setting string="Sales Approval Cycle"
+                             help="Choose which approval cycle (if any) applies to Sales Orders for the current company.">
+                        <field name="sale_approval_cycle_type" widget="radio"/>
                     </setting>
                 </block>
             </xpath>
             <!-- Purchase Settings -->
             <xpath expr="//form//app[@name='purchase']" position="inside">
                 <block title="Raid Purchase Approvals" id="raid_purchase_approval_setting">
-                    <setting string="Purchase Approval Cycle" help="Enable multi-level approval for Purchase Orders.">
-                        <field name="use_purchase_approval_cycle"/>
+                    <setting string="Purchase Approval Cycle"
+                             help="Choose which approval cycle (if any) applies to Purchase Orders for the current company.">
+                        <field name="purchase_approval_cycle_type" widget="radio"/>
                     </setting>
                 </block>
             </xpath>
