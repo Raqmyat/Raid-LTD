@@ -9,6 +9,7 @@
             <!-- Load hidden fields needed for conditions -->
             <xpath expr="//field[@name='state']" position="before">
                 <field name="use_sale_approval_cycle" invisible="1"/>
+                <field name="approval_path" invisible="1"/>
             </xpath>
 
             <!-- Smart Button for POs -->
@@ -21,11 +22,18 @@
                 <attribute name="statusbar_visible">draft,sent,sale</attribute>
             </xpath>
 
-            <!-- When approval is enabled, show full approval path -->
+            <!-- When approval is enabled, show ONLY the branch actually taken.
+                 Before the HR Manager decides, approval_path is empty and the
+                 full-cycle bar is shown by default (unchanged behavior). -->
             <xpath expr="//field[@name='state']" position="after">
                 <field name="state" widget="statusbar"
                        statusbar_visible="draft,sent,submitted,op_manager,hr,audit,ceo,sale"
-                       invisible="not use_sale_approval_cycle"/>
+                       invisible="not use_sale_approval_cycle or approval_path == 'finance'"
+                       readonly="1"/>
+                <field name="state" widget="statusbar"
+                       statusbar_visible="draft,sent,submitted,op_manager,to_finance,finance_done,sale"
+                       invisible="not use_sale_approval_cycle or approval_path != 'finance'"
+                       readonly="1"/>
             </xpath>
             <xpath expr="//field[@name='state'][1]" position="attributes">
                 <attribute name="invisible">use_sale_approval_cycle</attribute>
@@ -42,7 +50,12 @@
                 <button name="action_op_manager_approve" string="Approve (Ops Manager)" type="object" class="btn-primary"
                         invisible="not use_sale_approval_cycle or state != 'submitted'" groups="raid_custom_approval_workflow.group_sale_ops_manager" />
 
+                <!-- HR decision: either continue the full cycle (Audit/CEO), or
+                     send straight to Finance to close the order directly. -->
                 <button name="action_hr_approve" string="Approve (HR)" type="object" class="btn-primary"
+                        invisible="not use_sale_approval_cycle or state != 'op_manager'" groups="raid_custom_approval_workflow.group_sale_hr" />
+
+                <button name="action_hr_send_to_finance" string="Send to Finance" type="object" class="btn-secondary"
                         invisible="not use_sale_approval_cycle or state != 'op_manager'" groups="raid_custom_approval_workflow.group_sale_hr" />
 
                 <button name="action_audit_approve" string="Approve (Audit)" type="object" class="btn-primary"
@@ -54,15 +67,19 @@
                 <button name="action_ceo_approve" string="Approve (CEO)" type="object" class="btn-primary"
                         invisible="not use_sale_approval_cycle or state != 'audit'" groups="raid_custom_approval_workflow.group_sale_ceo" />
 
+                <!-- Finance branch: single approval closes the order directly -->
+                <button name="action_finance_approve" string="Approve &amp; Close (Finance)" type="object" class="btn-primary"
+                        invisible="not use_sale_approval_cycle or state != 'to_finance'" groups="raid_custom_approval_workflow.group_sale_finance" />
+
                 <!-- Reject Button -->
                 <button name="action_reject" string="Reject" type="object" class="btn-secondary"
-                        invisible="not use_sale_approval_cycle or state not in ['submitted', 'op_manager', 'hr', 'audit', 'ceo']"
-                        groups="raid_custom_approval_workflow.group_sale_ops_manager,raid_custom_approval_workflow.group_sale_hr,raid_custom_approval_workflow.group_sale_audit,raid_custom_approval_workflow.group_sale_ceo" />
+                        invisible="not use_sale_approval_cycle or state not in ['submitted', 'op_manager', 'hr', 'audit', 'ceo', 'to_finance']"
+                        groups="raid_custom_approval_workflow.group_sale_ops_manager,raid_custom_approval_workflow.group_sale_hr,raid_custom_approval_workflow.group_sale_audit,raid_custom_approval_workflow.group_sale_ceo,raid_custom_approval_workflow.group_sale_finance" />
             </xpath>
 
             <!-- Confirm button visibility -->
             <xpath expr="//header/button[@name='action_confirm'][1]" position="attributes">
-                <attribute name="invisible">(use_sale_approval_cycle and state != 'ceo') or (not use_sale_approval_cycle and state != 'draft')</attribute>
+                <attribute name="invisible">(use_sale_approval_cycle and state not in ['ceo', 'finance_done']) or (not use_sale_approval_cycle and state != 'draft')</attribute>
             </xpath>
             <xpath expr="//header/button[@name='action_confirm'][2]" position="attributes">
                 <attribute name="invisible">use_sale_approval_cycle or (not use_sale_approval_cycle and state != 'sent')</attribute>
