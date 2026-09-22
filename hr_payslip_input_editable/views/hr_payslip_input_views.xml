@@ -38,11 +38,15 @@
         </field>
     </record>
 
-    <!-- Menu Item under Payroll -->
+    <!-- Standalone Menu (top-level, no dependency on hr_payroll's internal menu id) -->
+    <menuitem id="menu_hr_payslip_input_editable_root"
+              name="Salary Inputs (Bulk Edit)"
+              sequence="90"/>
+
     <menuitem id="menu_hr_payslip_input_editable"
               name="Salary Inputs (Bulk Edit)"
               action="action_hr_payslip_input_editable"
-              parent="hr_payroll.menu_hr_payroll_root"
-              sequence="30"/>
+              parent="menu_hr_payslip_input_editable_root"
+              sequence="10"/>
 
 </odoo>
