@@ -1,18 +1,20 @@
 {
-    'name': 'HR Payslip Input Editable List',
-    'version': '19.0.1.0.0',
-    'summary': 'Bulk edit Payslip Other Inputs (e.g. Actual Basic) from one editable list view',
+    'name': 'HR Actual Salary Inputs (Bulk Editable)',
+    'version': '19.0.2.0.0',
+    'summary': 'Bulk-enter actual monthly salary inputs (e.g. Actual Basic) per employee, read directly by salary rules',
     'description': """
-Adds a menu under Payroll to view and edit all hr.payslip.input records
-(salary inputs, e.g. Actual Basic) in one editable list, instead of opening
-each payslip individually.
+Adds a standalone, bulk-editable list (Employee / Input Type / Month / Amount)
+that is completely independent from each payslip's own "Other Inputs" tab.
+Salary rules can query this table directly at computation time (via
+env['hr.payslip.actual.input']), so the values are never lost when
+"Compute Sheet" is pressed on a payslip.
 """,
     'category': 'Human Resources/Payroll',
     'author': 'Custom',
     'depends': ['hr_payroll'],
     'data': [
         'security/ir.model.access.csv',
-        'views/hr_payslip_input_views.xml',
+        'views/hr_payslip_actual_input_views.xml',
     ],
     'installable': True,
     'application': False,
