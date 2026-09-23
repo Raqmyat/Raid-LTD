@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="hr_payslip_actual_inputs_tags.ActualInputsTagsField">
+        <div class="o_actual_inputs_tags position-relative">
+            <div class="d-flex flex-wrap gap-1 align-items-center">
+                <t t-foreach="lines" t-as="line" t-key="line.id">
+                    <span class="badge text-bg-secondary d-flex align-items-center gap-1">
+                        <t t-esc="tagLabel(line)"/>
+                        <a href="#" class="text-white" t-on-click="(ev) => this.removeLine(line, ev)">×</a>
+                    </span>
+                </t>
+                <a href="#" class="badge text-bg-light border" t-on-click.prevent="toggleDropdown">+</a>
+            </div>
+            <div t-if="state.open"
+                 class="o_input_dropdown dropdown-menu show p-1"
+                 style="position:absolute; z-index: 1000; min-width: 220px; top: 100%; left: 0;">
+                <t t-if="!state.pickingAmountFor">
+                    <t t-if="state.availableTypes.length === 0">
+                        <span class="dropdown-item-text text-muted">No available types</span>
+                    </t>
+                    <a t-foreach="state.availableTypes" t-as="type" t-key="type.id"
+                       href="#" class="dropdown-item"
+                       t-on-click.prevent="() => this.pickType(type)">
+                        <t t-esc="type.name"/>
+                    </a>
+                </t>
+                <t t-else="">
+                    <div class="p-1">
+                        <label class="form-label mb-1 small">
+                            <t t-esc="state.pickingAmountFor.name"/>
+                        </label>
+                        <input type="number" class="form-control form-control-sm"
+                               t-model.number="state.amount"
+                               t-on-keydown="onAmountKeydown"/>
+                        <div class="mt-2 d-flex gap-2">
+                            <button class="btn btn-sm btn-primary" t-on-click="confirmAmount">Save</button>
+                            <button class="btn btn-sm btn-secondary" t-on-click="cancelAmount">Cancel</button>
+                        </div>
+                    </div>
+                </t>
+            </div>
+        </div>
+    </t>
+</templates>
