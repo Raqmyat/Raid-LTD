@@ -1,6 +1,6 @@
 {
     'name': 'HR Actual Salary Inputs (Bulk Editable)',
-    'version': '19.0.2.0.0',
+    'version': '19.0.3.0.0',
     'summary': 'Bulk-enter actual monthly salary inputs (e.g. Actual Basic) per employee, read directly by salary rules',
     'description': """
 Adds a standalone, bulk-editable list (Employee / Input Type / Month / Amount)
@@ -15,6 +15,7 @@ env['hr.payslip.actual.input']), so the values are never lost when
     'data': [
         'security/ir.model.access.csv',
         'views/hr_payslip_actual_input_views.xml',
+        'views/hr_payslip_tree_views.xml',
     ],
     'installable': True,
     'application': False,
