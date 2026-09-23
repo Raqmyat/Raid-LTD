@@ -1,13 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+
+    <!-- Compact popup used when adding a new tag from the list -->
+    <record id="view_hr_payslip_input_quick_form" model="ir.ui.view">
+        <field name="name">hr.payslip.input.quick.form</field>
+        <field name="model">hr.payslip.input</field>
+        <field name="arch" type="xml">
+            <form string="Salary Input">
+                <group>
+                    <field name="input_type_id"/>
+                    <field name="amount"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <!-- Expose the real Other Inputs lines directly in the Payslips list,
+         as tags you can add/remove inline, similar to an Analytic Account
+         tags field. Adding a new tag opens the small popup above so you
+         pick the Input Type and set the Amount right away. -->
     <record id="hr_payslip_tree_actual_basic_view" model="ir.ui.view">
         <field name="name">hr.payslip.list.actual.basic</field>
         <field name="model">hr.payslip</field>
         <field name="inherit_id" ref="hr_payroll.view_hr_payslip_tree"/>
         <field name="arch" type="xml">
             <field name="employee_id" position="after">
-                <field name="actual_input_note" optional="show" string="Actual Inputs"/>
+                <field name="input_line_ids"
+                       widget="many2many_tags"
+                       optional="show"
+                       string="Actual Inputs"
+                       context="{'form_view_ref': 'hr_payslip_input_editable.view_hr_payslip_input_quick_form'}"
+                       options="{'create': True, 'create_edit': True}"/>
             </field>
         </field>
     </record>
+
 </odoo>
