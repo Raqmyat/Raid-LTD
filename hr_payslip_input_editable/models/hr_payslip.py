@@ -8,8 +8,9 @@ class HrPayslip(models.Model):
     actual_input_note = fields.Char(
         string='Actual Inputs Status',
         compute='_compute_actual_input_note',
-        help='بيوضح هل فيه صفوف Actual Salary Inputs لنفس الموظف والشهر ده '
-             'هتتضاف تلقائيًا لتبويب Other Inputs لما تدوس Compute Sheet.',
+        help='Shows whether there are any "Actual Salary Inputs" rows for '
+             'this employee and month, which will be automatically added '
+             'to the Other Inputs tab when you press Compute Sheet.',
     )
 
     @api.depends('employee_id', 'date_from')
@@ -18,13 +19,13 @@ class HrPayslip(models.Model):
             recs = slip._get_actual_input_records()
             if recs:
                 names = ', '.join(recs.mapped('input_type_id.name'))
-                slip.actual_input_note = 'هيتضاف: %s' % names
+                slip.actual_input_note = 'Will add: %s' % names
             else:
                 slip.actual_input_note = ''
 
     def _get_actual_input_records(self):
-        """رجّع كل صفوف Actual Salary Inputs بتاعة نفس الموظف ونفس شهر
-        الـ Payslip ده (بغض النظر عن نوع الـ Input)."""
+        """Return all 'Actual Salary Inputs' rows (any Input Type) for the
+        same employee and the same month as this payslip."""
         self.ensure_one()
         if not self.employee_id or not self.date_from:
             return self.env['hr.payslip.actual.input']
@@ -39,12 +40,13 @@ class HrPayslip(models.Model):
         return super().compute_sheet()
 
     def _sync_actual_inputs_to_payslip(self):
-        """بتضخّ كل صف من جدول Actual Salary Inputs (hr.payslip.actual.input)
-        الخاص بنفس الموظف ونفس الشهر جوه Other Inputs الحقيقية للـ Payslip
-        (hr.payslip.input)، عشان أي Salary Rule يقدر يستخدمها عادي بـ
-        inputs.CODE.amount من غير أي كود بحث مخصص.
-        لو فيه سطر بنفس الـ Input Type موجود قبل كده في نفس الـ Payslip،
-        بس بيتحدث الـ Amount بتاعه، مش بيتكرر.
+        """Push every matching row from the standalone Actual Salary Inputs
+        table (hr.payslip.actual.input) for this employee/month into this
+        payslip's real Other Inputs lines (hr.payslip.input), so any Salary
+        Rule can read them the normal Odoo way via inputs.CODE.amount, with
+        no custom lookup code needed.
+        If a line with the same Input Type already exists on this payslip,
+        only its amount is updated (never duplicated).
         """
         self.ensure_one()
         actual_inputs = self._get_actual_input_records()

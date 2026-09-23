@@ -1,6 +1,6 @@
 {
     'name': 'HR Actual Salary Inputs (Bulk Editable)',
-    'version': '19.0.4.0.0',
+    'version': '19.0.6.0.0',
     'summary': 'Bulk-enter monthly salary inputs per employee; auto-synced into the payslip\'s real Other Inputs lines',
     'description': """
 Adds a standalone, bulk-editable list (Employee / Input Type / Month / Amount)
