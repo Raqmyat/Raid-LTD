@@ -1,6 +1,6 @@
 {
     'name': 'HR Payslip Actual Inputs (Tags)',
-    'version': '19.0.1.0.0',
+    'version': '19.0.3.0.0',
     'summary': 'Add multiple Other Inputs per employee directly from the Payslips list, as tags',
     'description': """
 Exposes the payslip's real Other Inputs lines (hr.payslip.input) directly

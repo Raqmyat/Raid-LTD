@@ -10,7 +10,8 @@
         <field name="arch" type="xml">
             <form string="Salary Input">
                 <group>
-                    <field name="input_type_id"/>
+                    <field name="input_type_id"
+                           domain="['|', ('struct_ids', '=', False), ('struct_ids', 'in', [context.get('payslip_struct_id')])]"/>
                     <field name="amount"/>
                 </group>
             </form>
@@ -30,8 +31,8 @@
                        widget="many2many_tags"
                        optional="show"
                        string="Actual Inputs"
-                       domain="[]"
-                       context="{'form_view_ref': 'hr_payslip_actual_inputs_tags.view_hr_payslip_input_quick_form'}"
+                       domain="[('payslip_id', '=', id)]"
+                       context="{'form_view_ref': 'hr_payslip_actual_inputs_tags.view_hr_payslip_input_quick_form', 'default_payslip_id': id, 'payslip_struct_id': struct_id}"
                        options="{'no_quick_create': True, 'no_create_edit': False}"/>
             </field>
         </field>
