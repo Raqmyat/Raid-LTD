@@ -29,8 +29,9 @@
                        widget="many2many_tags"
                        optional="show"
                        string="Actual Inputs"
+                       domain="[]"
                        context="{'form_view_ref': 'hr_payslip_input_editable.view_hr_payslip_input_quick_form'}"
-                       options="{'create': True, 'create_edit': True}"/>
+                       options="{'no_quick_create': True, 'no_create_edit': False}"/>
             </field>
         </field>
     </record>
