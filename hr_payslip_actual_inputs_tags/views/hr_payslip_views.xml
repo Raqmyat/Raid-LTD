@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Compact popup used when adding a new tag from the list -->
+    <!-- Small popup shown when adding a new tag from the list: pick the
+         Input Type, set the Amount. Same two fields Odoo already uses on
+         hr.payslip.input, no extra restrictions added here. -->
     <record id="view_hr_payslip_input_quick_form" model="ir.ui.view">
         <field name="name">hr.payslip.input.quick.form</field>
         <field name="model">hr.payslip.input</field>
@@ -16,11 +18,10 @@
     </record>
 
     <!-- Expose the real Other Inputs lines directly in the Payslips list,
-         as tags you can add/remove inline, similar to an Analytic Account
-         tags field. Adding a new tag opens the small popup above so you
-         pick the Input Type and set the Amount right away. -->
-    <record id="hr_payslip_tree_actual_basic_view" model="ir.ui.view">
-        <field name="name">hr.payslip.list.actual.basic</field>
+         as tags you can add inline. You can add as many Input Types as
+         needed for the same payslip/employee. -->
+    <record id="hr_payslip_tree_actual_inputs_view" model="ir.ui.view">
+        <field name="name">hr.payslip.list.actual.inputs.tags</field>
         <field name="model">hr.payslip</field>
         <field name="inherit_id" ref="hr_payroll.view_hr_payslip_tree"/>
         <field name="arch" type="xml">
@@ -30,7 +31,7 @@
                        optional="show"
                        string="Actual Inputs"
                        domain="[]"
-                       context="{'form_view_ref': 'hr_payslip_input_editable.view_hr_payslip_input_quick_form'}"
+                       context="{'form_view_ref': 'hr_payslip_actual_inputs_tags.view_hr_payslip_input_quick_form'}"
                        options="{'no_quick_create': True, 'no_create_edit': False}"/>
             </field>
         </field>

@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models
+from odoo import models
 
 
 class HrPayslipInput(models.Model):
     """Extends the STANDARD Odoo model (the real 'Other Inputs' lines on a
-    payslip), only to make each line's tag label show 'Type: Amount'
-    (e.g. 'Actual Basic: 900.0') when displayed with widget="many2many_tags".
+    payslip). Only adds a readable tag label ('Type: Amount') so it displays
+    nicely when shown with widget="many2many_tags" in the Payslips list.
+    No new model, no new table - this is the same data Salary Rules already
+    read via inputs.CODE.amount.
     """
     _inherit = 'hr.payslip.input'
 
