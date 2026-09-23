@@ -1,13 +1,17 @@
 {
     'name': 'HR Actual Salary Inputs (Bulk Editable)',
-    'version': '19.0.3.0.0',
-    'summary': 'Bulk-enter actual monthly salary inputs (e.g. Actual Basic) per employee, read directly by salary rules',
+    'version': '19.0.4.0.0',
+    'summary': 'Bulk-enter monthly salary inputs per employee; auto-synced into the payslip\'s real Other Inputs lines',
     'description': """
 Adds a standalone, bulk-editable list (Employee / Input Type / Month / Amount)
-that is completely independent from each payslip's own "Other Inputs" tab.
-Salary rules can query this table directly at computation time (via
-env['hr.payslip.actual.input']), so the values are never lost when
-"Compute Sheet" is pressed on a payslip.
+that is completely independent from any payslip record, so entries survive
+even before a payslip exists and are not reset by re-creating payslips.
+
+When "Compute Sheet" is pressed on a payslip, any matching rows (same
+employee + same month) are automatically pushed into that payslip's real
+Other Inputs lines (hr.payslip.input), for whatever Input Type was chosen.
+Salary rules then read them the normal Odoo way (inputs.CODE.amount), with
+no custom lookup code needed.
 """,
     'category': 'Human Resources/Payroll',
     'author': 'Custom',

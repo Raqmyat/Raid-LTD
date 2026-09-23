@@ -1,62 +1,62 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
 
-ACTUAL_BASIC_CODE = 'ACTUALBASIC'
-
 
 class HrPayslip(models.Model):
     _inherit = 'hr.payslip'
 
-    actual_basic_amount = fields.Float(
-        string='Actual Basic',
-        compute='_compute_actual_basic_amount',
-        inverse='_inverse_actual_basic_amount',
-        help='القيمة الفعلية للراتب الأساسي للشهر ده. بتتقرأ وبتتكتب '
-             'مباشرة في جدول Actual Salary Inputs (موديل '
-             'hr.payslip.actual.input) لنفس الموظف ونفس الشهر، فمش '
-             'بتتأثر بعمل Compute Sheet.',
+    actual_input_note = fields.Char(
+        string='Actual Inputs Status',
+        compute='_compute_actual_input_note',
+        help='بيوضح هل فيه صفوف Actual Salary Inputs لنفس الموظف والشهر ده '
+             'هتتضاف تلقائيًا لتبويب Other Inputs لما تدوس Compute Sheet.',
     )
 
-    def _get_actual_basic_input_type(self):
-        return self.env['hr.payslip.input.type'].search(
-            [('code', '=', ACTUAL_BASIC_CODE)], limit=1)
+    @api.depends('employee_id', 'date_from')
+    def _compute_actual_input_note(self):
+        for slip in self:
+            recs = slip._get_actual_input_records()
+            if recs:
+                names = ', '.join(recs.mapped('input_type_id.name'))
+                slip.actual_input_note = 'هيتضاف: %s' % names
+            else:
+                slip.actual_input_note = ''
 
-    def _get_actual_basic_record(self):
+    def _get_actual_input_records(self):
+        """رجّع كل صفوف Actual Salary Inputs بتاعة نفس الموظف ونفس شهر
+        الـ Payslip ده (بغض النظر عن نوع الـ Input)."""
         self.ensure_one()
         if not self.employee_id or not self.date_from:
             return self.env['hr.payslip.actual.input']
-        input_type = self._get_actual_basic_input_type()
-        if not input_type:
-            return self.env['hr.payslip.actual.input']
         return self.env['hr.payslip.actual.input'].search([
             ('employee_id', '=', self.employee_id.id),
-            ('input_type_id', '=', input_type.id),
             ('date_from', '=', self.date_from.replace(day=1)),
-        ], limit=1)
+        ])
 
-    @api.depends('employee_id', 'date_from')
-    def _compute_actual_basic_amount(self):
+    def compute_sheet(self):
         for slip in self:
-            rec = slip._get_actual_basic_record()
-            slip.actual_basic_amount = rec.amount if rec else 0.0
+            slip._sync_actual_inputs_to_payslip()
+        return super().compute_sheet()
 
-    def _inverse_actual_basic_amount(self):
-        input_type = self._get_actual_basic_input_type()
-        if not input_type:
-            input_type = self.env['hr.payslip.input.type'].create({
-                'name': 'Actual Basic',
-                'code': ACTUAL_BASIC_CODE,
-            })
-        for slip in self:
-            if not slip.employee_id or not slip.date_from:
-                continue
-            rec = slip._get_actual_basic_record()
-            if rec:
-                rec.amount = slip.actual_basic_amount
+    def _sync_actual_inputs_to_payslip(self):
+        """بتضخّ كل صف من جدول Actual Salary Inputs (hr.payslip.actual.input)
+        الخاص بنفس الموظف ونفس الشهر جوه Other Inputs الحقيقية للـ Payslip
+        (hr.payslip.input)، عشان أي Salary Rule يقدر يستخدمها عادي بـ
+        inputs.CODE.amount من غير أي كود بحث مخصص.
+        لو فيه سطر بنفس الـ Input Type موجود قبل كده في نفس الـ Payslip،
+        بس بيتحدث الـ Amount بتاعه، مش بيتكرر.
+        """
+        self.ensure_one()
+        actual_inputs = self._get_actual_input_records()
+        for rec in actual_inputs:
+            line = self.input_line_ids.filtered(
+                lambda l: l.input_type_id == rec.input_type_id)
+            if line:
+                line[0].amount = rec.amount
             else:
-                self.env['hr.payslip.actual.input'].create({
-                    'employee_id': slip.employee_id.id,
-                    'input_type_id': input_type.id,
-                    'date_from': slip.date_from.replace(day=1),
-                    'amount': slip.actual_basic_amount,
+                self.env['hr.payslip.input'].create({
+                    'payslip_id': self.id,
+                    'input_type_id': rec.input_type_id.id,
+                    'amount': rec.amount,
+                    'name': rec.note or rec.input_type_id.name,
                 })
