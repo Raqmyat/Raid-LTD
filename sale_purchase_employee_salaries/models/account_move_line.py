@@ -10,3 +10,9 @@ class AccountMoveLine(models.Model):
         string='Employee',
         help='الموظف المرتبط ببند الفاتورة ده - بيتوّرث تلقائيًا من بند أمر البيع المقابل.',
     )
+
+    is_salary_alloc = fields.Boolean(
+        string='Salary Allocation Line',
+        copy=True,
+        help='سطر توزيع إيراد المرتبات على حساب الرول (بيتولّد تلقائي عند الترحيل).',
+    )

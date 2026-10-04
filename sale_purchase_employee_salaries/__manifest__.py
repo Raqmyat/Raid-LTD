@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Sale/Purchase Employee Salaries',
-    'version': '19.0.1.3.0',
+    'version': '19.0.2.0.0',
     'category': 'Sales',
     'summary': 'ربط أوامر البيع/الشراء بالموظفين، وطباعة جدول تفصيل الرواتب (Employee x Rule) في أمر البيع والفاتورة',
     'description': """
@@ -17,8 +17,9 @@ Sale/Purchase Employee Salaries
 - عند الطباعة (أمر البيع أو الفاتورة)، لو Is Salaries مفعّل، بيظهر في آخر
   الصفحة جدول تفصيلي منفصل: كل موظف = صف، وكل رول من رولز الراتب (حتى
   تكلفة الموظف) = عمود - للعرض فقط، مش بنود فعلية بتأثر على الحسابات.
-- حقل "Revenue Allocation Account" على كل Salary Rule: عند ترحيل الفاتورة بيتعمل
-  قيد توزيع تلقائي فيه سطر واحد لكل رول (مجموعه من كل الموظفين) على حسابه.
+- حقل "Revenue Allocation Account" على كل Salary Rule: عند ترحيل الفاتورة بيتضاف
+  جوه قيد الفاتورة نفسه سطر واحد لكل رول (مجموعه من كل الموظفين) على حسابه،
+  ومقابله مدين على حساب المنتج الأصلي (من غير تأثير على إجمالي الفاتورة).
     """,
     'author': 'Custom Development',
     'license': 'LGPL-3',
@@ -27,7 +28,6 @@ Sale/Purchase Employee Salaries
         'security/ir.model.access.csv',
         'wizard/sale_order_salary_wizard_views.xml',
         'views/hr_salary_rule_views.xml',
-        'views/res_company_views.xml',
         'views/sale_order_views.xml',
         'views/purchase_order_views.xml',
         'views/account_move_views.xml',

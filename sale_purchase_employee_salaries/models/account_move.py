@@ -1,42 +1,29 @@
 # -*- coding: utf-8 -*-
 from collections import defaultdict
 
-from odoo import fields, models, _
-from odoo.exceptions import UserError
+from odoo import Command, fields, models, _
 
 
 class AccountMove(models.Model):
     _name = 'account.move'
     _inherit = ['account.move', 'salary.matrix.mixin']
 
-    salary_reclass_move_id = fields.Many2one(
-        'account.move',
-        string='Salary Allocation Entry',
-        readonly=True,
-        copy=False,
-        ondelete='set null',
-    )
-
     # ------------------------------------------------------------------
     # Hooks
     # ------------------------------------------------------------------
     def _post(self, soft=True):
-        posted = super()._post(soft=soft)
-        to_allocate = posted.filtered(
-            lambda m: m.move_type in ('out_invoice', 'out_refund')
-            and m.is_salaries and m.payslip_run_id and not m.salary_reclass_move_id
-        )
-        for move in to_allocate:
-            move._create_salary_allocation_entry()
-        return posted
+        # بنضيف سطور التوزيع جوه قيد الفاتورة نفسه قبل الترحيل
+        for move in self:
+            if (move.state == 'draft'
+                    and move.move_type in ('out_invoice', 'out_refund')
+                    and move.is_salaries and move.payslip_run_id):
+                move._apply_salary_allocation()
+        return super()._post(soft=soft)
 
     def button_draft(self):
-        self._remove_salary_allocation_entry()
-        return super().button_draft()
-
-    def button_cancel(self):
-        self._remove_salary_allocation_entry()
-        return super().button_cancel()
+        res = super().button_draft()
+        self.filtered(lambda m: m.state == 'draft')._remove_salary_allocation_lines()
+        return res
 
     # ------------------------------------------------------------------
     # Allocation logic
@@ -46,10 +33,9 @@ class AccountMove(models.Model):
 
     def _compute_salary_allocation(self):
         """
-        {(rule, rule_account, source_account): amount}  بعملة الشركة، بإشارة موجبة للفاتورة.
-        لكل بند موظف في الفاتورة: نسبة = قيمة البند / تكلفة الموظف في الـ payslip،
-        وكل رول له حساب بيتضرب قيمته في النسبة دي (فلو عدّلت المبلغ في الويزارد
-        التوزيع بيتناسب معاه). اللي مش متوزّع بيفضل في حساب المنتج الأصلي.
+        {(rule, rule_account, source_account): amount} بعملة الشركة، بإشارة موجبة.
+        لكل بند موظف: نسبة = قيمة البند / تكلفة الموظف في الـ payslip،
+        وكل رول له حساب بيتضرب قيمته في النسبة دي. اللي مش متوزّع بيفضل في حساب المنتج.
         """
         self.ensure_one()
         run = self.payslip_run_id
@@ -82,18 +68,24 @@ class AccountMove(models.Model):
                 allocation[(rule, account, line.account_id)] += rl.total * factor
         return allocation
 
-    @staticmethod
-    def _salary_alloc_line(account, balance, name, partner):
-        return (0, 0, {
+    def _salary_alloc_line_cmd(self, account, balance, name):
+        company_currency = self.company_id.currency_id
+        date = self.invoice_date or fields.Date.context_today(self)
+        return Command.create({
+            'display_type': 'cogs',        # سطر محاسبي بس: مش بيدخل في الإجمالي ولا بيظهر في بنود الفاتورة
+            'is_salary_alloc': True,
             'account_id': account.id,
             'name': name,
-            'partner_id': partner.id,
-            'debit': balance if balance > 0 else 0.0,
-            'credit': -balance if balance < 0 else 0.0,
+            'partner_id': self.partner_id.id,
+            'currency_id': self.currency_id.id,
+            'amount_currency': company_currency._convert(
+                balance, self.currency_id, self.company_id, date),
+            'balance': balance,
         })
 
-    def _create_salary_allocation_entry(self):
+    def _apply_salary_allocation(self):
         self.ensure_one()
+        self._remove_salary_allocation_lines()
         allocation = self._compute_salary_allocation()
         if not allocation:
             return False
@@ -110,39 +102,18 @@ class AccountMove(models.Model):
         if not credits:
             return False
 
-        partner = self.partner_id
-        line_vals = []
+        commands = []
         for (rule, account), amount in credits.items():
-            # سطر واحد لكل رول = مجموع الرول من كل الموظفين
-            line_vals.append(self._salary_alloc_line(
-                account, -currency.round(amount), rule.name, partner))
+            # سطر واحد لكل رول = مجموع الرول من كل الموظفين (دائن على حساب الربح)
+            commands.append(self._salary_alloc_line_cmd(
+                account, -currency.round(amount), rule.name))
         for source, amount in debits.items():
-            line_vals.append(self._salary_alloc_line(
-                source, currency.round(amount),
-                _('Salary allocation - %s', self.name), partner))
+            # مدين على حساب المنتج الأصلي عشان الإيراد ميتحسبش مرتين
+            commands.append(self._salary_alloc_line_cmd(
+                source, currency.round(amount), _('Salary allocation')))
+        self.write({'line_ids': commands})
+        return True
 
-        journal = self.company_id.salary_reclass_journal_id or self.env['account.journal'].search(
-            [('type', '=', 'general'), ('company_id', '=', self.company_id.id)], limit=1)
-        if not journal:
-            raise UserError(_('No Miscellaneous journal found for salary allocation. '
-                              'Set one on the company form.'))
-
-        entry = self.env['account.move'].create({
-            'move_type': 'entry',
-            'journal_id': journal.id,
-            'company_id': self.company_id.id,
-            'date': self.date,
-            'ref': _('Salary allocation - %s', self.name),
-            'line_ids': line_vals,
-        })
-        entry.action_post()
-        self.salary_reclass_move_id = entry
-        return entry
-
-    def _remove_salary_allocation_entry(self):
-        for move in self.filtered('salary_reclass_move_id'):
-            entry = move.salary_reclass_move_id
-            move.salary_reclass_move_id = False
-            if entry.state == 'posted':
-                entry.button_draft()
-            entry.unlink()
+    def _remove_salary_allocation_lines(self):
+        for move in self:
+            move.line_ids.filtered('is_salary_alloc').unlink()

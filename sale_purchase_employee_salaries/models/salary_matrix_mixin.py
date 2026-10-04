@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from markupsafe import escape
 from odoo import api, fields, models
 
 
@@ -84,7 +85,7 @@ class SalaryMatrixMixin(models.AbstractModel):
         td_num_style = td_style + 'text-align:right;'
 
         header_cells = ''.join(
-            f'<th style="{th_style}">{col["name"]}</th>' for col in matrix['columns']
+            f'<th style="{th_style}">{escape(col["name"])}</th>' for col in matrix['columns']
         )
         rows_html = ''
         for row in matrix['rows']:
@@ -92,7 +93,7 @@ class SalaryMatrixMixin(models.AbstractModel):
                 f'<td style="{td_num_style}">{val:,.2f}</td>' for val in row['values']
             )
             rows_html += (
-                f'<tr><td style="{td_style}">{row["employee"]}</td>'
+                f'<tr><td style="{td_style}">{escape(row["employee"])}</td>'
                 f'{value_cells}'
                 f'<td style="{td_num_style}"><strong>{row["employee_cost"]:,.2f}</strong></td></tr>'
             )
