@@ -27,3 +27,12 @@ class SaleOrder(models.Model):
             vals['is_salaries'] = True
             vals['payslip_run_id'] = self.payslip_run_id.id
         return vals
+
+    def _create_invoices(self, *args, **kwargs):
+        """توزيع الرولز على الحسابات بيتطبّق أول ما الفاتورة تتعمل (Draft)، مش عند التأكيد."""
+        invoices = super()._create_invoices(*args, **kwargs)
+        for invoice in invoices.filtered(
+                lambda m: m.move_type in ('out_invoice', 'out_refund')
+                and m.is_salaries and m.payslip_run_id and m.state == 'draft'):
+            invoice._apply_salary_allocation()
+        return invoices

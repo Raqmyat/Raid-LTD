@@ -36,5 +36,10 @@
                 <t t-foreach="salary_matrix['columns']" t-as="col"><td/></t>
             </t>
         </xpath>
+
+        <!-- عمود Amount يعرض إجمالي الموظف قبل خصم الرولز (التوزيع بيتم في القيد) -->
+        <xpath expr="//td[@name='td_subtotal']//span[@t-field='line.price_subtotal']" position="attributes">
+            <attribute name="t-field">line.salary_gross_subtotal</attribute>
+        </xpath>
     </template>
 </odoo>

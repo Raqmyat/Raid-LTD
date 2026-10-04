@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from collections import defaultdict
 
-from odoo import Command, fields, models, _
+from odoo import Command, models
 
 
 class AccountMove(models.Model):
@@ -12,7 +12,6 @@ class AccountMove(models.Model):
     # Hooks
     # ------------------------------------------------------------------
     def _post(self, soft=True):
-        # بنضيف سطور التوزيع جوه قيد الفاتورة نفسه قبل الترحيل
         for move in self:
             if (move.state == 'draft'
                     and move.move_type in ('out_invoice', 'out_refund')
@@ -25,95 +24,99 @@ class AccountMove(models.Model):
         self.filtered(lambda m: m.state == 'draft')._remove_salary_allocation_lines()
         return res
 
+    def _get_move_lines_to_report(self):
+        lines = super()._get_move_lines_to_report()
+        if self.is_salaries:
+            # سطور توزيع الرولز بتتخفي من الطباعة (بتظهر في القيد بس)
+            lines = lines.filtered(lambda l: not l.is_salary_alloc)
+        return lines
+
     # ------------------------------------------------------------------
     # Allocation logic
     # ------------------------------------------------------------------
     def _get_slip_cost(self, slip):
         return slip.employer_cost if 'employer_cost' in slip._fields else slip.net_wage
 
-    def _compute_salary_allocation(self):
+    def _apply_salary_allocation(self):
         """
-        {(rule, rule_account, source_account): amount} بعملة الشركة، بإشارة موجبة.
-        لكل بند موظف: نسبة = قيمة البند / تكلفة الموظف في الـ payslip،
-        وكل رول له حساب بيتضرب قيمته في النسبة دي. اللي مش متوزّع بيفضل في حساب المنتج.
+        بدل ما نضيف سطر مدين، بنخصم قيمة الرولز اللي ليها حساب من سطر كل موظف،
+        وبننزلها مرة واحدة: بند واحد لكل رول (مجموعه من كل الموظفين) على حسابه.
+        إجمالي الفاتورة والضرايب بيفضلوا زي ما هم.
         """
         self.ensure_one()
+        self._remove_salary_allocation_lines()   # يرجّع المبالغ الأصلية لو اتطبّق قبل كده
+
         run = self.payslip_run_id
         if 'slip_ids' in run._fields:
             slips = run.slip_ids
         else:
             slips = self.env['hr.payslip'].search([('payslip_run_id', '=', run.id)])
-
         slips_by_emp = defaultdict(lambda: self.env['hr.payslip'])
         for slip in slips:
             slips_by_emp[slip.employee_id.id] |= slip
 
-        allocation = defaultdict(float)
-        lines = self.invoice_line_ids.filtered(
-            lambda l: l.display_type == 'product' and l.employee_id
-        )
-        for line in lines:
+        currency = self.currency_id
+        groups = defaultdict(float)      # (rule, account, taxes) -> amount
+        reductions = {}                  # line -> amount
+        for line in self.invoice_line_ids.filtered(
+                lambda l: l.display_type == 'product' and l.employee_id and not l.is_salary_alloc):
             emp_slips = slips_by_emp.get(line.employee_id.id)
             if not emp_slips:
                 continue
             cost = sum(self._get_slip_cost(s) for s in emp_slips)
             if not cost:
                 continue
-            factor = -line.balance / cost  # الفاتورة: balance سالب -> نسبة موجبة
+            ratio = line.price_subtotal / cost
+            taxes = tuple(sorted(line.tax_ids.ids))
+            total = 0.0
             for rl in emp_slips.line_ids:
                 rule = rl.salary_rule_id
                 account = rule.with_company(self.company_id).profit_account_id
                 if not account:
                     continue
-                allocation[(rule, account, line.account_id)] += rl.total * factor
-        return allocation
+                amount = currency.round(rl.total * ratio)
+                if currency.is_zero(amount):
+                    continue
+                groups[(rule, account, taxes)] += amount
+                total += amount
+            if total:
+                reductions[line] = total
 
-    def _salary_alloc_line_cmd(self, account, balance, name):
-        company_currency = self.company_id.currency_id
-        date = self.invoice_date or fields.Date.context_today(self)
-        return Command.create({
-            'display_type': 'cogs',        # سطر محاسبي بس: مش بيدخل في الإجمالي ولا بيظهر في بنود الفاتورة
-            'is_salary_alloc': True,
-            'account_id': account.id,
-            'name': name,
-            'partner_id': self.partner_id.id,
-            'currency_id': self.currency_id.id,
-            'amount_currency': company_currency._convert(
-                balance, self.currency_id, self.company_id, date),
-            'balance': balance,
-        })
-
-    def _apply_salary_allocation(self):
-        self.ensure_one()
-        self._remove_salary_allocation_lines()
-        allocation = self._compute_salary_allocation()
-        if not allocation:
-            return False
-
-        currency = self.company_id.currency_id
-        credits = defaultdict(float)   # (rule, account) -> amount
-        debits = defaultdict(float)    # source account -> amount
-        for (rule, account, source), amount in allocation.items():
-            amount = currency.round(amount)
-            if currency.is_zero(amount):
-                continue
-            credits[(rule, account)] += amount
-            debits[source] += amount
-        if not credits:
+        if not groups:
             return False
 
         commands = []
-        for (rule, account), amount in credits.items():
-            # سطر واحد لكل رول = مجموع الرول من كل الموظفين (دائن على حساب الربح)
-            commands.append(self._salary_alloc_line_cmd(
-                account, -currency.round(amount), rule.name))
-        for source, amount in debits.items():
-            # مدين على حساب المنتج الأصلي عشان الإيراد ميتحسبش مرتين
-            commands.append(self._salary_alloc_line_cmd(
-                source, currency.round(amount), _('Salary allocation')))
-        self.write({'line_ids': commands})
+        for line, amount in reductions.items():
+            commands.append(Command.update(line.id, {
+                'price_unit': line.price_unit - amount / (line.quantity or 1.0),
+                'salary_allocated': amount,
+            }))
+        sequence = max(self.invoice_line_ids.mapped('sequence') or [10]) + 1
+        for (rule, account, taxes), amount in groups.items():
+            commands.append(Command.create({
+                'display_type': 'product',
+                'is_salary_alloc': True,
+                'name': rule.name,
+                'account_id': account.id,
+                'quantity': 1.0,
+                'price_unit': currency.round(amount),
+                'tax_ids': [Command.set(list(taxes))],
+                'sequence': sequence,
+            }))
+            sequence += 1
+        self.write({'invoice_line_ids': commands})
         return True
 
     def _remove_salary_allocation_lines(self):
         for move in self:
-            move.line_ids.filtered('is_salary_alloc').unlink()
+            commands = []
+            for line in move.invoice_line_ids:
+                if line.is_salary_alloc:
+                    commands.append(Command.delete(line.id))
+                elif line.salary_allocated:
+                    commands.append(Command.update(line.id, {
+                        'price_unit': line.price_unit + line.salary_allocated / (line.quantity or 1.0),
+                        'salary_allocated': 0.0,
+                    }))
+            if commands:
+                move.write({'invoice_line_ids': commands})
