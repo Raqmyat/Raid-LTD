@@ -1,4 +1,6 @@
 from . import salary_matrix_mixin
+from . import hr_salary_rule
+from . import res_company
 from . import sale_order
 from . import sale_order_line
 from . import purchase_order_line

@@ -13,6 +13,9 @@
             <xpath expr="//notebook" position="inside">
                 <page string="Salary Details" name="salary_details"
                       invisible="not is_salaries or not payslip_run_id">
+                    <group>
+                        <field name="salary_reclass_move_id" readonly="1" invisible="not salary_reclass_move_id"/>
+                    </group>
                     <field name="salary_matrix_preview" nolabel="1"/>
                 </page>
             </xpath>
