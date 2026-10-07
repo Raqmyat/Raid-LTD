@@ -86,7 +86,11 @@ class HrPayslip(models.Model):
     def _search_billing_status(self, operator, value):
         if operator not in ('=', '!=', 'in', 'not in'):
             raise UserError(self.env._('Unsupported operator for Billing Status.'))
-        values = set(value) if isinstance(value, (list, tuple, set)) else {value}
+        # أودو 19 بيبعت القيمة أحيانًا كـ OrderedSet (بعد تحويل '=' لـ 'in')
+        if isinstance(value, str) or not hasattr(value, '__iter__'):
+            values = {value}
+        else:
+            values = set(value)
 
         ordered, invoiced = self._get_billing_keys()
         billed_keys = ordered | invoiced
