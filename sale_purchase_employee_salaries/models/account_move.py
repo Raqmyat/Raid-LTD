@@ -35,7 +35,8 @@ class AccountMove(models.Model):
     # Allocation logic
     # ------------------------------------------------------------------
     def _get_slip_cost(self, slip):
-        return slip.employer_cost if 'employer_cost' in slip._fields else slip.net_wage
+        # المبلغ المفوتر = مجموع الرولز المتعلّم عليها Include in Billing Total بس
+        return slip._get_billable_amount()
 
     def _apply_salary_allocation(self):
         """
@@ -69,7 +70,7 @@ class AccountMove(models.Model):
             ratio = line.price_subtotal / cost
             taxes = tuple(sorted(line.tax_ids.ids))
             total = 0.0
-            for rl in emp_slips.line_ids:
+            for rl in emp_slips._get_billable_lines():
                 rule = rl.salary_rule_id
                 account = rule.with_company(self.company_id).profit_account_id
                 if not account:

@@ -7,6 +7,8 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='code']" position="after">
                 <field name="profit_account_id" options="{'no_create': True}"/>
+                <field name="show_in_salary_matrix"/>
+                <field name="include_in_billing_total"/>
             </xpath>
         </field>
     </record>

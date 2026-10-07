@@ -26,12 +26,16 @@ class SalaryMatrixMixin(models.AbstractModel):
             else:
                 rec.salary_matrix_preview = False
 
+    def _get_matrix_slip_lines(self, slip):
+        """بنعرض بس الرولز اللي متعلّم عليها 'Show in Salary Details'."""
+        return slip._get_salary_detail_lines()
+
     def _get_salary_matrix(self):
         """
         {'columns': [{'code','name'}, ...],
          'rows': [{'employee_id', 'employee', 'values': [...], 'employee_cost'}, ...],
          'rows_by_employee': {employee_id: row, ...}}
-        كل رولز الرواتب بترتيب ظهورها في تبويب Salary Computation، من غير أي فلترة.
+        الرولز المتعلّم عليها Show in Salary Details بس، بترتيب ظهورها في Salary Computation.
         rows_by_employee موجود عشان نتجنب استخدام next() جوه القوالب (مش
         متاح في بيئة QWeb المحدودة).
         """
@@ -49,7 +53,7 @@ class SalaryMatrixMixin(models.AbstractModel):
         columns = []
         seen_codes = set()
         for slip in payslips:
-            for rl in slip.line_ids:
+            for rl in self._get_matrix_slip_lines(slip):
                 key = rl.code or rl.name
                 if key not in seen_codes:
                     seen_codes.add(key)
@@ -58,14 +62,14 @@ class SalaryMatrixMixin(models.AbstractModel):
         rows = []
         for slip in payslips:
             values_map = {}
-            for rl in slip.line_ids:
+            for rl in self._get_matrix_slip_lines(slip):
                 key = rl.code or rl.name
                 values_map[key] = rl.total
             rows.append({
                 'employee_id': slip.employee_id.id,
                 'employee': slip.employee_id.name,
                 'values': [values_map.get(col['code'], 0.0) for col in columns],
-                'employee_cost': slip.employer_cost if 'employer_cost' in slip._fields else 0.0,
+                'employee_cost': slip._get_billable_amount(),
             })
 
         result['columns'] = columns
@@ -78,7 +82,7 @@ class SalaryMatrixMixin(models.AbstractModel):
         self.ensure_one()
         matrix = self._get_salary_matrix()
         if not matrix['columns']:
-            return '<p class="text-muted">No payroll data found for the selected Pay Run.</p>'
+            return '<p class="text-muted">No payroll data found for the selected Pay Run, or no salary rule is marked as Show in Salary Details.</p>'
 
         th_style = 'border:1px solid #ccc;padding:4px 8px;background:#f1f1f1;'
         td_style = 'border:1px solid #ccc;padding:4px 8px;'
@@ -103,7 +107,7 @@ class SalaryMatrixMixin(models.AbstractModel):
             '<thead><tr>'
             f'<th style="{th_style}">Employee</th>'
             f'{header_cells}'
-            f'<th style="{th_style}">Total Employee Cost</th>'
+            f'<th style="{th_style}">Billing Total</th>'
             '</tr></thead>'
             f'<tbody>{rows_html}</tbody>'
             '</table>'

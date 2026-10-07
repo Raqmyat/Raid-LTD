@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- عمود حالة الفوترة في لست الـ Payslips -->
+    <record id="hr_payslip_list_billing_status" model="ir.ui.view">
+        <field name="name">hr.payslip.list.billing.status</field>
+        <field name="model">hr.payslip</field>
+        <field name="inherit_id" ref="hr_payroll.view_hr_payslip_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='employee_id']" position="after">
+                <field name="billing_status" widget="badge" optional="show"
+                       decoration-danger="billing_status == 'none'"
+                       decoration-warning="billing_status == 'ordered'"
+                       decoration-success="billing_status == 'invoiced'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- فلاتر الفوترة في البحث -->
+    <record id="hr_payslip_search_billing_status" model="ir.ui.view">
+        <field name="name">hr.payslip.search.billing.status</field>
+        <field name="model">hr.payslip</field>
+        <field name="inherit_id" ref="hr_payroll.view_hr_payslip_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="billing_none" string="No Sale Order"
+                        domain="[('billing_status', '=', 'none')]"/>
+                <filter name="billing_ordered" string="Sale Order - Not Invoiced"
+                        domain="[('billing_status', '=', 'ordered')]"/>
+                <filter name="billing_invoiced" string="Invoiced"
+                        domain="[('billing_status', '=', 'invoiced')]"/>
+                <filter name="billing_not_invoiced" string="Not Invoiced (all)"
+                        domain="[('billing_status', '!=', 'invoiced')]"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

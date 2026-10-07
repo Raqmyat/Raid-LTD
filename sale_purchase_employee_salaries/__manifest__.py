@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Sale/Purchase Employee Salaries',
-    'version': '19.0.2.2.0',
+    'version': '19.0.2.5.0',
     'category': 'Sales',
     'summary': 'ربط أوامر البيع/الشراء بالموظفين، وطباعة جدول تفصيل الرواتب (Employee x Rule) في أمر البيع والفاتورة',
     'description': """
@@ -20,6 +20,14 @@ Sale/Purchase Employee Salaries
 - حقل "Revenue Allocation Account" على كل Salary Rule: عند ترحيل الفاتورة بيتضاف
   بند واحد لكل رول (مجموعه من كل الموظفين) على حسابه،
   وبيتخصم من سطر كل موظف (إجمالي الفاتورة والضرايب بيفضلوا زي ما هم).
+- Checkbox "Show in Salary Details" على كل Salary Rule: بس الرولز المتعلّم عليها
+  بتظهر كأعمدة في المعاينة وطباعة أمر البيع والفاتورة.
+- Checkbox "Include in Billing Total" على كل Salary Rule (منفصل عن Show in Salary Details):
+  إجمالي سطر الموظف (أمر البيع/الفاتورة) = مجموع الرولز المتعلّم عليها دي بس،
+  والتوزيع على الحسابات بيشتغل على نفس الرولز دي بس.
+- حقل "Billing Status" على الـ Payslip (No Sale Order / Sale Order - Not Invoiced /
+  Invoiced) مع فلاتر وعمود في لست الـ Payslips، وبيظهر كمان في ويزارد توليد البنود
+  (والموظفين اللي ليهم أمر بيع بالفعل بيتشال علامة 'يتضاف؟' منهم تلقائي).
     """,
     'author': 'Custom Development',
     'license': 'LGPL-3',
@@ -28,6 +36,7 @@ Sale/Purchase Employee Salaries
         'security/ir.model.access.csv',
         'wizard/sale_order_salary_wizard_views.xml',
         'views/hr_salary_rule_views.xml',
+        'views/hr_payslip_views.xml',
         'views/sale_order_views.xml',
         'views/purchase_order_views.xml',
         'views/account_move_views.xml',

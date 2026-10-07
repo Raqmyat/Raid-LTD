@@ -39,12 +39,12 @@ class SaleOrderSalaryWizard(models.TransientModel):
         for slip in payslips:
             if not slip.employee_id:
                 continue
-            amount = slip.employer_cost if 'employer_cost' in slip._fields else slip.net_wage
+            amount = slip._get_billable_amount()
             new_lines.append((0, 0, {
                 'employee_id': slip.employee_id.id,
                 'payslip_id': slip.id,
                 'amount': amount,
-                'to_include': True,
+                'to_include': slip.billing_status == 'none',
             }))
         self.line_ids = new_lines
 
@@ -80,7 +80,7 @@ class SaleOrderSalaryWizardLine(models.TransientModel):
     employee_id = fields.Many2one('hr.employee', required=True)
     payslip_id = fields.Many2one('hr.payslip')
     amount = fields.Monetary(
-        string='إجمالي التكلفة',
+        string='إجمالي الفوترة',
         currency_field='currency_id',
         help='قابلة للتعديل يدويًا لو الحساب التلقائي مش مطابق. القيمة دي هي price_unit للبند.',
     )
@@ -88,3 +88,5 @@ class SaleOrderSalaryWizardLine(models.TransientModel):
         'res.currency', default=lambda self: self.env.company.currency_id
     )
     to_include = fields.Boolean(string='يتضاف؟', default=True)
+    billing_status = fields.Selection(
+        related='payslip_id.billing_status', string='حالة الفوترة', readonly=True)
