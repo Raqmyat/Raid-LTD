@@ -57,7 +57,8 @@ class AccountMove(models.Model):
             slips_by_emp[slip.employee_id.id] |= slip
 
         currency = self.currency_id
-        groups = defaultdict(float)      # (rule, account, taxes) -> amount
+        # (rule, account, taxes, analytic distribution) -> amount
+        groups = defaultdict(float)
         reductions = {}                  # line -> amount
         for line in self.invoice_line_ids.filtered(
                 lambda l: l.display_type == 'product' and l.employee_id and not l.is_salary_alloc):
@@ -69,6 +70,19 @@ class AccountMove(models.Model):
                 continue
             ratio = line.price_subtotal / cost
             taxes = tuple(sorted(line.tax_ids.ids))
+            # Use the analytic distribution already on the invoice line; if it is
+            # missing, fall back to the linked sale order line(s).
+            analytic_distribution = line.analytic_distribution or {}
+            if not analytic_distribution and line.sale_line_ids:
+                for sale_line in line.sale_line_ids:
+                    if sale_line.analytic_distribution:
+                        analytic_distribution = sale_line.analytic_distribution
+                        break
+            # Make a stable, hashable key so different analytics never get merged.
+            analytic_key = tuple(sorted(
+                (str(key), float(value))
+                for key, value in (analytic_distribution or {}).items()
+            ))
             total = 0.0
             for rl in emp_slips._get_billable_lines():
                 rule = rl.salary_rule_id
@@ -78,7 +92,7 @@ class AccountMove(models.Model):
                 amount = currency.round(rl.total * ratio)
                 if currency.is_zero(amount):
                     continue
-                groups[(rule, account, taxes)] += amount
+                groups[(rule, account, taxes, analytic_key)] += amount
                 total += amount
             if total:
                 reductions[line] = total
@@ -93,8 +107,8 @@ class AccountMove(models.Model):
                 'salary_allocated': amount,
             }))
         sequence = max(self.invoice_line_ids.mapped('sequence') or [10]) + 1
-        for (rule, account, taxes), amount in groups.items():
-            commands.append(Command.create({
+        for (rule, account, taxes, analytic_key), amount in groups.items():
+            vals = {
                 'display_type': 'product',
                 'is_salary_alloc': True,
                 'name': rule.name,
@@ -103,7 +117,10 @@ class AccountMove(models.Model):
                 'price_unit': currency.round(amount),
                 'tax_ids': [Command.set(list(taxes))],
                 'sequence': sequence,
-            }))
+            }
+            if analytic_key:
+                vals['analytic_distribution'] = dict(analytic_key)
+            commands.append(Command.create(vals))
             sequence += 1
         self.write({'invoice_line_ids': commands})
         return True
