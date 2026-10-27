@@ -100,7 +100,12 @@ class ApprovalMixin(models.AbstractModel):
     def _approval_set(self, state):
         # permission is checked explicitly before; sudo lets approvers who do
         # not have write access on payslips / leaves move the status
-        self.sudo().write({'approval_state': state})
+        self.sudo().with_context(approval_internal=True).write({'approval_state': state})
+
+    def write(self, vals):
+        if 'approval_state' in vals and not self.env.context.get('approval_internal'):
+            raise UserError(_("The approval status can only be changed through the approval buttons."))
+        return super().write(vals)
 
     def _approval_initial_state(self):
         return 'draft'

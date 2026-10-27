@@ -43,12 +43,4 @@
         <field name="binding_view_types">list,form</field>
     </record>
 
-    <record id="action_bulk_approval_leave" model="ir.actions.act_window">
-        <field name="name">Approve Selected</field>
-        <field name="res_model">bulk.approval.wizard</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-        <field name="binding_model_id" ref="hr_holidays.model_hr_leave"/>
-        <field name="binding_view_types">list,form</field>
-    </record>
 </odoo>

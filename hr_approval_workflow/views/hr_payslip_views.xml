@@ -43,4 +43,61 @@
             </xpath>
         </field>
     </record>
+
+    <!-- Approval bar on the standard payslip form: inserted above the sheet so it
+         does not depend on the structure of the existing header. -->
+    <record id="hr_payslip_form_approval" model="ir.ui.view">
+        <field name="name">hr.payslip.form.approval</field>
+        <field name="model">hr.payslip</field>
+        <field name="inherit_id" ref="hr_payroll.view_hr_payslip_form"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <div class="d-flex flex-wrap align-items-center gap-2 px-3 py-2 border-bottom bg-view">
+                    <button name="action_approval_submit" type="object" string="Submit"
+                            class="btn btn-primary"
+                            invisible="approval_state != 'draft'"
+                            groups="hr_approval_workflow.group_approval_submitter,base.group_system"/>
+                    <button name="action_approval_ops_approve" type="object" string="Operations Approve"
+                            class="btn btn-primary"
+                            invisible="approval_state != 'submitted'"
+                            groups="hr_approval_workflow.group_approval_ops,base.group_system"/>
+                    <button name="action_approval_hr_approve" type="object" string="HR Approve"
+                            class="btn btn-primary"
+                            invisible="approval_state != 'ops_approved'"
+                            groups="hr_approval_workflow.group_approval_hr,base.group_system"/>
+                    <button name="action_approval_send_finance" type="object" string="Send to Finance"
+                            class="btn btn-primary"
+                            invisible="approval_state != 'hr_approved'"
+                            groups="hr_approval_workflow.group_approval_hr,base.group_system"/>
+                    <button name="action_approval_close" type="object" string="Close &amp; Post (HR)"
+                            class="btn btn-success"
+                            invisible="approval_state != 'hr_approved'"
+                            groups="hr_approval_workflow.group_approval_hr,base.group_system"/>
+                    <button name="action_approval_send_ceo" type="object" string="Send to CEO"
+                            class="btn btn-primary"
+                            invisible="approval_state != 'finance'"
+                            groups="hr_approval_workflow.group_approval_finance,base.group_system"/>
+                    <button name="action_approval_close" type="object" string="Close &amp; Post (Finance)"
+                            class="btn btn-success"
+                            invisible="approval_state != 'finance'"
+                            groups="hr_approval_workflow.group_approval_finance,base.group_system"/>
+                    <button name="action_approval_close" type="object" string="Close &amp; Post (CEO)"
+                            class="btn btn-success"
+                            invisible="approval_state != 'ceo'"
+                            groups="hr_approval_workflow.group_approval_ceo,base.group_system"/>
+                    <button name="action_approval_refuse" type="object" string="Refuse"
+                            class="btn btn-danger"
+                            invisible="approval_state in ('draft', 'done', 'refused')"
+                            groups="hr_approval_workflow.group_approval_ops,hr_approval_workflow.group_approval_hr,hr_approval_workflow.group_approval_finance,hr_approval_workflow.group_approval_ceo,base.group_system"/>
+                    <button name="action_approval_reset" type="object" string="Reset Approval"
+                            class="btn btn-secondary"
+                            invisible="approval_state != 'refused'"
+                            groups="hr_approval_workflow.group_approval_submitter,base.group_system"/>
+                    <field name="approval_state" widget="statusbar" readonly="1" class="ms-auto"
+                           statusbar_visible="draft,submitted,ops_approved,hr_approved,finance,ceo,done"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
 </odoo>
