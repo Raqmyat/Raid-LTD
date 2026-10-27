@@ -1,5 +1,4 @@
 from . import models
-from . import wizard
 
 
 def _post_init(env):

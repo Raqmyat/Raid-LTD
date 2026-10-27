@@ -1,13 +1,78 @@
 import ast
 
+from lxml import etree
+
 from odoo import api, models, _
 from odoo.exceptions import UserError
+
+from .approval_mixin import G_SUBMIT, G_OPS, G_HR, G_FIN, G_CEO
+
+SYS = 'base.group_system'
+
+# Standard buttons of the old validation cycle that are removed from the
+# payslip list/form headers. Extra technical names can be added with the
+# system parameter hr_approval_workflow.hide_buttons (comma separated;
+# needs a server restart / module upgrade to refresh the view cache).
+HIDE_NAMES = {'action_payslip_done', 'action_payslip_verify', 'action_payslip_confirm'}
+HIDE_LABELS = {'validate', 'confirm', 'create draft entry'}
+
+# (method, label, css class, groups)
+LIST_BUTTONS = [
+    ('action_bulk_submit', 'Submit', 'btn-primary', [G_SUBMIT, SYS]),
+    ('action_bulk_approve', 'Approve', 'btn-primary', [G_OPS, G_HR, SYS]),
+    ('action_bulk_send_finance', 'Send to Finance', 'btn-primary', [G_HR, SYS]),
+    ('action_bulk_send_ceo', 'Send to CEO', 'btn-primary', [G_FIN, SYS]),
+    ('action_bulk_close', 'Close & Post', 'btn-success', [G_HR, G_FIN, G_CEO, SYS]),
+    ('action_bulk_refuse', 'Refuse', 'btn-danger', [G_OPS, G_HR, G_FIN, G_CEO, SYS]),
+    ('action_bulk_reset', 'Reset Approval', 'btn-secondary', [G_SUBMIT, SYS]),
+]
+
+
+def patch_payslip_arch(arch, view_type, hide_names, hide_labels, buttons):
+    """Remove the old validation buttons from the headers and (list view)
+    put the approval buttons first. Works on any header structure."""
+    for btn in arch.xpath('//header//button'):
+        name = btn.get('name')
+        label = (btn.get('string') or '').strip().lower()
+        if name in hide_names or label in hide_labels:
+            btn.getparent().remove(btn)
+    if view_type == 'list' and arch.tag == 'list':
+        headers = arch.xpath('./header')
+        if headers:
+            header = headers[0]
+        else:
+            header = etree.Element('header')
+            arch.insert(0, header)
+        for idx, (method, label, css, groups) in enumerate(buttons):
+            node = etree.Element('button', {
+                'name': method, 'type': 'object', 'string': label,
+                'class': css, 'groups': ','.join(groups),
+            })
+            header.insert(idx, node)
+    return arch
 
 
 class HrPayslip(models.Model):
     _name = 'hr.payslip'
     _inherit = ['hr.payslip', 'approval.mixin']
 
+    # ------------------------------------------------------------------
+    # views: old validation cycle buttons out, approval buttons in
+    # ------------------------------------------------------------------
+    @api.model
+    def _get_view(self, view_id=None, view_type='form', **options):
+        arch, view = super()._get_view(view_id, view_type, **options)
+        if view_type in ('list', 'form'):
+            extra = self.env['ir.config_parameter'].sudo().get_param(
+                'hr_approval_workflow.hide_buttons', '')
+            names = HIDE_NAMES | {n.strip() for n in extra.split(',') if n.strip()}
+            buttons = [(m, _(l), c, g) for m, l, c, g in LIST_BUTTONS]
+            patch_payslip_arch(arch, view_type, names, HIDE_LABELS, buttons)
+        return arch, view
+
+    # ------------------------------------------------------------------
+    # closing = the old "validate", now driven by the approval cycle
+    # ------------------------------------------------------------------
     def _approval_on_done(self):
         """Final closing: validate the payslip (creates the accounting entry
         when hr_payroll_account is installed)."""
@@ -31,6 +96,35 @@ class HrPayslip(models.Model):
                         "they can be validated:\n%s",
                         '\n'.join(pending.mapped('display_name'))))
         return super().action_payslip_done()
+
+    # ------------------------------------------------------------------
+    # Compute / Cancel / Set to Draft stay available, tied to the approval status
+    # ------------------------------------------------------------------
+    def compute_sheet(self):
+        locked = self.filtered(lambda p: p.approval_state != 'draft')
+        if locked:
+            raise UserError(_(
+                "The sheet can only be computed while the approval status is Draft "
+                "(use Reset Approval / Set to Draft first):\n%s",
+                '\n'.join(locked.mapped('display_name'))))
+        return super().compute_sheet()
+
+    def action_payslip_cancel(self):
+        if any(p.approval_state == 'done' for p in self):
+            raise UserError(_("A payslip whose approval is Done can no longer be cancelled."))
+        res = super().action_payslip_cancel()
+        self.filtered(lambda p: p.approval_state != 'refused')._approval_set('refused')
+        return res
+
+    def action_payslip_draft(self):
+        res = super().action_payslip_draft()
+        self._approval_set('draft')
+        return res
+
+    def _approval_on_reset(self):
+        cancelled = self.filtered(lambda p: p.state == 'cancel')
+        if cancelled:
+            cancelled.sudo().action_payslip_draft()
 
     @api.model
     def _approval_apply_default_filter(self):

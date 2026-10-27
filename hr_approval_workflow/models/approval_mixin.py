@@ -42,6 +42,31 @@ STATE_ACTOR = {
     'ceo': G_CEO,
 }
 
+# bulk buttons (list view): key -> {current status: (required group, single-record method)}
+# every button only touches the selected records that are on one of its statuses
+BULK = {
+    'submit': {'draft': (G_SUBMIT, 'action_approval_submit')},
+    'approve': {
+        'submitted': (G_OPS, 'action_approval_ops_approve'),
+        'ops_approved': (G_HR, 'action_approval_hr_approve'),
+    },
+    'send_finance': {'hr_approved': (G_HR, 'action_approval_send_finance')},
+    'send_ceo': {'finance': (G_FIN, 'action_approval_send_ceo')},
+    'close': {
+        'hr_approved': (G_HR, 'action_approval_close'),
+        'finance': (G_FIN, 'action_approval_close'),
+        'ceo': (G_CEO, 'action_approval_close'),
+    },
+    'refuse': {
+        'submitted': (G_OPS, 'action_approval_refuse'),
+        'ops_approved': (G_HR, 'action_approval_refuse'),
+        'hr_approved': (G_HR, 'action_approval_refuse'),
+        'finance': (G_FIN, 'action_approval_refuse'),
+        'ceo': (G_CEO, 'action_approval_refuse'),
+    },
+    'reset': {'refused': (G_SUBMIT, 'action_approval_reset')},
+}
+
 
 class ApprovalMixin(models.AbstractModel):
     _name = 'approval.mixin'
@@ -184,3 +209,70 @@ class ApprovalMixin(models.AbstractModel):
 
     def _approval_on_reset(self):
         pass
+
+    # ------------------------------------------------------------------
+    # bulk actions (list buttons): work on mixed selections
+    # ------------------------------------------------------------------
+    def _approval_bulk(self, key):
+        user = self.env.user
+        is_admin = user.has_group('base.group_system')
+        rules = BULK[key]
+        done = skipped_status = skipped_role = 0
+        failed = []
+        for rec in self:
+            rule = rules.get(rec.approval_state)
+            if not rule:
+                skipped_status += 1
+                continue
+            group, method = rule
+            if not (is_admin or user.has_group(group)):
+                skipped_role += 1
+                continue
+            try:
+                with self.env.cr.savepoint():
+                    getattr(rec, method)()
+                done += 1
+            except UserError as e:
+                failed.append("%s: %s" % (rec.display_name, e.args[0] if e.args else e))
+        lines = [_("%(n)s record(s) processed.", n=done)]
+        if skipped_status:
+            lines.append(_("%(n)s skipped (not in a status this button applies to).", n=skipped_status))
+        if skipped_role:
+            lines.append(_("%(n)s skipped (not your approval role).", n=skipped_role))
+        if failed:
+            lines.append(_("%(n)s failed:", n=len(failed)))
+            lines.extend(failed[:10])
+            if len(failed) > 10:
+                lines.append("...")
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'type': 'success' if done and not failed else 'warning',
+                'title': _("Approval"),
+                'message': "\n".join(lines),
+                'sticky': bool(failed),
+                'next': {'type': 'ir.actions.client', 'tag': 'reload'},
+            },
+        }
+
+    def action_bulk_submit(self):
+        return self._approval_bulk('submit')
+
+    def action_bulk_approve(self):
+        return self._approval_bulk('approve')
+
+    def action_bulk_send_finance(self):
+        return self._approval_bulk('send_finance')
+
+    def action_bulk_send_ceo(self):
+        return self._approval_bulk('send_ceo')
+
+    def action_bulk_close(self):
+        return self._approval_bulk('close')
+
+    def action_bulk_refuse(self):
+        return self._approval_bulk('refuse')
+
+    def action_bulk_reset(self):
+        return self._approval_bulk('reset')
