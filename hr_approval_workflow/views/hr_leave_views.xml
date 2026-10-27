@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_leave_approval_view_search" model="ir.ui.view">
+        <field name="name">hr.leave.approval.search</field>
+        <field name="model">hr.leave</field>
+        <field name="arch" type="xml">
+            <search string="Time Off Approvals">
+                <field name="employee_id"/>
+                <field name="holiday_status_id"/>
+                <field name="approval_state"/>
+                <filter name="my_turn" string="My Turn" domain="[('approval_my_turn', '=', True)]"/>
+                <separator/>
+                <filter name="f_submitted" string="Submitted" domain="[('approval_state', '=', 'submitted')]"/>
+                <filter name="f_ops" string="Operations Approved" domain="[('approval_state', '=', 'ops_approved')]"/>
+                <filter name="f_hr" string="HR Approved" domain="[('approval_state', '=', 'hr_approved')]"/>
+                <filter name="f_finance" string="Finance" domain="[('approval_state', '=', 'finance')]"/>
+                <filter name="f_ceo" string="CEO" domain="[('approval_state', '=', 'ceo')]"/>
+                <filter name="f_done" string="Done" domain="[('approval_state', '=', 'done')]"/>
+                <filter name="f_refused" string="Refused" domain="[('approval_state', '=', 'refused')]"/>
+                <group>
+                    <filter name="group_approval" string="Approval Status" context="{'group_by': 'approval_state'}"/>
+                    <filter name="group_employee" string="Employee" context="{'group_by': 'employee_id'}"/>
+                    <filter name="group_type" string="Time Off Type" context="{'group_by': 'holiday_status_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="hr_leave_approval_view_list" model="ir.ui.view">
+        <field name="name">hr.leave.approval.list</field>
+        <field name="model">hr.leave</field>
+        <field name="arch" type="xml">
+            <list string="Time Off Approvals" default_order="approval_seq, date_from">
+                <field name="employee_id"/>
+                <field name="holiday_status_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="number_of_days"/>
+                <field name="state" optional="show"/>
+                <field name="approval_seq" column_invisible="1"/>
+                <field name="approval_state" widget="badge"
+                       decoration-muted="approval_state == 'draft'"
+                       decoration-info="approval_state in ('submitted', 'ops_approved', 'hr_approved')"
+                       decoration-warning="approval_state in ('finance', 'ceo')"
+                       decoration-success="approval_state == 'done'"
+                       decoration-danger="approval_state == 'refused'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_hr_leave_approval" model="ir.actions.act_window">
+        <field name="name">Time Off Approvals</field>
+        <field name="res_model">hr.leave</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="hr_leave_approval_view_search"/>
+        <field name="context">{'search_default_my_turn': 1, 'search_default_group_approval': 1}</field>
+    </record>
+    <record id="action_hr_leave_approval_view_list" model="ir.actions.act_window.view">
+        <field name="sequence">1</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="hr_leave_approval_view_list"/>
+        <field name="act_window_id" ref="action_hr_leave_approval"/>
+    </record>
+</odoo>

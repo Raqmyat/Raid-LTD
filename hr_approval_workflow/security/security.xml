@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="privilege_approval_submitter" model="res.groups.privilege">
+        <field name="name">Payroll Submitter</field>
+        <field name="sequence">60</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+    <record id="group_approval_submitter" model="res.groups">
+        <field name="name">Payroll Submitter</field>
+        <field name="privilege_id" ref="privilege_approval_submitter"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="privilege_approval_ops" model="res.groups.privilege">
+        <field name="name">Operations Approval</field>
+        <field name="sequence">70</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+    <record id="group_approval_ops" model="res.groups">
+        <field name="name">Operations Manager (Approver)</field>
+        <field name="privilege_id" ref="privilege_approval_ops"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="privilege_approval_hr" model="res.groups.privilege">
+        <field name="name">HR Approval</field>
+        <field name="sequence">80</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+    <record id="group_approval_hr" model="res.groups">
+        <field name="name">HR Approver</field>
+        <field name="privilege_id" ref="privilege_approval_hr"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="privilege_approval_finance" model="res.groups.privilege">
+        <field name="name">Finance Approval</field>
+        <field name="sequence">90</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+    <record id="group_approval_finance" model="res.groups">
+        <field name="name">Finance Approver</field>
+        <field name="privilege_id" ref="privilege_approval_finance"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="privilege_approval_ceo" model="res.groups.privilege">
+        <field name="name">CEO Approval</field>
+        <field name="sequence">100</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+    <record id="group_approval_ceo" model="res.groups">
+        <field name="name">CEO Approver</field>
+        <field name="privilege_id" ref="privilege_approval_ceo"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+</odoo>

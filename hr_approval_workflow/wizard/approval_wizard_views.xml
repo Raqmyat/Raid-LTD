@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_bulk_approval_wizard" model="ir.ui.view">
+        <field name="name">bulk.approval.wizard.form</field>
+        <field name="model">bulk.approval.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Approve Selected">
+                <field name="res_model" invisible="1"/>
+                <field name="res_ids" invisible="1"/>
+                <div class="alert alert-info" role="alert" invisible="skipped_count == 0">
+                    Only the records with the <strong>lowest status</strong> are processed,
+                    so everybody ends up on the same status. The others are left untouched:
+                    repeat the action to move the whole group forward.
+                </div>
+                <group>
+                    <group>
+                        <field name="lowest_state"/>
+                        <field name="record_count"/>
+                        <field name="skipped_count"/>
+                    </group>
+                    <group>
+                        <field name="breakdown"/>
+                    </group>
+                </group>
+                <group>
+                    <field name="action_type" widget="radio"/>
+                    <field name="allowed_hint"/>
+                </group>
+                <footer>
+                    <button string="Confirm" name="action_confirm" type="object" class="btn-primary" data-hotkey="q"/>
+                    <button string="Cancel" special="cancel" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_bulk_approval_payslip" model="ir.actions.act_window">
+        <field name="name">Approve Selected</field>
+        <field name="res_model">bulk.approval.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="hr_payroll.model_hr_payslip"/>
+        <field name="binding_view_types">list,form</field>
+    </record>
+
+    <record id="action_bulk_approval_leave" model="ir.actions.act_window">
+        <field name="name">Approve Selected</field>
+        <field name="res_model">bulk.approval.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="hr_holidays.model_hr_leave"/>
+        <field name="binding_view_types">list,form</field>
+    </record>
+</odoo>
