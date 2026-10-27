@@ -20,6 +20,7 @@ Draft -> Submitted -> Operations Approved -> HR Approved -> (Close | Finance -> 
         'views/hr_payslip_views.xml',
         'views/hr_leave_views.xml',
         'views/menus.xml',
+        'views/default_filter.xml',
     ],
     'installable': True,
     'application': False,

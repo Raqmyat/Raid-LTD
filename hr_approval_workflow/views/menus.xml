@@ -3,8 +3,6 @@
     <menuitem id="menu_hr_approval_root" name="HR Approvals" sequence="95"
               web_icon="hr_approval_workflow,static/description/icon.png"
               groups="group_approval_submitter,group_approval_ops,group_approval_hr,group_approval_finance,group_approval_ceo,base.group_system"/>
-    <menuitem id="menu_hr_payslip_approval" name="Payslip Approvals" parent="menu_hr_approval_root"
-              action="action_hr_payslip_approval" sequence="10"/>
     <menuitem id="menu_hr_leave_approval" name="Time Off Approvals" parent="menu_hr_approval_root"
               action="action_hr_leave_approval" sequence="20"/>
 </odoo>

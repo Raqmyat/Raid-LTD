@@ -1,61 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="hr_payslip_approval_view_search" model="ir.ui.view">
-        <field name="name">hr.payslip.approval.search</field>
+    <!-- Integrates into the STANDARD payslip list/search (the same views the other
+         payroll customizations extend). Nothing existing is replaced or moved:
+         the approval column is only APPENDED at the end of the list and the
+         filters are only APPENDED inside the search view. -->
+    <record id="hr_payslip_list_approval_state" model="ir.ui.view">
+        <field name="name">hr.payslip.list.approval.state</field>
         <field name="model">hr.payslip</field>
+        <field name="inherit_id" ref="hr_payroll.view_hr_payslip_tree"/>
+        <field name="priority">99</field>
         <field name="arch" type="xml">
-            <search string="Payslip Approvals">
-                <field name="employee_id"/>
-                <field name="approval_state"/>
-                <filter name="my_turn" string="My Turn" domain="[('approval_my_turn', '=', True)]"/>
-                <separator/>
-                <filter name="f_draft" string="Draft" domain="[('approval_state', '=', 'draft')]"/>
-                <filter name="f_submitted" string="Submitted" domain="[('approval_state', '=', 'submitted')]"/>
-                <filter name="f_ops" string="Operations Approved" domain="[('approval_state', '=', 'ops_approved')]"/>
-                <filter name="f_hr" string="HR Approved" domain="[('approval_state', '=', 'hr_approved')]"/>
-                <filter name="f_finance" string="Finance" domain="[('approval_state', '=', 'finance')]"/>
-                <filter name="f_ceo" string="CEO" domain="[('approval_state', '=', 'ceo')]"/>
-                <filter name="f_done" string="Done" domain="[('approval_state', '=', 'done')]"/>
-                <filter name="f_refused" string="Refused" domain="[('approval_state', '=', 'refused')]"/>
-                <group>
-                    <filter name="group_approval" string="Approval Status" context="{'group_by': 'approval_state'}"/>
-                    <filter name="group_employee" string="Employee" context="{'group_by': 'employee_id'}"/>
-                </group>
-            </search>
-        </field>
-    </record>
-
-    <record id="hr_payslip_approval_view_list" model="ir.ui.view">
-        <field name="name">hr.payslip.approval.list</field>
-        <field name="model">hr.payslip</field>
-        <field name="arch" type="xml">
-            <list string="Payslip Approvals" default_order="approval_seq, employee_id">
-                <field name="employee_id"/>
-                <field name="date_from"/>
-                <field name="date_to"/>
-                <field name="state" optional="show"/>
-                <field name="approval_seq" column_invisible="1"/>
-                <field name="approval_state" widget="badge"
+            <xpath expr="//list" position="inside">
+                <field name="approval_state" widget="badge" optional="show"
                        decoration-muted="approval_state == 'draft'"
                        decoration-info="approval_state in ('submitted', 'ops_approved', 'hr_approved')"
                        decoration-warning="approval_state in ('finance', 'ceo')"
                        decoration-success="approval_state == 'done'"
                        decoration-danger="approval_state == 'refused'"/>
-            </list>
+            </xpath>
         </field>
     </record>
 
-    <record id="action_hr_payslip_approval" model="ir.actions.act_window">
-        <field name="name">Payslip Approvals</field>
-        <field name="res_model">hr.payslip</field>
-        <field name="view_mode">list,form</field>
-        <field name="search_view_id" ref="hr_payslip_approval_view_search"/>
-        <field name="context">{'search_default_my_turn': 1, 'search_default_group_approval': 1}</field>
-    </record>
-    <record id="action_hr_payslip_approval_view_list" model="ir.actions.act_window.view">
-        <field name="sequence">1</field>
-        <field name="view_mode">list</field>
-        <field name="view_id" ref="hr_payslip_approval_view_list"/>
-        <field name="act_window_id" ref="action_hr_payslip_approval"/>
+    <record id="hr_payslip_search_approval_state" model="ir.ui.view">
+        <field name="name">hr.payslip.search.approval.state</field>
+        <field name="model">hr.payslip</field>
+        <field name="inherit_id" ref="hr_payroll.view_hr_payslip_filter"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <field name="approval_state"/>
+                <filter name="approval_my_turn" string="Approval: My Turn" domain="[('approval_my_turn', '=', True)]"/>
+                <filter name="approval_f_draft" string="Approval: Draft" domain="[('approval_state', '=', 'draft')]"/>
+                <filter name="approval_f_submitted" string="Approval: Submitted" domain="[('approval_state', '=', 'submitted')]"/>
+                <filter name="approval_f_ops" string="Approval: Operations Approved" domain="[('approval_state', '=', 'ops_approved')]"/>
+                <filter name="approval_f_hr" string="Approval: HR Approved" domain="[('approval_state', '=', 'hr_approved')]"/>
+                <filter name="approval_f_finance" string="Approval: Finance" domain="[('approval_state', '=', 'finance')]"/>
+                <filter name="approval_f_ceo" string="Approval: CEO" domain="[('approval_state', '=', 'ceo')]"/>
+                <filter name="approval_f_done" string="Approval: Done" domain="[('approval_state', '=', 'done')]"/>
+                <filter name="approval_f_refused" string="Approval: Refused" domain="[('approval_state', '=', 'refused')]"/>
+                <filter name="approval_group_by" string="Approval Status" context="{'group_by': 'approval_state'}"/>
+            </xpath>
+        </field>
     </record>
 </odoo>
