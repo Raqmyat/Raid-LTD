@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_leave_approval_cfo" model="res.groups">
+        <field name="name">Time Off Approval - CFO</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+    <record id="group_leave_approval_ceo" model="res.groups">
+        <field name="name">Time Off Approval - CEO</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+</odoo>
