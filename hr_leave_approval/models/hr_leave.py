@@ -383,20 +383,40 @@ class HrLeave(models.Model):
             leave.action_refuse()
 
     def _lv_do_reset(self):
+        """Reset a refused/cancelled leave without calling the broken
+        action_reset_confirm() inheritance chain present in this database.
+
+        Odoo versions/addons may expose different reset helpers. Prefer the
+        standard draft action, then confirm the request again if required.
+        The caller updates the custom approval status after this succeeds.
+        """
         leave = self.sudo().with_context(lv_closing=True)
+
         if leave.state not in ('refuse', 'cancel'):
             return
-        if hasattr(leave, 'action_reset_confirm'):
-            leave.action_reset_confirm()
-        else:
-            if hasattr(leave, 'action_draft'):
-                leave.action_draft()
-            if hasattr(leave, 'action_confirm'):
-                leave.action_confirm()
-        if leave.state not in ('draft', 'confirm'):
+
+        # Do not call action_reset_confirm(): in this database the override in
+        # hr_holidays_attendance calls super() to a method that does not exist.
+        if not hasattr(leave, 'action_draft'):
             raise UserError(_(
-                "%s could not be reset to 'To Approve'. Reset it from the standard "
-                "Time Off screen first.", leave.display_name))
+                "This Odoo version does not expose action_draft() for %s. "
+                "The leave cannot be reset automatically.", leave.display_name))
+
+        leave.action_draft()
+
+        # In the standard flow, a reset may return to Draft. Re-submit it so
+        # it enters the normal Time Off approval state again.
+        if leave.state == 'draft':
+            if not hasattr(leave, 'action_confirm'):
+                raise UserError(_(
+                    "The leave %s was reset to Draft, but this Odoo version "
+                    "does not expose action_confirm().", leave.display_name))
+            leave.action_confirm()
+
+        if leave.state not in ('draft', 'confirm', 'validate1'):
+            raise UserError(_(
+                "%s could not be reset to a pending Time Off state. "
+                "Current state: %s.", leave.display_name, leave.state))
 
     # ------------------------------------------------------------------
     # block the standard approval until the cycle is finished
