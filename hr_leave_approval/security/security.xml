@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Each role is an independent checkbox in the user form (Human Resources section). -->
+    <record id="privilege_leave_manager" model="res.groups.privilege">
+        <field name="name">Time Off Approval: Manager</field>
+        <field name="sequence">110</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+    <record id="group_leave_manager" model="res.groups">
+        <field name="name">Manager Approver</field>
+        <field name="privilege_id" ref="privilege_leave_manager"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">First step of the cycle: approves the requests of the employees who report to him (relationship, not group). The group only shows him the buttons and the Approval Cycle menu.</field>
+    </record>
+
+    <record id="privilege_leave_hr" model="res.groups.privilege">
+        <field name="name">Time Off Approval: HR</field>
+        <field name="sequence">111</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+    <record id="group_leave_hr" model="res.groups">
+        <field name="name">HR Approver</field>
+        <field name="privilege_id" ref="privilege_leave_hr"/>
+        <field name="implied_ids" eval="[(4, ref('group_leave_manager'))]"/>
+    </record>
+
+    <record id="privilege_leave_cfo" model="res.groups.privilege">
+        <field name="name">Time Off Approval: CFO</field>
+        <field name="sequence">112</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+    <record id="group_leave_cfo" model="res.groups">
+        <field name="name">CFO Approver</field>
+        <field name="privilege_id" ref="privilege_leave_cfo"/>
+        <field name="implied_ids" eval="[(4, ref('group_leave_manager'))]"/>
+    </record>
+
+    <record id="privilege_leave_ceo" model="res.groups.privilege">
+        <field name="name">Time Off Approval: CEO</field>
+        <field name="sequence">113</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+    <record id="group_leave_ceo" model="res.groups">
+        <field name="name">CEO Approver</field>
+        <field name="privilege_id" ref="privilege_leave_ceo"/>
+        <field name="implied_ids" eval="[(4, ref('group_leave_manager'))]"/>
+    </record>
+</odoo>
