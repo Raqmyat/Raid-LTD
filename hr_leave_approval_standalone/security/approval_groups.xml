@@ -1,9 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Odoo 19: groups are organized through res.groups.privilege -->
+    <record id="module_category_leave_approval_standalone" model="ir.module.category">
+        <field name="name">Time Off Approval</field>
+        <field name="sequence">35</field>
+    </record>
+    <record id="privilege_leave_approval_standalone" model="res.groups.privilege">
+        <field name="name">Time Off Approval</field>
+        <field name="category_id" ref="module_category_leave_approval_standalone"/>
+        <field name="sequence">35</field>
+    </record>
     <record id="group_leave_approval_cfo" model="res.groups">
         <field name="name">Time Off Approval - CFO</field>
+        <field name="privilege_id" ref="privilege_leave_approval_standalone"/>
     </record>
     <record id="group_leave_approval_ceo" model="res.groups">
         <field name="name">Time Off Approval - CEO</field>
+        <field name="privilege_id" ref="privilege_leave_approval_standalone"/>
     </record>
 </odoo>
