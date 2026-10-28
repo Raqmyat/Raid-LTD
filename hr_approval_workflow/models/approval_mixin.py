@@ -371,3 +371,5 @@ def _make_wizard(key):
 for _key, _label, _css in BUTTONS:
     setattr(ApprovalMixin, 'action_btn_%s' % _key, _make_direct(_key))
     setattr(ApprovalMixin, 'action_wizard_%s' % _key, _make_wizard(_key))
+    # v3 name, kept so views cached by the browser before the upgrade still work
+    setattr(ApprovalMixin, 'action_bulk_%s' % _key, _make_wizard(_key))

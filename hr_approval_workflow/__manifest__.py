@@ -1,6 +1,6 @@
 {
     'name': 'Payslip Approval Workflow',
-    'version': '19.0.4.0.0',
+    'version': '19.0.4.1.0',
     'category': 'Human Resources/Payroll',
     'author': 'Custom',
     'summary': 'Multi-level approval cycle on Payslips (buttons + status bar on the payslip form)',
@@ -26,6 +26,7 @@ Draft -> Submitted -> Operations Approved -> HR Approved -> (Close | Finance -> 
         'views/approval_step_views.xml',
         'wizard/approval_wizard_views.xml',
         'views/hr_payslip_views.xml',
+        'views/payslip_run_actions.xml',
         'views/default_filter.xml',
     ],
     'post_init_hook': '_post_init',

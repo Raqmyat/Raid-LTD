@@ -18,10 +18,17 @@ class HrPayslipRun(models.Model):
         return arch, view
 
 
+def _approval_run_wizard(self, key):
+    """Wizard with the payslips of these pay runs that wait for the current user."""
+    return self.mapped('slip_ids')._approval_open_wizard(key)
+
+
+HrPayslipRun._approval_run_wizard = _approval_run_wizard
+
+
 def _make_run_method(key):
     def method(self):
-        self.ensure_one()
-        return self.slip_ids._approval_open_wizard(key)
+        return self._approval_run_wizard(key)
     return method
 
 

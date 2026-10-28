@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Pay Runs > select a run (or open it) > Actions: opens the wizard with the payslips of the run
+         that wait for you. No payslip has to be selected. -->
+    <record id="server_action_run_approve" model="ir.actions.server">
+        <field name="name">Approval: Approve</field>
+        <field name="model_id" ref="hr_payroll.model_hr_payslip_run"/>
+        <field name="binding_model_id" ref="hr_payroll.model_hr_payslip_run"/>
+        <field name="state">code</field>
+        <field name="code">action = records._approval_run_wizard('approve')</field>
+    </record>
+    <record id="server_action_run_send_finance" model="ir.actions.server">
+        <field name="name">Approval: Send to Finance</field>
+        <field name="model_id" ref="hr_payroll.model_hr_payslip_run"/>
+        <field name="binding_model_id" ref="hr_payroll.model_hr_payslip_run"/>
+        <field name="state">code</field>
+        <field name="code">action = records._approval_run_wizard('send_finance')</field>
+    </record>
+    <record id="server_action_run_send_ceo" model="ir.actions.server">
+        <field name="name">Approval: Send to CEO</field>
+        <field name="model_id" ref="hr_payroll.model_hr_payslip_run"/>
+        <field name="binding_model_id" ref="hr_payroll.model_hr_payslip_run"/>
+        <field name="state">code</field>
+        <field name="code">action = records._approval_run_wizard('send_ceo')</field>
+    </record>
+    <record id="server_action_run_close" model="ir.actions.server">
+        <field name="name">Approval: Close &amp; Post</field>
+        <field name="model_id" ref="hr_payroll.model_hr_payslip_run"/>
+        <field name="binding_model_id" ref="hr_payroll.model_hr_payslip_run"/>
+        <field name="state">code</field>
+        <field name="code">action = records._approval_run_wizard('close')</field>
+    </record>
+    <record id="server_action_run_refuse" model="ir.actions.server">
+        <field name="name">Approval: Refuse</field>
+        <field name="model_id" ref="hr_payroll.model_hr_payslip_run"/>
+        <field name="binding_model_id" ref="hr_payroll.model_hr_payslip_run"/>
+        <field name="state">code</field>
+        <field name="code">action = records._approval_run_wizard('refuse')</field>
+    </record>
+</odoo>

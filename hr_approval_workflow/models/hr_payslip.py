@@ -62,10 +62,12 @@ class HrPayslip(models.Model):
         period = ''
         if self.date_from and self.date_to:
             period = '%s → %s' % (self.date_from, self.date_to)
+        run = self.payslip_run_id.name or ''
         vals.update({
             'name': self.employee_id.name or self.display_name,
-            'extra': '%s  |  %s %s' % (period, format(net, ',.%df' % (currency.decimal_places or 2)),
-                                       currency.name or ''),
+            'extra': '%s%s  |  %s %s' % (
+                (run + '  |  ') if run else '', period,
+                format(net, ',.%df' % (currency.decimal_places or 2)), currency.name or ''),
         })
         return vals
 
