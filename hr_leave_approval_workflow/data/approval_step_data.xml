@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Default role -> group mapping for Time Off. Change it from Settings > Time Off Approval Roles. -->
+    <record id="step_leave_submit" model="approval.step">
+        <field name="res_model">hr.leave</field>
+        <field name="role">submit</field>
+        <field name="name">Submitter</field>
+        <field name="sequence">10</field>
+        <field name="group_id" ref="hr_approval_workflow.group_approval_submitter"/>
+    </record>
+    <record id="step_leave_ops" model="approval.step">
+        <field name="res_model">hr.leave</field>
+        <field name="role">ops</field>
+        <field name="name">Operations</field>
+        <field name="sequence">20</field>
+        <field name="group_id" ref="hr_approval_workflow.group_approval_ops"/>
+    </record>
+    <record id="step_leave_hr" model="approval.step">
+        <field name="res_model">hr.leave</field>
+        <field name="role">hr</field>
+        <field name="name">HR</field>
+        <field name="sequence">30</field>
+        <field name="group_id" ref="hr_approval_workflow.group_approval_hr"/>
+    </record>
+    <record id="step_leave_finance" model="approval.step">
+        <field name="res_model">hr.leave</field>
+        <field name="role">finance</field>
+        <field name="name">Finance</field>
+        <field name="sequence">40</field>
+        <field name="group_id" ref="hr_approval_workflow.group_approval_finance"/>
+    </record>
+    <record id="step_leave_ceo" model="approval.step">
+        <field name="res_model">hr.leave</field>
+        <field name="role">ceo</field>
+        <field name="name">CEO</field>
+        <field name="sequence">50</field>
+        <field name="group_id" ref="hr_approval_workflow.group_approval_ceo"/>
+    </record>
+</odoo>

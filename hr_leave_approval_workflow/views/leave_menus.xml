@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Roles configuration: one screen per model -->
+    <record id="hr_approval_workflow.approval_step_action" model="ir.actions.act_window">
+        <field name="domain">[('res_model', '=', 'hr.payslip')]</field>
+    </record>
+    <record id="approval_step_leave_action" model="ir.actions.act_window">
+        <field name="name">Time Off Approval Roles</field>
+        <field name="res_model">approval.step</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('res_model', '=', 'hr.leave')]</field>
+    </record>
+    <menuitem id="menu_approval_step_leave" name="Time Off Approval Roles"
+              parent="base.menu_administration" action="approval_step_leave_action"
+              sequence="96" groups="base.group_system"/>
+
+    <!-- "Approval Cycle" menu under Time Off: opens the wizard with everything that is
+         waiting for you on that button, no selection needed. -->
+    <menuitem id="menu_leave_approval_cycle" name="Approval Cycle"
+              parent="hr_holidays.menu_hr_holidays_root" sequence="35"/>
+
+    <record id="server_action_leave_approve" model="ir.actions.server">
+        <field name="name">Time Off: Approve</field>
+        <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+        <field name="state">code</field>
+        <field name="code">action = env['hr.leave']._approval_menu_action('approve')</field>
+    </record>
+    <menuitem id="menu_leave_approve" name="Approve" parent="menu_leave_approval_cycle"
+              action="server_action_leave_approve" sequence="10"/>
+
+    <record id="server_action_leave_send_finance" model="ir.actions.server">
+        <field name="name">Time Off: Send to Finance</field>
+        <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+        <field name="state">code</field>
+        <field name="code">action = env['hr.leave']._approval_menu_action('send_finance')</field>
+    </record>
+    <menuitem id="menu_leave_send_finance" name="Send to Finance" parent="menu_leave_approval_cycle"
+              action="server_action_leave_send_finance" sequence="20"/>
+
+    <record id="server_action_leave_send_ceo" model="ir.actions.server">
+        <field name="name">Time Off: Send to CEO</field>
+        <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+        <field name="state">code</field>
+        <field name="code">action = env['hr.leave']._approval_menu_action('send_ceo')</field>
+    </record>
+    <menuitem id="menu_leave_send_ceo" name="Send to CEO" parent="menu_leave_approval_cycle"
+              action="server_action_leave_send_ceo" sequence="30"/>
+
+    <record id="server_action_leave_close" model="ir.actions.server">
+        <field name="name">Time Off: Close &amp; Post</field>
+        <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+        <field name="state">code</field>
+        <field name="code">action = env['hr.leave']._approval_menu_action('close')</field>
+    </record>
+    <menuitem id="menu_leave_close" name="Close &amp; Post" parent="menu_leave_approval_cycle"
+              action="server_action_leave_close" sequence="40"/>
+
+    <record id="server_action_leave_refuse" model="ir.actions.server">
+        <field name="name">Time Off: Refuse</field>
+        <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+        <field name="state">code</field>
+        <field name="code">action = env['hr.leave']._approval_menu_action('refuse')</field>
+    </record>
+    <menuitem id="menu_leave_refuse" name="Refuse" parent="menu_leave_approval_cycle"
+              action="server_action_leave_refuse" sequence="50"/>
+</odoo>
