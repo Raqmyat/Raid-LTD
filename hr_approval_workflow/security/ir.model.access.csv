@@ -1,2 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_bulk_approval_wizard,bulk.approval.wizard,model_bulk_approval_wizard,base.group_user,1,1,1,1
+access_approval_step_user,approval.step.user,model_approval_step,base.group_user,1,0,0,0
+access_approval_step_admin,approval.step.admin,model_approval_step,base.group_system,1,1,1,1
+access_approval_action_wizard,approval.action.wizard,model_approval_action_wizard,base.group_user,1,1,1,1
+access_approval_action_wizard_line,approval.action.wizard.line,model_approval_action_wizard_line,base.group_user,1,1,1,1

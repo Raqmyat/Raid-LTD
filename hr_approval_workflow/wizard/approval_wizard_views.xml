@@ -1,46 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_bulk_approval_wizard" model="ir.ui.view">
-        <field name="name">bulk.approval.wizard.form</field>
-        <field name="model">bulk.approval.wizard</field>
+    <record id="approval_action_wizard_form" model="ir.ui.view">
+        <field name="name">approval.action.wizard.form</field>
+        <field name="model">approval.action.wizard</field>
         <field name="arch" type="xml">
-            <form string="Approve Selected">
+            <form string="Approval">
                 <field name="res_model" invisible="1"/>
-                <field name="res_ids" invisible="1"/>
-                <div class="alert alert-info" role="alert" invisible="skipped_count == 0">
-                    Only the records with the <strong>lowest status</strong> are processed,
-                    so everybody ends up on the same status. The others are left untouched:
-                    repeat the action to move the whole group forward.
+                <field name="action_key" invisible="1"/>
+                <div class="alert alert-info" role="alert">
+                    <field name="summary" nolabel="1"/>
                 </div>
-                <group>
-                    <group>
-                        <field name="lowest_state"/>
-                        <field name="record_count"/>
-                        <field name="skipped_count"/>
-                    </group>
-                    <group>
-                        <field name="breakdown"/>
-                    </group>
-                </group>
-                <group>
-                    <field name="action_type" widget="radio"/>
-                    <field name="allowed_hint"/>
-                </group>
+                <field name="line_ids" nolabel="1">
+                    <list editable="bottom" create="0" delete="0">
+                        <field name="selected" widget="boolean_toggle"/>
+                        <field name="name" readonly="1"/>
+                        <field name="extra" readonly="1"/>
+                        <field name="state_label" readonly="1"/>
+                    </list>
+                </field>
                 <footer>
-                    <button string="Confirm" name="action_confirm" type="object" class="btn-primary" data-hotkey="q"/>
-                    <button string="Cancel" special="cancel" data-hotkey="x"/>
+                    <button name="action_confirm" type="object" string="Confirm"
+                            class="btn-primary" data-hotkey="q"/>
+                    <button name="action_select_all" type="object" string="Select All"
+                            class="btn-secondary"/>
+                    <button name="action_unselect_all" type="object" string="Unselect All"
+                            class="btn-secondary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="x"/>
                 </footer>
             </form>
         </field>
     </record>
-
-    <record id="action_bulk_approval_payslip" model="ir.actions.act_window">
-        <field name="name">Approve Selected</field>
-        <field name="res_model">bulk.approval.wizard</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-        <field name="binding_model_id" ref="hr_payroll.model_hr_payslip"/>
-        <field name="binding_view_types">list,form</field>
-    </record>
-
 </odoo>

@@ -1,55 +1,27 @@
 import ast
 
-from lxml import etree
-
 from odoo import api, models, _
 from odoo.exceptions import UserError
 
-from .approval_mixin import G_SUBMIT, G_OPS, G_HR, G_FIN, G_CEO
+from .approval_mixin import BULK
+from .view_patch import approval_buttons, patch_header
 
-SYS = 'base.group_system'
-
-# Standard buttons of the old validation cycle that are removed from the
-# payslip list/form headers. Extra technical names can be added with the
-# system parameter hr_approval_workflow.hide_buttons (comma separated;
-# needs a server restart / module upgrade to refresh the view cache).
+# Buttons of the old validation cycle that are removed from the payslip
+# headers. Extra technical names: system parameter hr_approval_workflow.hide_buttons
+# (comma separated; restart / upgrade to refresh the view cache).
 HIDE_NAMES = {'action_payslip_done', 'action_payslip_verify', 'action_payslip_confirm'}
 HIDE_LABELS = {'validate', 'confirm', 'create draft entry'}
 
-# (method, label, css class, groups)
-LIST_BUTTONS = [
-    ('action_bulk_submit', 'Submit', 'btn-primary', [G_SUBMIT, SYS]),
-    ('action_bulk_approve', 'Approve', 'btn-primary', [G_OPS, G_HR, SYS]),
-    ('action_bulk_send_finance', 'Send to Finance', 'btn-primary', [G_HR, SYS]),
-    ('action_bulk_send_ceo', 'Send to CEO', 'btn-primary', [G_FIN, SYS]),
-    ('action_bulk_close', 'Close & Post', 'btn-success', [G_HR, G_FIN, G_CEO, SYS]),
-    ('action_bulk_refuse', 'Refuse', 'btn-danger', [G_OPS, G_HR, G_FIN, G_CEO, SYS]),
-    ('action_bulk_reset', 'Reset Approval', 'btn-secondary', [G_SUBMIT, SYS]),
-]
 
-
-def patch_payslip_arch(arch, view_type, hide_names, hide_labels, buttons):
-    """Remove the old validation buttons from the headers and (list view)
-    put the approval buttons first. Works on any header structure."""
-    for btn in arch.xpath('//header//button'):
-        name = btn.get('name')
-        label = (btn.get('string') or '').strip().lower()
-        if name in hide_names or label in hide_labels:
-            btn.getparent().remove(btn)
-    if view_type == 'list' and arch.tag == 'list':
-        headers = arch.xpath('./header')
-        if headers:
-            header = headers[0]
-        else:
-            header = etree.Element('header')
-            arch.insert(0, header)
-        for idx, (method, label, css, groups) in enumerate(buttons):
-            node = etree.Element('button', {
-                'name': method, 'type': 'object', 'string': label,
-                'class': css, 'groups': ','.join(groups),
-            })
-            header.insert(idx, node)
-    return arch
+def _roles_groups(env, model, key):
+    """Group xmlids allowed to see the button `key` (from the configuration)."""
+    Step = env['approval.step']
+    xmlids = []
+    for role, _method in BULK[key].values():
+        xmlid = Step._group_xmlid_for(model, role)
+        if xmlid and xmlid not in xmlids:
+            xmlids.append(xmlid)
+    return xmlids + ['base.group_system']
 
 
 class HrPayslip(models.Model):
@@ -57,7 +29,7 @@ class HrPayslip(models.Model):
     _inherit = ['hr.payslip', 'approval.mixin']
 
     # ------------------------------------------------------------------
-    # views: old validation cycle buttons out, approval buttons in
+    # views: old validation buttons out, approval buttons in
     # ------------------------------------------------------------------
     @api.model
     def _get_view(self, view_id=None, view_type='form', **options):
@@ -66,16 +38,55 @@ class HrPayslip(models.Model):
             extra = self.env['ir.config_parameter'].sudo().get_param(
                 'hr_approval_workflow.hide_buttons', '')
             names = HIDE_NAMES | {n.strip() for n in extra.split(',') if n.strip()}
-            buttons = [(m, _(l), c, g) for m, l, c, g in LIST_BUTTONS]
-            patch_payslip_arch(arch, view_type, names, HIDE_LABELS, buttons)
+
+            def groups_for(key):
+                return _roles_groups(self.env, 'hr.payslip', key)
+
+            if view_type == 'form':
+                # direct buttons + status bar, same row as Compute Sheet / Cancel / Print
+                specs = approval_buttons('action_btn_', groups_for, True)
+                patch_header(arch, specs, names, HIDE_LABELS, statusbar=True)
+            else:
+                # selection -> wizard
+                specs = approval_buttons('action_wizard_', groups_for, False)
+                patch_header(arch, specs, names, HIDE_LABELS)
         return arch, view
+
+    # ------------------------------------------------------------------
+    # wizard / notification details
+    # ------------------------------------------------------------------
+    def _approval_wizard_line_vals(self):
+        vals = super()._approval_wizard_line_vals()
+        currency = self.company_id.currency_id
+        net = getattr(self, 'net_wage', 0.0) or 0.0
+        period = ''
+        if self.date_from and self.date_to:
+            period = '%s → %s' % (self.date_from, self.date_to)
+        vals.update({
+            'name': self.employee_id.name or self.display_name,
+            'extra': '%s  |  %s %s' % (period, format(net, ',.%df' % (currency.decimal_places or 2)),
+                                       currency.name or ''),
+        })
+        return vals
+
+    def _approval_notify_name(self):
+        return self.employee_id.name or self.display_name
+
+    def _approval_notify_targets(self):
+        targets = []
+        for run in self.mapped('payslip_run_id'):
+            slips = self.filtered(lambda p, run=run: p.payslip_run_id == run)
+            if hasattr(run, 'message_notify'):
+                targets.append((run, slips))
+            else:
+                targets.extend((s, s) for s in slips)
+        targets.extend((s, s) for s in self.filtered(lambda p: not p.payslip_run_id))
+        return targets
 
     # ------------------------------------------------------------------
     # closing = the old "validate", now driven by the approval cycle
     # ------------------------------------------------------------------
     def _approval_on_done(self):
-        """Final closing: validate the payslip (creates the accounting entry
-        when hr_payroll_account is installed)."""
         to_close = self.filtered(lambda p: p.state in ('draft', 'verify'))
         if not to_close:
             return
