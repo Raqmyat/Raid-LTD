@@ -377,27 +377,26 @@ class HrLeave(models.Model):
             raise UserError(_("%s cannot be validated from its current Time Off status.",
                               leave.display_name))
 
+    def _lv_do_refuse(self):
+        leave = self.sudo().with_context(lv_closing=True)
+        if leave.state in ('confirm', 'validate1', 'validate'):
+            leave.action_refuse()
+
     def _lv_do_reset(self):
         leave = self.sudo().with_context(lv_closing=True)
-
         if leave.state not in ('refuse', 'cancel'):
-           return
-
-       # Odoo 19 compatibility:
-       # Reset using the standard draft/confirm actions instead
-       # of action_reset_confirm(), whose super chain is broken.
-       if hasattr(leave, 'action_draft'):
-          leave.action_draft()
-
-       if leave.state == 'draft' and hasattr(leave, 'action_confirm'):
-          leave.action_confirm()
-
-       if leave.state not in ('draft', 'confirm'):
-          raise UserError(_(
-              "%s could not be reset to 'To Approve'. "
-              "Please reset it from the standard Time Off screen first.",
-              leave.display_name,
-          ))
+            return
+        if hasattr(leave, 'action_reset_confirm'):
+            leave.action_reset_confirm()
+        else:
+            if hasattr(leave, 'action_draft'):
+                leave.action_draft()
+            if hasattr(leave, 'action_confirm'):
+                leave.action_confirm()
+        if leave.state not in ('draft', 'confirm'):
+            raise UserError(_(
+                "%s could not be reset to 'To Approve'. Reset it from the standard "
+                "Time Off screen first.", leave.display_name))
 
     # ------------------------------------------------------------------
     # block the standard approval until the cycle is finished
