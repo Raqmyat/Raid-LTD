@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_leave_appr_cancel_wizard" model="ir.ui.view">
+        <field name="name">leave.appr.cancel.wizard.form</field>
+        <field name="model">leave.appr.cancel.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Cancel Time Off">
+                <group>
+                    <field name="leave_ids" widget="many2many_tags"/>
+                    <field name="reason" placeholder="Why is this time off cancelled?"/>
+                </group>
+                <footer>
+                    <button string="Cancel Time Off" name="action_confirm" type="object" class="btn-primary" data-hotkey="q"/>
+                    <button string="Close" special="cancel" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- also available from the Actions menu of the list (several requests at once) -->
+    <record id="action_leave_appr_cancel_wizard" model="ir.actions.act_window">
+        <field name="name">Cancel Time Off (Cycle)</field>
+        <field name="res_model">leave.appr.cancel.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="hr_holidays.model_hr_leave"/>
+        <field name="binding_view_types">list</field>
+    </record>
+</odoo>

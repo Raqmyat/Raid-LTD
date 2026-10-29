@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- FORM: cycle status + cycle buttons; the standard Approve / Validate are hidden -->
+    <record id="hr_leave_view_form_approval_cycle" model="ir.ui.view">
+        <field name="name">hr.leave.form.approval.cycle</field>
+        <field name="model">hr.leave</field>
+        <field name="inherit_id" ref="hr_holidays.hr_leave_view_form"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_approve'][1]" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='action_approve'][2]" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='action_refuse']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='action_cancel']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//header" position="inside">
+                <button string="Approve" name="action_leave_appr_manager_approve" type="object"
+                        class="oe_highlight" groups="hr_leave_approval_cycle.group_leave_appr_manager"
+                        invisible="not id or leave_appr_state != 'manager'"/>
+                <button string="Approve &amp; Close" name="action_leave_appr_hr_close" type="object"
+                        class="oe_highlight" groups="hr_leave_approval_cycle.group_leave_appr_hr"
+                        invisible="not id or leave_appr_state != 'hr'"/>
+                <button string="Send to CFO" name="action_leave_appr_hr_to_cfo" type="object"
+                        groups="hr_leave_approval_cycle.group_leave_appr_hr"
+                        invisible="not id or leave_appr_state != 'hr'"/>
+                <button string="Approve &amp; Close" name="action_leave_appr_cfo_close" type="object"
+                        class="oe_highlight" groups="hr_leave_approval_cycle.group_leave_appr_cfo"
+                        invisible="not id or leave_appr_state != 'cfo'"/>
+                <button string="Send to CEO" name="action_leave_appr_cfo_to_ceo" type="object"
+                        groups="hr_leave_approval_cycle.group_leave_appr_cfo"
+                        invisible="not id or leave_appr_state != 'cfo'"/>
+                <button string="Approve &amp; Close" name="action_leave_appr_ceo_close" type="object"
+                        class="oe_highlight" groups="hr_leave_approval_cycle.group_leave_appr_ceo"
+                        invisible="not id or leave_appr_state != 'ceo'"/>
+                <button string="Refuse (Cycle)" name="action_leave_appr_refuse" type="object"
+                        groups="hr_leave_approval_cycle.group_leave_appr_manager,hr_leave_approval_cycle.group_leave_appr_hr,hr_leave_approval_cycle.group_leave_appr_cfo,hr_leave_approval_cycle.group_leave_appr_ceo"
+                        invisible="not id or leave_appr_state not in ('manager', 'hr', 'cfo', 'ceo')"/>
+                <button string="Cancel Time Off" name="action_leave_appr_cancel" type="object"
+                        invisible="not id or leave_appr_state in ('cancelled', 'refused')"/>
+                <field name="leave_appr_state" widget="statusbar"
+                       statusbar_visible="manager,hr,cfo,ceo,done" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- LIST: one column appended, nothing else touched -->
+    <record id="hr_leave_view_tree_approval_cycle" model="ir.ui.view">
+        <field name="name">hr.leave.list.approval.cycle</field>
+        <field name="model">hr.leave</field>
+        <field name="inherit_id" ref="hr_holidays.hr_leave_view_tree"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <field name="leave_appr_state" widget="badge" optional="show"
+                       decoration-info="leave_appr_state in ('manager', 'hr')"
+                       decoration-warning="leave_appr_state in ('cfo', 'ceo')"
+                       decoration-success="leave_appr_state == 'done'"
+                       decoration-danger="leave_appr_state == 'refused'"
+                       decoration-muted="leave_appr_state == 'cancelled'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- SEARCH: filters appended (the manager search view inherits from this one) -->
+    <record id="hr_leave_view_search_approval_cycle" model="ir.ui.view">
+        <field name="name">hr.leave.search.approval.cycle</field>
+        <field name="model">hr.leave</field>
+        <field name="inherit_id" ref="hr_holidays.view_hr_holidays_filter"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <field name="leave_appr_state"/>
+                <filter name="leave_appr_my_turn" string="Cycle: My Turn" domain="[('leave_appr_my_turn', '=', True)]"/>
+                <filter name="leave_appr_f_manager" string="Cycle: Direct Manager" domain="[('leave_appr_state', '=', 'manager')]"/>
+                <filter name="leave_appr_f_hr" string="Cycle: HR" domain="[('leave_appr_state', '=', 'hr')]"/>
+                <filter name="leave_appr_f_cfo" string="Cycle: CFO" domain="[('leave_appr_state', '=', 'cfo')]"/>
+                <filter name="leave_appr_f_ceo" string="Cycle: CEO" domain="[('leave_appr_state', '=', 'ceo')]"/>
+                <filter name="leave_appr_f_done" string="Cycle: Approved" domain="[('leave_appr_state', '=', 'done')]"/>
+                <filter name="leave_appr_f_refused" string="Cycle: Refused" domain="[('leave_appr_state', '=', 'refused')]"/>
+                <filter name="leave_appr_f_cancelled" string="Cycle: Cancelled" domain="[('leave_appr_state', '=', 'cancelled')]"/>
+                <filter name="leave_appr_group" string="Approval Cycle Status" context="{'group_by': 'leave_appr_state'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Menu: requests waiting for me, under the Time Off app -->
+    <record id="action_leave_approval_cycle" model="ir.actions.act_window">
+        <field name="name">Approval Cycle</field>
+        <field name="res_model">hr.leave</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_leave_appr_my_turn': 1}</field>
+        <field name="search_view_id" ref="hr_holidays.view_hr_holidays_filter"/>
+    </record>
+    <menuitem id="menu_leave_approval_cycle" name="Approval Cycle"
+              parent="hr_holidays.menu_hr_holidays_root" sequence="45"
+              action="action_leave_approval_cycle"
+              groups="group_leave_appr_manager,group_leave_appr_hr,group_leave_appr_cfo,group_leave_appr_ceo,base.group_system"/>
+</odoo>
