@@ -21,6 +21,16 @@ PAY_ACCOUNTING_GROUPS = (
     'account.group_account_invoice', 'account.group_account_user', 'account.group_account_manager')
 
 
+def _validated_state(model):
+    """Technical value of the payslip status "Done" (validated, not yet paid):
+    'validated' on recent payroll versions, 'done' on older ones."""
+    keys = [k for k, _label in model._fields['state']._description_selection(model.env)]
+    for candidate in ('validated', 'done'):
+        if candidate in keys:
+            return candidate
+    return 'done'
+
+
 def _pay_groups(env):
     """Group xmlids allowed to see / use the Pay button."""
     Step = env['approval.step']
@@ -74,7 +84,7 @@ class HrPayslip(models.Model):
                 pay_spec = {
                     'name': 'action_approval_pay', 'string': 'Pay', 'class': 'btn-success',
                     'groups': ','.join(_pay_groups(self.env)),
-                    'invisible': "state != 'done' or approval_state != 'done'",
+                    'invisible': "state != '%s' or approval_state != 'done'" % _validated_state(self),
                 }
                 # right after the Close & Post buttons
                 last_close = max(
@@ -156,7 +166,7 @@ class HrPayslip(models.Model):
                 raise UserError(_(
                     "%s must finish the approval cycle (Close & Post) before it can be paid.",
                     rec.display_name))
-            if rec.state != 'done':
+            if rec.state != _validated_state(self):
                 raise UserError(_(
                     "%s is not in a payable status (already paid or not validated).",
                     rec.display_name))
