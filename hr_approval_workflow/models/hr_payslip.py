@@ -80,11 +80,11 @@ class HrPayslip(models.Model):
             if view_type == 'form':
                 # direct buttons + status bar, same row as Compute Sheet / Cancel / Print
                 specs = approval_buttons('action_btn_', groups_for, True)
-                # Pay: only after the approval is closed (Done) and the payslip is validated
+                # Pay: visibility depends only on the approval status (Done)
                 pay_spec = {
                     'name': 'action_approval_pay', 'string': 'Pay', 'class': 'btn-success',
                     'groups': ','.join(_pay_groups(self.env)),
-                    'invisible': "state != '%s' or approval_state != 'done'" % _validated_state(self),
+                    'invisible': "approval_state != 'done'",
                 }
                 # right after the Close & Post buttons
                 last_close = max(
