@@ -3,11 +3,18 @@
     <!-- Pay Runs > select a run (or open it) > Actions: opens the wizard with the payslips of the run
          that wait for you. No payslip has to be selected. -->
     <record id="server_action_run_approve" model="ir.actions.server">
-        <field name="name">Approval: Approve</field>
+        <field name="name">Approval: Approve Ops</field>
         <field name="model_id" ref="hr_payroll.model_hr_payslip_run"/>
         <field name="binding_model_id" ref="hr_payroll.model_hr_payslip_run"/>
         <field name="state">code</field>
-        <field name="code">action = records._approval_run_wizard('approve')</field>
+        <field name="code">action = records._approval_run_wizard('approve_ops')</field>
+    </record>
+    <record id="server_action_run_approve_hr" model="ir.actions.server">
+        <field name="name">Approval: Approve HR</field>
+        <field name="model_id" ref="hr_payroll.model_hr_payslip_run"/>
+        <field name="binding_model_id" ref="hr_payroll.model_hr_payslip_run"/>
+        <field name="state">code</field>
+        <field name="code">action = records._approval_run_wizard('approve_hr')</field>
     </record>
     <record id="server_action_run_send_finance" model="ir.actions.server">
         <field name="name">Approval: Send to Finance</field>

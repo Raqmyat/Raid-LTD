@@ -44,11 +44,13 @@ class ApprovalActionWizard(models.TransientModel):
 
     def action_confirm(self):
         self.ensure_one()
-        ids = self.line_ids.filtered('selected').mapped('record_id')
-        if not ids:
+        lines = self.line_ids.filtered('selected')
+        if not lines:
             raise UserError(_("Select at least one record."))
-        records = self.env[self.res_model].browse(ids).exists()
-        return records._approval_bulk(self.action_key)
+        # the status shown in the wizard is the one that must still be current
+        expected = {l.record_id: l.state for l in lines}
+        records = self.env[self.res_model].browse(list(expected)).exists()
+        return records._approval_bulk(self.action_key, expected=expected)
 
 
 class ApprovalActionWizardLine(models.TransientModel):

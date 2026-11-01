@@ -3,7 +3,7 @@ import ast
 from odoo import api, models, _
 from odoo.exceptions import UserError
 
-from .approval_mixin import BULK
+from .approval_mixin import BULK, R_CEO, R_FIN, R_HR
 from .view_patch import approval_buttons, patch_header
 
 # Buttons of the old validation cycle that are removed from the payslip
@@ -11,13 +11,38 @@ from .view_patch import approval_buttons, patch_header
 # (comma separated; restart / upgrade to refresh the view cache).
 HIDE_NAMES = {'action_payslip_done', 'action_payslip_verify', 'action_payslip_confirm'}
 HIDE_LABELS = {'validate', 'confirm', 'create draft entry'}
+# The standard Pay button (form only) is replaced by ours, tied to the approval status
+HIDE_NAMES_FORM = {'action_payslip_paid'}
+HIDE_LABELS_FORM = {'pay', 'mark as paid'}
+# who may press Pay: the roles that can close
+PAY_ROLES = (R_HR, R_FIN, R_CEO)
+# ... and anyone with access rights on the Accounting app (only the groups that exist)
+PAY_ACCOUNTING_GROUPS = (
+    'account.group_account_invoice', 'account.group_account_user', 'account.group_account_manager')
 
 
-def _roles_groups(env, model, key):
-    """Group xmlids allowed to see the button `key` (from the configuration)."""
+def _pay_groups(env):
+    """Group xmlids allowed to see / use the Pay button."""
     Step = env['approval.step']
     xmlids = []
-    for role, _method in BULK[key].values():
+    for role in PAY_ROLES:
+        xmlid = Step._group_xmlid_for('hr.payslip', role)
+        if xmlid and xmlid not in xmlids:
+            xmlids.append(xmlid)
+    for xmlid in PAY_ACCOUNTING_GROUPS:
+        if env.ref(xmlid, raise_if_not_found=False) and xmlid not in xmlids:
+            xmlids.append(xmlid)
+    return xmlids + ['base.group_system']
+
+
+def _roles_groups(env, model, key, state=None):
+    """Group xmlids allowed to see the button `key` (from the configuration).
+    With `state`, only the role that acts on that status."""
+    Step = env['approval.step']
+    xmlids = []
+    for st, (role, _method) in BULK[key].items():
+        if state and st != state:
+            continue
         xmlid = Step._group_xmlid_for(model, role)
         if xmlid and xmlid not in xmlids:
             xmlids.append(xmlid)
@@ -39,13 +64,25 @@ class HrPayslip(models.Model):
                 'hr_approval_workflow.hide_buttons', '')
             names = HIDE_NAMES | {n.strip() for n in extra.split(',') if n.strip()}
 
-            def groups_for(key):
-                return _roles_groups(self.env, 'hr.payslip', key)
+            def groups_for(key, state=None):
+                return _roles_groups(self.env, 'hr.payslip', key, state)
 
             if view_type == 'form':
                 # direct buttons + status bar, same row as Compute Sheet / Cancel / Print
                 specs = approval_buttons('action_btn_', groups_for, True)
-                patch_header(arch, specs, names, HIDE_LABELS, statusbar=True)
+                # Pay: only after the approval is closed (Done) and the payslip is validated
+                pay_spec = {
+                    'name': 'action_approval_pay', 'string': 'Pay', 'class': 'btn-success',
+                    'groups': ','.join(_pay_groups(self.env)),
+                    'invisible': "state != 'done' or approval_state != 'done'",
+                }
+                # right after the Close & Post buttons
+                last_close = max(
+                    (i for i, sp in enumerate(specs) if sp['name'].startswith('action_btn_close')),
+                    default=len(specs) - 1)
+                specs.insert(last_close + 1, pay_spec)
+                patch_header(arch, specs, names | HIDE_NAMES_FORM,
+                             HIDE_LABELS | HIDE_LABELS_FORM, statusbar=True)
             else:
                 # selection -> wizard
                 specs = approval_buttons('action_wizard_', groups_for, False)
@@ -95,6 +132,40 @@ class HrPayslip(models.Model):
         if not hasattr(to_close, 'action_payslip_done'):
             raise UserError(_("Cannot find the payslip validation method on this Odoo version."))
         to_close.sudo().with_context(approval_closing=True).action_payslip_done()
+
+    def _approval_user_can_pay(self):
+        user = self.env.user
+        if any(self._approval_user_can(r) for r in PAY_ROLES):
+            return True
+        for xmlid in PAY_ACCOUNTING_GROUPS:
+            try:
+                if user.has_group(xmlid):
+                    return True
+            except Exception:  # accounting not installed / group removed
+                continue
+        return False
+
+    def action_approval_pay(self):
+        """Pay button: available once the approval cycle is Done and the payslip is
+        validated. Uses the standard 'mark as paid' of payroll."""
+        if not self._approval_user_can_pay():
+            raise UserError(_("You don't have the permission to perform this action."))
+        self._approval_lock()
+        for rec in self:
+            if rec.approval_state != 'done':
+                raise UserError(_(
+                    "%s must finish the approval cycle (Close & Post) before it can be paid.",
+                    rec.display_name))
+            if rec.state != 'done':
+                raise UserError(_(
+                    "%s is not in a payable status (already paid or not validated).",
+                    rec.display_name))
+        slips = self.sudo()
+        if hasattr(slips, 'action_payslip_paid'):
+            slips.action_payslip_paid()
+        else:  # standard method not found on this version
+            slips.write({'state': 'paid'})
+        return True
 
     def action_payslip_done(self):
         """Block the standard validation until the approval cycle is complete."""

@@ -47,6 +47,11 @@ NOTIFY_ROLE = {
 # key -> {status the button applies to: (required role, single-record method)}
 BULK = {
     'submit': {'draft': (R_SUBMIT, 'action_approval_submit')},
+    # separate buttons per role (Approve Ops / Approve HR)
+    'approve_ops': {'submitted': (R_OPS, 'action_approval_ops_approve')},
+    'approve_hr': {'ops_approved': (R_HR, 'action_approval_hr_approve')},
+    # legacy shared button: no longer shown, kept so views / server actions cached
+    # before the upgrade keep working
     'approve': {
         'submitted': (R_OPS, 'action_approval_ops_approve'),
         'ops_approved': (R_HR, 'action_approval_hr_approve'),
@@ -70,7 +75,8 @@ BULK = {
 # (key, label, css class) in display order
 BUTTONS = [
     ('submit', 'Submit', 'btn-primary'),
-    ('approve', 'Approve', 'btn-primary'),
+    ('approve_ops', 'Approve Ops', 'btn-primary'),
+    ('approve_hr', 'Approve HR', 'btn-primary'),
     ('send_finance', 'Send to Finance', 'btn-primary'),
     ('send_ceo', 'Send to CEO', 'btn-primary'),
     ('close', 'Close & Post', 'btn-success'),
@@ -78,6 +84,7 @@ BUTTONS = [
     ('reset', 'Reset Approval', 'btn-secondary'),
 ]
 BUTTON_LABELS = {key: label for key, label, _css in BUTTONS}
+BUTTON_LABELS['approve'] = 'Approve'  # legacy key
 
 
 class ApprovalMixin(models.AbstractModel):
@@ -153,6 +160,16 @@ class ApprovalMixin(models.AbstractModel):
     def _approval_initial_state(self):
         return 'draft'
 
+    def _approval_lock(self):
+        """Lock the rows and re-read the status from the database, so that two
+        simultaneous clicks (double click / two approvers) cannot both act on the
+        same status: the second one waits, then sees the new status."""
+        if not self.ids:
+            return
+        self.env.cr.execute(
+            'SELECT id FROM "%s" WHERE id IN %%s FOR UPDATE' % self._table, (tuple(self.ids),))
+        self.invalidate_recordset(['approval_state'])
+
     # ------------------------------------------------------------------
     # single-record transitions (strict: raise on wrong status / role)
     # ------------------------------------------------------------------
@@ -227,12 +244,21 @@ class ApprovalMixin(models.AbstractModel):
     # ------------------------------------------------------------------
     # bulk processing: applies a button to a mixed set of records
     # ------------------------------------------------------------------
-    def _approval_bulk(self, key):
+    def _approval_bulk(self, key, expected=None):
+        """expected: the status the user saw when pressing the button. Either a
+        status (str) for all records, or {record_id: status}. A record that is no
+        longer in that status (somebody already moved it, or the button was
+        pressed twice) is skipped instead of being pushed one more step."""
         rules = BULK[key]
         done = self.browse()
-        skipped_status = skipped_role = 0
+        skipped_status = skipped_role = skipped_moved = 0
         failed = []
+        self._approval_lock()
         for rec in self:
+            exp = expected.get(rec.id) if isinstance(expected, dict) else expected
+            if exp and rec.approval_state != exp:
+                skipped_moved += 1
+                continue
             rule = rules.get(rec.approval_state)
             if not rule:
                 skipped_status += 1
@@ -253,6 +279,8 @@ class ApprovalMixin(models.AbstractModel):
             lines.append(_("%(n)s skipped (not in a status this button applies to).", n=skipped_status))
         if skipped_role:
             lines.append(_("%(n)s skipped (not your approval role).", n=skipped_role))
+        if skipped_moved:
+            lines.append(_("%(n)s skipped (already processed by someone else).", n=skipped_moved))
         if failed:
             lines.append(_("%(n)s failed:", n=len(failed)))
             lines.extend(failed[:10])
@@ -354,9 +382,9 @@ class ApprovalMixin(models.AbstractModel):
                     _logger.warning("Approval notification failed", exc_info=True)
 
 
-def _make_direct(key):
+def _make_direct(key, state=None):
     def method(self):
-        return self._approval_bulk(key)
+        return self._approval_bulk(key, expected=state)
     return method
 
 
@@ -368,8 +396,11 @@ def _make_wizard(key):
 
 # action_btn_<key>    : direct (payslip form)
 # action_wizard_<key> : opens the "who do you want to approve" wizard (list / pay run)
-for _key, _label, _css in BUTTONS:
+for _key in BULK:  # includes the legacy 'approve' key
     setattr(ApprovalMixin, 'action_btn_%s' % _key, _make_direct(_key))
+    # one button per (action, status): the status the user saw is checked on the server
+    for _state in BULK[_key]:
+        setattr(ApprovalMixin, 'action_btn_%s__%s' % (_key, _state), _make_direct(_key, _state))
     setattr(ApprovalMixin, 'action_wizard_%s' % _key, _make_wizard(_key))
     # v3 name, kept so views cached by the browser before the upgrade still work
     setattr(ApprovalMixin, 'action_bulk_%s' % _key, _make_wizard(_key))

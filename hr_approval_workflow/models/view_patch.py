@@ -8,16 +8,24 @@ STATUSBAR_VISIBLE = 'draft,submitted,ops_approved,hr_approved,finance,ceo,done'
 def approval_buttons(prefix, group_xmlids_for, with_state_visibility):
     """Button specs for the headers.
     prefix: method prefix (action_btn_ / action_wizard_ / action_run_)
-    group_xmlids_for(key) -> list of group xmlids allowed to see the button."""
+    group_xmlids_for(key, state=None) -> list of group xmlids allowed to see the button.
+    with_state_visibility: one button per (action, status), shown only in that status
+    and only to the role that acts on it (so e.g. Operations no longer sees
+    "Approve" again once the payslip is Operations Approved)."""
     specs = []
     for key, label, css in BUTTONS:
-        invisible = None
         if with_state_visibility:
-            invisible = "approval_state not in %s" % list(BULK[key])
-        specs.append({
-            'name': '%s%s' % (prefix, key), 'string': label, 'class': css,
-            'groups': ','.join(group_xmlids_for(key)), 'invisible': invisible,
-        })
+            for state in BULK[key]:
+                specs.append({
+                    'name': '%s%s__%s' % (prefix, key, state), 'string': label, 'class': css,
+                    'groups': ','.join(group_xmlids_for(key, state)),
+                    'invisible': "approval_state != '%s'" % state,
+                })
+        else:
+            specs.append({
+                'name': '%s%s' % (prefix, key), 'string': label, 'class': css,
+                'groups': ','.join(group_xmlids_for(key)), 'invisible': None,
+            })
     return specs
 
 

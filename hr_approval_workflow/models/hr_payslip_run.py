@@ -1,6 +1,6 @@
 from odoo import api, models
 
-from .approval_mixin import BUTTONS
+from .approval_mixin import BULK, BUTTONS
 from .hr_payslip import _roles_groups
 from .view_patch import approval_buttons, patch_header
 
@@ -13,7 +13,7 @@ class HrPayslipRun(models.Model):
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
             specs = approval_buttons(
-                'action_run_', lambda key: _roles_groups(self.env, 'hr.payslip', key), False)
+                'action_run_', lambda key, state=None: _roles_groups(self.env, 'hr.payslip', key, state), False)
             patch_header(arch, specs)
         return arch, view
 
@@ -34,5 +34,5 @@ def _make_run_method(key):
 
 # action_run_<key>: from the pay run, no selection needed - the wizard lists the
 # payslips of this run that are waiting for the current user
-for _key, _label, _css in BUTTONS:
+for _key in BULK:  # includes the legacy 'approve' key
     setattr(HrPayslipRun, 'action_run_%s' % _key, _make_run_method(_key))
