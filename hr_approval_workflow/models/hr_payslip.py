@@ -142,6 +142,11 @@ class HrPayslip(models.Model):
         if not hasattr(to_close, 'action_payslip_done'):
             raise UserError(_("Cannot find the payslip validation method on this Odoo version."))
         to_close.sudo().with_context(approval_closing=True).action_payslip_done()
+        # Close = validate: the payslip must end in the system's validated status
+        validated = _validated_state(self)
+        stuck = to_close.sudo().filtered(lambda p: p.state in ('draft', 'verify'))
+        if stuck:
+            stuck.write({'state': validated})
 
     def _approval_user_can_pay(self):
         user = self.env.user
