@@ -80,11 +80,11 @@ class HrPayslip(models.Model):
             if view_type == 'form':
                 # direct buttons + status bar, same row as Compute Sheet / Cancel / Print
                 specs = approval_buttons('action_btn_', groups_for, True)
-                # Pay: visibility depends only on the approval status (Done)
+                # Pay: only after the approval is closed (Done) and the payslip is validated
                 pay_spec = {
                     'name': 'action_approval_pay', 'string': 'Pay', 'class': 'btn-success',
                     'groups': ','.join(_pay_groups(self.env)),
-                    'invisible': "approval_state != 'done'",
+                    'invisible': "state != '%s' or approval_state != 'done'" % _validated_state(self),
                 }
                 # right after the Close & Post buttons
                 last_close = max(
@@ -142,12 +142,6 @@ class HrPayslip(models.Model):
         if not hasattr(to_close, 'action_payslip_done'):
             raise UserError(_("Cannot find the payslip validation method on this Odoo version."))
         to_close.sudo().with_context(approval_closing=True).action_payslip_done()
-        # Close must leave the payslip in the system's validated status (needed for Pay):
-        # if the standard validation did not get it there, set it.
-        validated = _validated_state(self)
-        stuck = to_close.sudo().filtered(lambda p: p.state in ('draft', 'verify'))
-        if stuck:
-            stuck.write({'state': validated})
 
     def _approval_user_can_pay(self):
         user = self.env.user
@@ -162,10 +156,8 @@ class HrPayslip(models.Model):
         return False
 
     def action_approval_pay(self):
-        """Pay button: available once the approval cycle is Done. The system status is
-        kept in line with the approval: a payslip whose approval is Done is brought to
-        the system's validated status first (if it is still Draft / Waiting), then the
-        standard 'mark as paid' of payroll is called (it needs the validated status)."""
+        """Pay button: available once the approval cycle is Done and the payslip is
+        validated. Uses the standard 'mark as paid' of payroll."""
         if not self._approval_user_can_pay():
             raise UserError(_("You don't have the permission to perform this action."))
         self._approval_lock()
@@ -174,23 +166,11 @@ class HrPayslip(models.Model):
                 raise UserError(_(
                     "%s must finish the approval cycle (Close & Post) before it can be paid.",
                     rec.display_name))
-        slips = self.sudo()
-        # approval is Done but the system status was not validated yet -> validate it now
-        to_validate = slips.filtered(lambda p: p.state in ('draft', 'verify'))
-        if to_validate:
-            if not hasattr(to_validate, 'action_payslip_done'):
-                raise UserError(_("Cannot find the payslip validation method on this Odoo version."))
-            to_validate.with_context(approval_closing=True).action_payslip_done()
-        validated = _validated_state(self)
-        labels = dict(self._fields['state']._description_selection(self.env))
-        for rec in slips:
-            if rec.state == 'paid':
-                raise UserError(_("%s is already paid.", rec.display_name))
-            if rec.state != validated:
+            if rec.state != _validated_state(self):
                 raise UserError(_(
-                    "%(slip)s cannot be paid: its status is '%(state)s' (it must be '%(ok)s').",
-                    slip=rec.display_name, state=labels.get(rec.state, rec.state),
-                    ok=labels.get(validated, validated)))
+                    "%s is not in a payable status (already paid or not validated).",
+                    rec.display_name))
+        slips = self.sudo()
         if hasattr(slips, 'action_payslip_paid'):
             slips.action_payslip_paid()
         else:  # standard method not found on this version
