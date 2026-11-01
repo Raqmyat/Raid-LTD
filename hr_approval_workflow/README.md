@@ -29,3 +29,6 @@ Close & Post | Refuse | Reset Approval), same roles, same permissions:
   two approvers at once) it is skipped instead of being pushed one more step (rows are locked).
 - Approve is split into "Approve Ops" (Submitted) and "Approve HR" (Operations Approved) on the payslip form, the
   payslip list and the Pay Run form (button + Actions menu); each one is shown only to its own role.
+- Pay keeps the system status in line with the approval: if the approval is Done but the payslip is still Draft / Waiting,
+  Pay validates it first (standard validation), then marks it as paid. Errors show the real payslip status.
+- Close & Post always leaves the payslip in the system's validated status (standard validation first, status set if it did not reach it).

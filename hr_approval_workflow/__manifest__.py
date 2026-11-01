@@ -1,6 +1,6 @@
 {
     'name': 'Payslip Approval Workflow',
-    'version': '19.0.4.3.2',
+    'version': '19.0.4.3.4',
     'category': 'Human Resources/Payroll',
     'author': 'Custom',
     'summary': 'Multi-level approval cycle on Payslips (buttons + status bar on the payslip form)',
