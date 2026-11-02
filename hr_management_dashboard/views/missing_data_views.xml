@@ -38,12 +38,9 @@
         <field name="view_mode">list</field>
         <field name="context">{'search_default_group_company': 1, 'search_default_group_department': 1, 'search_default_group_employee': 1}</field>
     </record>
-
-    <!-- server action: rebuilds the data first, then opens the list -->
-    <record id="action_employee_data_issue_server" model="ir.actions.server">
+    <!-- client action: rebuilds the data first (via JS), then opens the list -->
+    <record id="action_employee_data_issue_client" model="ir.actions.client">
         <field name="name">Employee Missing Data</field>
-        <field name="model_id" ref="model_hr_employee_data_issue"/>
-        <field name="state">code</field>
-        <field name="code">action = model.action_open_report()</field>
+        <field name="tag">hr_management_dashboard.open_missing_data</field>
     </record>
 </odoo>

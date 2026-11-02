@@ -122,7 +122,7 @@ class HrMgmtDashboard(models.AbstractModel):
             ]},
             {'title': _('Employee Data'), 'items': [
                 self._item(_('Employees with missing data'), 'hr.employee', [], count=emp_missing,
-                           action='hr_management_dashboard.action_employee_data_issue_server'),
+                           action='hr_management_dashboard.action_employee_data_issue_client'),
             ]},
         ]
         for s in sections:

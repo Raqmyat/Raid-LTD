@@ -14,5 +14,5 @@
     <menuitem id="menu_issues" name="Issues &amp; Pending Tasks" parent="menu_hr_mgmt_root"
               action="action_issues_dashboard" sequence="40"/>
     <menuitem id="menu_employee_data_issue" name="Employee Missing Data" parent="menu_hr_mgmt_root"
-              action="action_employee_data_issue_server" sequence="50"/>
+              action="action_employee_data_issue_client" sequence="50"/>
 </odoo>
