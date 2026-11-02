@@ -67,12 +67,11 @@
                 <filter name="f_unlink" string="Deleted" domain="[('action', '=', 'unlink')]"/>
                 <separator/>
                 <filter name="f_date" string="Date" date="log_day"/>
-                <group string="Group By">
-                    <filter name="group_user" string="User" context="{'group_by': 'user_id'}"/>
+                <separator/>
+                <filter name="group_user" string="User" context="{'group_by': 'user_id'}"/>
                     <filter name="group_model" string="Module" context="{'group_by': 'model_label'}"/>
                     <filter name="group_action" string="Action" context="{'group_by': 'action'}"/>
                     <filter name="group_day" string="Day" context="{'group_by': 'log_day:day'}"/>
-                </group>
             </search>
         </field>
     </record>

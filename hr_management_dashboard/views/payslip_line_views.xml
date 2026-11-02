@@ -32,7 +32,7 @@
                 <field name="rpt_company_id" type="row"/>
                 <field name="rpt_department_id" type="row"/>
                 <field name="rpt_employee_id" type="row"/>
-                <field name="salary_rule_id" type="col"/>
+                <field name="code" type="col"/>
                 <field name="total" type="measure"/>
             </pivot>
         </field>
@@ -46,22 +46,20 @@
                 <field name="rpt_employee_id"/>
                 <field name="rpt_department_id"/>
                 <field name="rpt_company_id"/>
-                <field name="salary_rule_id"/>
                 <field name="code"/>
                 <field name="name"/>
                 <field name="slip_id"/>
                 <filter name="period" string="Period" date="rpt_date_from"/>
                 <filter name="state_done" string="Done / Paid" domain="[('rpt_state', 'in', ['done', 'paid'])]"/>
                 <filter name="state_draft" string="Draft / Waiting" domain="[('rpt_state', 'in', ['draft', 'verify'])]"/>
-                <group string="Group By">
-                    <filter name="group_company" string="Company" context="{'group_by': 'rpt_company_id'}"/>
+                <separator/>
+                <filter name="group_company" string="Company" context="{'group_by': 'rpt_company_id'}"/>
                     <filter name="group_department" string="Department" context="{'group_by': 'rpt_department_id'}"/>
                     <filter name="group_employee" string="Employee" context="{'group_by': 'rpt_employee_id'}"/>
                     <filter name="group_slip" string="Payslip" context="{'group_by': 'slip_id'}"/>
-                    <filter name="group_rule" string="Rule" context="{'group_by': 'salary_rule_id'}"/>
+                    <filter name="group_rule" string="Rule" context="{'group_by': 'code'}"/>
                     <filter name="group_category" string="Category" context="{'group_by': 'category_id'}"/>
                     <filter name="group_month" string="Month" context="{'group_by': 'rpt_date_from:month'}"/>
-                </group>
             </search>
         </field>
     </record>

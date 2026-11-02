@@ -23,12 +23,11 @@
                 <field name="department_id"/>
                 <field name="company_id"/>
                 <field name="issue"/>
-                <group string="Group By">
-                    <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
+                <separator/>
+                <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
                     <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
                     <filter name="group_employee" string="Employee" context="{'group_by': 'employee_id'}"/>
                     <filter name="group_issue" string="Missing Field" context="{'group_by': 'issue'}"/>
-                </group>
             </search>
         </field>
     </record>
