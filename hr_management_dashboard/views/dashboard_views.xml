@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_employee_status" model="ir.actions.client">
+        <field name="name">Employee Status Report</field>
+        <field name="tag">hr_management_dashboard.employee_status</field>
+    </record>
+    <record id="action_issues_dashboard" model="ir.actions.client">
+        <field name="name">Issues &amp; Pending Tasks</field>
+        <field name="tag">hr_management_dashboard.issues</field>
+    </record>
+</odoo>

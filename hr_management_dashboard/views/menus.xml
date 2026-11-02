@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_hr_mgmt_root" name="HR Reports" sequence="95"
+              web_icon="hr,static/description/icon.png" groups="hr.group_hr_manager"/>
+    <menuitem id="menu_employee_status" name="Employee Status" parent="menu_hr_mgmt_root"
+              action="action_employee_status" sequence="10"/>
+    <menuitem id="menu_payslip_line_report" name="Payroll Rules Report" parent="menu_hr_mgmt_root"
+              action="action_payslip_line_report" sequence="20"
+              groups="hr_payroll.group_hr_payroll_user"/>
+    <menuitem id="menu_weekly_tasks" name="Weekly Tasks Report" parent="menu_hr_mgmt_root"
+              action="action_audit_report_wizard" sequence="30"/>
+    <menuitem id="menu_audit_log" name="All User Actions" parent="menu_hr_mgmt_root"
+              action="action_audit_log" sequence="35"/>
+    <menuitem id="menu_issues" name="Issues &amp; Pending Tasks" parent="menu_hr_mgmt_root"
+              action="action_issues_dashboard" sequence="40"/>
+    <menuitem id="menu_employee_data_issue" name="Employee Missing Data" parent="menu_hr_mgmt_root"
+              action="action_employee_data_issue_server" sequence="50"/>
+</odoo>

@@ -1,0 +1,26 @@
+{
+    'name': 'HR Management Dashboard & Reports',
+    'version': '19.0.1.0.0',
+    'category': 'Human Resources',
+    'summary': 'Interactive HR dashboards, payroll rules report, user activity audit and pending/missing-data reports',
+    'depends': ['hr', 'hr_holidays', 'hr_attendance', 'hr_payroll'],
+    'data': [
+        'security/ir.model.access.csv',
+        'security/security.xml',
+        'views/payslip_line_views.xml',
+        'views/audit_views.xml',
+        'views/missing_data_views.xml',
+        'views/dashboard_views.xml',
+        'views/menus.xml',
+    ],
+    'assets': {
+        'web.assets_backend': [
+            'hr_management_dashboard/static/src/js/dashboards.js',
+            'hr_management_dashboard/static/src/xml/dashboards.xml',
+            'hr_management_dashboard/static/src/scss/dashboards.scss',
+        ],
+    },
+    'license': 'LGPL-3',
+    'installable': True,
+    'application': True,
+}

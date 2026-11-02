@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="hr_management_dashboard.EmployeeStatus">
+        <div class="o_hrm_dashboard p-3 overflow-auto">
+            <t t-if="state.data">
+                <h2 class="mb-3">Employee Status Report</h2>
+
+                <div class="o_hrm_cards">
+                    <div class="o_hrm_card" t-on-click="() => this.openEmployees('All Employees', [])">
+                        <div class="o_hrm_num" t-out="state.data.total"/>
+                        <div class="o_hrm_lbl">Total Employees</div>
+                    </div>
+                    <div class="o_hrm_card o_hrm_ok"
+                         t-on-click="() => this.openEmployees('With Work Permit / ID', state.data.permit_domain)">
+                        <div class="o_hrm_num" t-out="state.data.with_permit"/>
+                        <div class="o_hrm_lbl">With Work Permit (Identification No)</div>
+                    </div>
+                    <div class="o_hrm_card o_hrm_danger"
+                         t-on-click="() => this.openEmployees('Without Work Permit / ID', state.data.no_permit_domain)">
+                        <div class="o_hrm_num" t-out="state.data.without_permit"/>
+                        <div class="o_hrm_lbl">Without Work Permit</div>
+                    </div>
+                </div>
+
+                <h4 class="mt-4">Employees by Company &amp; Department</h4>
+                <t t-foreach="state.data.companies" t-as="company" t-key="company.id">
+                    <div class="o_hrm_company">
+                        <div class="o_hrm_company_head" t-on-click="() => this.toggle(company.id)">
+                            <i class="fa me-2" t-att-class="state.collapsed[company.id] ? 'fa-chevron-right' : 'fa-chevron-down'"/>
+                            <span class="fw-bold" t-out="company.name"/>
+                            <a href="#" class="badge text-bg-primary ms-2"
+                               t-on-click.prevent.stop="() => this.openEmployees(company.name, company.domain)"
+                               t-out="company.total"/>
+                        </div>
+                        <t t-if="!state.collapsed[company.id]">
+                            <div class="o_hrm_dept" t-foreach="company.departments" t-as="dep" t-key="dep_index"
+                                 t-on-click="() => this.openEmployees(company.name + ' / ' + dep.name, dep.domain)">
+                                <span t-out="dep.name"/>
+                                <span class="badge text-bg-secondary" t-out="dep.count"/>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+
+                <div class="d-flex align-items-center mt-4">
+                    <h4 class="mb-0">New Employees per Month</h4>
+                    <select class="form-select form-select-sm ms-3 w-auto" t-on-change="onMonthsChange">
+                        <option value="6" t-att-selected="state.months == 6">Last 6 months</option>
+                        <option value="12" t-att-selected="state.months == 12">Last 12 months</option>
+                        <option value="24" t-att-selected="state.months == 24">Last 24 months</option>
+                    </select>
+                </div>
+                <div class="o_hrm_bars">
+                    <div class="o_hrm_bar_col" t-foreach="state.data.months" t-as="m" t-key="m_index"
+                         t-on-click="() => this.openEmployees('Added in ' + m.label, m.domain)">
+                        <div class="o_hrm_bar_val" t-out="m.count"/>
+                        <div class="o_hrm_bar" t-att-style="'height:' + barHeight(m.count) + 'px'"/>
+                        <div class="o_hrm_bar_lbl" t-out="m.label"/>
+                    </div>
+                </div>
+            </t>
+        </div>
+    </t>
+
+    <t t-name="hr_management_dashboard.Issues">
+        <div class="o_hrm_dashboard p-3 overflow-auto">
+            <t t-if="state.data">
+                <h2 class="mb-1">Issues &amp; Pending Tasks</h2>
+                <p class="text-muted">
+                    "Overdue" = pending longer than <t t-out="state.data.overdue_days"/> days
+                    (system parameter <code>hr_management_dashboard.overdue_days</code>).
+                    Click any line to open the records.
+                </p>
+                <div class="o_hrm_section" t-foreach="state.data.sections" t-as="section" t-key="section_index">
+                    <h4 t-out="section.title"/>
+                    <div class="o_hrm_item" t-foreach="section.items" t-as="item" t-key="item_index"
+                         t-on-click="() => this.openItem(item)">
+                        <span t-out="item.label"/>
+                        <span class="badge"
+                              t-att-class="item.count > 0 ? 'text-bg-danger' : 'text-bg-success'"
+                              t-out="item.count"/>
+                    </div>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>

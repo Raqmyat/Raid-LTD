@@ -1,0 +1,37 @@
+.o_hrm_dashboard {
+    height: 100%;
+    .o_hrm_cards { display: flex; gap: 16px; flex-wrap: wrap; }
+    .o_hrm_card {
+        flex: 1 1 220px; max-width: 320px; padding: 18px; border-radius: 8px; cursor: pointer;
+        background: var(--bs-body-bg, #fff); border: 1px solid var(--bs-border-color, #dee2e6);
+        border-left: 5px solid #0d6efd; text-align: center;
+        &:hover { box-shadow: 0 2px 10px rgba(0, 0, 0, .15); }
+        &.o_hrm_ok { border-left-color: #198754; }
+        &.o_hrm_danger { border-left-color: #dc3545; }
+        .o_hrm_num { font-size: 2.4rem; font-weight: 700; line-height: 1.1; }
+        .o_hrm_lbl { color: #6c757d; }
+    }
+    .o_hrm_company {
+        border: 1px solid var(--bs-border-color, #dee2e6); border-radius: 6px; margin-bottom: 10px; overflow: hidden;
+        .o_hrm_company_head { padding: 10px 14px; cursor: pointer; background: rgba(0, 0, 0, .04); }
+        .o_hrm_dept {
+            display: flex; justify-content: space-between; padding: 7px 14px 7px 38px; cursor: pointer;
+            border-top: 1px solid var(--bs-border-color, #dee2e6);
+            &:hover { background: rgba(13, 110, 253, .08); }
+        }
+    }
+    .o_hrm_bars {
+        display: flex; align-items: flex-end; gap: 10px; padding: 16px 4px; overflow-x: auto; min-height: 210px;
+        .o_hrm_bar_col { display: flex; flex-direction: column; align-items: center; cursor: pointer; min-width: 56px;
+            &:hover .o_hrm_bar { background: #0a58ca; } }
+        .o_hrm_bar { width: 32px; background: #0d6efd; border-radius: 4px 4px 0 0; }
+        .o_hrm_bar_val { font-weight: 600; }
+        .o_hrm_bar_lbl { font-size: .75rem; color: #6c757d; margin-top: 4px; white-space: nowrap; }
+    }
+    .o_hrm_section { margin-bottom: 20px; max-width: 760px; }
+    .o_hrm_item {
+        display: flex; justify-content: space-between; align-items: center; padding: 9px 14px; cursor: pointer;
+        border: 1px solid var(--bs-border-color, #dee2e6); border-radius: 6px; margin-bottom: 6px;
+        &:hover { background: rgba(13, 110, 253, .08); }
+    }
+}

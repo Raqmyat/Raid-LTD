@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_data_issue_list" model="ir.ui.view">
+        <field name="name">hr.employee.data.issue.list</field>
+        <field name="model">hr.employee.data.issue</field>
+        <field name="arch" type="xml">
+            <list string="Missing Employee Data" action="action_open_employee" type="object"
+                  create="0" edit="0" delete="0">
+                <field name="company_id"/>
+                <field name="department_id"/>
+                <field name="employee_id"/>
+                <field name="issue"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_employee_data_issue_search" model="ir.ui.view">
+        <field name="name">hr.employee.data.issue.search</field>
+        <field name="model">hr.employee.data.issue</field>
+        <field name="arch" type="xml">
+            <search string="Missing Employee Data">
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="company_id"/>
+                <field name="issue"/>
+                <group string="Group By">
+                    <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
+                    <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="group_employee" string="Employee" context="{'group_by': 'employee_id'}"/>
+                    <filter name="group_issue" string="Missing Field" context="{'group_by': 'issue'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_employee_data_issue" model="ir.actions.act_window">
+        <field name="name">Employee Missing Data</field>
+        <field name="res_model">hr.employee.data.issue</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'search_default_group_company': 1, 'search_default_group_department': 1, 'search_default_group_employee': 1}</field>
+    </record>
+
+    <!-- server action: rebuilds the data first, then opens the list -->
+    <record id="action_employee_data_issue_server" model="ir.actions.server">
+        <field name="name">Employee Missing Data</field>
+        <field name="model_id" ref="model_hr_employee_data_issue"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_open_report()</field>
+    </record>
+</odoo>
