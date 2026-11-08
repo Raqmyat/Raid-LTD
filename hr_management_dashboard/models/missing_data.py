@@ -7,7 +7,7 @@ CHECK_FIELDS = [
     'work_email', 'mobile_phone', 'emergency_contact', 'emergency_phone',
     'bank_account_id', 'department_id', 'job_id', 'parent_id',
 ]
-LABEL_OVERRIDE = {'identification_id': 'Identification No (Work Permit)'}
+LABEL_OVERRIDE = {'identification_id': 'Identification No (ID)'}
 
 
 class HrEmployeeDataIssue(models.Model):

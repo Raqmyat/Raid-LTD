@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Sale/Purchase Employee Salaries',
-    'version': '19.0.2.5.1',
+    'version': '19.0.2.6.0',
     'category': 'Sales',
     'summary': 'ربط أوامر البيع/الشراء بالموظفين، وطباعة جدول تفصيل الرواتب (Employee x Rule) في أمر البيع والفاتورة',
     'description': """

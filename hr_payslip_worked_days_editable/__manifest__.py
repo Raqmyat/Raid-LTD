@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Payslip Worked Days Editable Column',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'category': 'Human Resources/Payroll',
     'summary': 'إظهار عدد أيام العمل كعمود قابل للتعديل مباشرة في ليستة Pay Run Payslips',
     'description': """

@@ -4,6 +4,17 @@
               web_icon="hr,static/description/icon.png" groups="hr.group_hr_manager"/>
     <menuitem id="menu_employee_status" name="Employee Status" parent="menu_hr_mgmt_root"
               action="action_employee_status" sequence="10"/>
+    <menuitem id="menu_employee_expiry" name="Visa &amp; Contract Expiry" parent="menu_hr_mgmt_root"
+              action="action_employee_expiry" sequence="15"/>
+    <menuitem id="menu_worked_days_report" name="Worked Days by Period" parent="menu_hr_mgmt_root"
+              action="action_worked_days_report" sequence="22"
+              groups="hr_payroll.group_hr_payroll_user"/>
+    <menuitem id="menu_payroll_approval_status" name="Payroll Approval Status" parent="menu_hr_mgmt_root"
+              action="action_payroll_approval_status" sequence="24"
+              groups="hr_payroll.group_hr_payroll_user"/>
+    <menuitem id="menu_payslip_billing_status" name="Payslip Billing Status" parent="menu_hr_mgmt_root"
+              action="action_payslip_billing_client" sequence="26"
+              groups="hr_payroll.group_hr_payroll_user"/>
     <menuitem id="menu_payslip_line_report" name="Payroll Rules Report" parent="menu_hr_mgmt_root"
               action="action_payslip_line_report" sequence="20"
               groups="hr_payroll.group_hr_payroll_user"/>

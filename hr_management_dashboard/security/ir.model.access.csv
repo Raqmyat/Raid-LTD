@@ -2,3 +2,5 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_hr_audit_log_manager,hr.audit.log manager,model_hr_audit_log,hr.group_hr_manager,1,0,0,0
 access_hr_employee_data_issue_manager,hr.employee.data.issue manager,model_hr_employee_data_issue,hr.group_hr_manager,1,0,0,0
 access_hr_audit_report_wizard_manager,hr.audit.report.wizard manager,model_hr_audit_report_wizard,hr.group_hr_manager,1,1,1,1
+access_hr_payslip_billing_status_manager,hr.payslip.billing.status manager,model_hr_payslip_billing_status,hr.group_hr_manager,1,0,0,0
+access_hr_payslip_billing_status_payroll,hr.payslip.billing.status payroll,model_hr_payslip_billing_status,hr_payroll.group_hr_payroll_user,1,0,0,0

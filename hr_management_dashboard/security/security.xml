@@ -11,5 +11,10 @@
             <field name="model_id" ref="model_hr_employee_data_issue"/>
             <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
         </record>
+        <record id="rule_hr_payslip_billing_status_company" model="ir.rule">
+            <field name="name">HR Payslip Billing Status: multi-company</field>
+            <field name="model_id" ref="model_hr_payslip_billing_status"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
     </data>
 </odoo>

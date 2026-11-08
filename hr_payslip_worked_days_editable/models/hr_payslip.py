@@ -9,6 +9,7 @@ class HrPayslip(models.Model):
         string='أيام العمل',
         compute='_compute_manual_worked_days',
         inverse='_inverse_manual_worked_days',
+        store=True,  # stored so it can be grouped / pivoted in HR reports
         help='عدد أيام العمل الفعلي - بيتقرأ ويتكتب في سطر "Attendance" بتاع Worked Days تلقائي.',
     )
 

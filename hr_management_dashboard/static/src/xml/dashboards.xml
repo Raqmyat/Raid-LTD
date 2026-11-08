@@ -12,14 +12,24 @@
                         <div class="o_hrm_lbl">Total Employees</div>
                     </div>
                     <div class="o_hrm_card o_hrm_ok"
-                         t-on-click="() => this.openEmployees('With Work Permit / ID', state.data.permit_domain)">
-                        <div class="o_hrm_num" t-out="state.data.with_permit"/>
-                        <div class="o_hrm_lbl">With Work Permit (Identification No)</div>
+                         t-on-click="() => this.openEmployees('With ID', state.data.id_domain)">
+                        <div class="o_hrm_num" t-out="state.data.with_id"/>
+                        <div class="o_hrm_lbl">With ID (Identification No)</div>
                     </div>
                     <div class="o_hrm_card o_hrm_danger"
-                         t-on-click="() => this.openEmployees('Without Work Permit / ID', state.data.no_permit_domain)">
-                        <div class="o_hrm_num" t-out="state.data.without_permit"/>
-                        <div class="o_hrm_lbl">Without Work Permit</div>
+                         t-on-click="() => this.openEmployees('Without ID', state.data.no_id_domain)">
+                        <div class="o_hrm_num" t-out="state.data.without_id"/>
+                        <div class="o_hrm_lbl">Without ID</div>
+                    </div>
+                </div>
+
+                <h4 class="mt-4">Visa &amp; Contract Alerts</h4>
+                <div class="o_hrm_cards">
+                    <div class="o_hrm_card" t-foreach="state.data.alerts" t-as="al" t-key="al_index"
+                         t-att-class="al.count ? 'o_hrm_danger' : 'o_hrm_ok'"
+                         t-on-click="() => this.openEmployees(al.label, al.domain)">
+                        <div class="o_hrm_num" t-out="al.count"/>
+                        <div class="o_hrm_lbl" t-out="al.label"/>
                     </div>
                 </div>
 

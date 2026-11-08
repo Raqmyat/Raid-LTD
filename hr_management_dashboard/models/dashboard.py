@@ -22,7 +22,25 @@ class HrMgmtDashboard(models.AbstractModel):
         months = max(1, min(int(months or 12), 36))
         Employee = self.env['hr.employee']          # runs as the user => multi-company rules apply
         total = Employee.search_count([])
-        with_permit = Employee.search_count([('identification_id', '!=', False)])
+        with_id = Employee.search_count([('identification_id', '!=', False)])
+
+        # Expiry alerts (visa = standard field visa_expire; contract = auto-renewed yearly date)
+        today = fields.Date.context_today(self)
+
+        def _between(field, days):
+            return [(field, '!=', False), (field, '>=', fields.Date.to_string(today)),
+                    (field, '<=', fields.Date.to_string(today + timedelta(days=days)))]
+
+        alert_defs = [
+            (_('Visa expired'), 'danger',
+             [('visa_expire', '!=', False), ('visa_expire', '<', fields.Date.to_string(today))]),
+            (_('Visa expiring within 60 days'), 'warning', _between('visa_expire', 60)),
+            (_('Contract renewal within 30 days'), 'warning', _between('rpt_contract_end', 30)),
+            (_('Contract renewal within 60 days'), 'warning', _between('rpt_contract_end', 60)),
+        ]
+        alerts = [{'label': label, 'level': level, 'domain': domain,
+                   'count': Employee.search_count(domain)}
+                  for label, level, domain in alert_defs]
 
         # Company > Department > count
         companies = {}
@@ -64,10 +82,11 @@ class HrMgmtDashboard(models.AbstractModel):
 
         return {
             'total': total,
-            'with_permit': with_permit,
-            'without_permit': total - with_permit,
-            'permit_domain': [('identification_id', '!=', False)],
-            'no_permit_domain': [('identification_id', '=', False)],
+            'with_id': with_id,
+            'without_id': total - with_id,
+            'id_domain': [('identification_id', '!=', False)],
+            'no_id_domain': [('identification_id', '=', False)],
+            'alerts': alerts,
             'companies': company_list,
             'months': month_rows,
         }
@@ -79,6 +98,23 @@ class HrMgmtDashboard(models.AbstractModel):
         except (KeyError, AccessError):
             return None
         return {'label': label, 'count': cnt, 'model': model, 'domain': domain, 'action': action}
+
+    def _approval_items(self):
+        """Batches per approval stage (only when the Raid payroll approval cycle is installed)."""
+        Run = self.env['hr.payslip.run']
+        waiting = Run._approval_waiting_map()
+        if not waiting:
+            return []
+        items = []
+        for state in ('submitted', 'op_manager', 'hr', 'legal', 'finance', 'audit', 'ceo'):
+            label = (_('Batches waiting for: %s') % waiting[state] if state != 'ceo'
+                     else _('Batches fully approved, not confirmed yet'))
+            items.append(self._item(label, 'hr.payslip.run', [('state', '=', state)]))
+        items.append(self._item(
+            _('Payslips (without batch) inside the approval cycle'), 'hr.payslip',
+            [('payslip_run_id', '=', False),
+             ('state', 'in', ['submitted', 'op_manager', 'hr', 'legal', 'finance', 'audit', 'ceo'])]))
+        return items
 
     @api.model
     def get_issues(self):
@@ -119,6 +155,13 @@ class HrMgmtDashboard(models.AbstractModel):
                 self._item(_('Payslips waiting for verification'), 'hr.payslip', [('state', '=', 'verify')]),
                 self._item(_('Draft batches whose period already ended'), 'hr.payslip.run',
                            [('state', '=', 'draft'), ('date_end', '<', today)]),
+            ]},
+            {'title': _('Payroll Approval Cycle'), 'items': self._approval_items()},
+            {'title': _('Payroll Billing (Sale Orders / Invoices)'), 'items': [
+                self._item(_('Batch payslips with NO sale order'), 'hr.payslip',
+                           [('payslip_run_id', '!=', False), ('billing_status', '=', 'none')]),
+                self._item(_('Batch payslips with sale order but NOT invoiced'), 'hr.payslip',
+                           [('payslip_run_id', '!=', False), ('billing_status', '=', 'ordered')]),
             ]},
             {'title': _('Employee Data'), 'items': [
                 self._item(_('Employees with missing data'), 'hr.employee', [], count=emp_missing,

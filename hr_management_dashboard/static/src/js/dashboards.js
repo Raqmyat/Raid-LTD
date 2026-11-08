@@ -82,3 +82,8 @@ registry.category("actions").add("hr_management_dashboard.issues", IssuesDashboa
 registry.category("actions").add("hr_management_dashboard.open_missing_data", async (env) => {
     return env.services.orm.call("hr.employee.data.issue", "action_open_report", []);
 });
+
+// Same pattern for the payslip billing snapshot
+registry.category("actions").add("hr_management_dashboard.open_billing_status", async (env) => {
+    return env.services.orm.call("hr.payslip.billing.status", "action_open_report", []);
+});

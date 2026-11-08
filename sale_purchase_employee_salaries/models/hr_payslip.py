@@ -35,9 +35,9 @@ class HrPayslip(models.Model):
         return sum(self._get_billable_lines().mapped('total'))
 
     @api.model
-    def _get_billing_keys(self, slips=None):
+    def _get_billing_docs(self, slips=None):
         """
-        بيرجّع (ordered_keys, invoiced_keys): كل واحد set من (payslip_run_id, employee_id).
+        {(payslip_run_id, employee_id): {'orders': sale.order, 'invoices': account.move}}
         الأوامر/الفواتير الملغية مش بتتحسب. لو slips اتبعتت بنحصر البحث عليها بس.
         """
         so_domain = [
@@ -62,10 +62,25 @@ class HrPayslip(models.Model):
             so_domain += [('employee_id', 'in', emps), ('order_id.payslip_run_id', 'in', runs)]
             inv_domain += [('employee_id', 'in', emps), ('move_id.payslip_run_id', 'in', runs)]
 
-        so_lines = self.env['sale.order.line'].sudo().search(so_domain)
-        inv_lines = self.env['account.move.line'].sudo().search(inv_domain)
-        ordered = {(l.order_id.payslip_run_id.id, l.employee_id.id) for l in so_lines}
-        invoiced = {(l.move_id.payslip_run_id.id, l.employee_id.id) for l in inv_lines}
+        SaleOrder = self.env['sale.order']
+        Move = self.env['account.move']
+        docs = {}
+        for l in self.env['sale.order.line'].sudo().search(so_domain):
+            key = (l.order_id.payslip_run_id.id, l.employee_id.id)
+            docs.setdefault(key, {'orders': SaleOrder, 'invoices': Move})
+            docs[key]['orders'] |= l.order_id
+        for l in self.env['account.move.line'].sudo().search(inv_domain):
+            key = (l.move_id.payslip_run_id.id, l.employee_id.id)
+            docs.setdefault(key, {'orders': SaleOrder, 'invoices': Move})
+            docs[key]['invoices'] |= l.move_id
+        return docs
+
+    @api.model
+    def _get_billing_keys(self, slips=None):
+        """بيرجّع (ordered_keys, invoiced_keys): كل واحد set من (payslip_run_id, employee_id)."""
+        docs = self._get_billing_docs(slips)
+        ordered = {k for k, v in docs.items() if v['orders']}
+        invoiced = {k for k, v in docs.items() if v['invoices']}
         return ordered, invoiced
 
     @staticmethod
