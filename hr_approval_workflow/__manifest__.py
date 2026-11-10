@@ -1,6 +1,6 @@
 {
     'name': 'Payslip Approval Workflow',
-    'version': '19.0.4.4.0',
+    'version': '19.0.5.0.0',
     'category': 'Human Resources/Payroll',
     'author': 'Custom',
     'summary': 'Multi-level approval cycle on Payslips (buttons + status bar on the payslip form)',
@@ -16,8 +16,9 @@ Draft -> Submitted -> Operations Approved -> HR Approved -> (Close | Finance -> 
 * "Approval: My Turn" default filter + status filters / grouping on the payslip list.
 * The old Validate / Confirm buttons are removed and the standard validation is blocked until the
   approval cycle is finished (system parameter hr_approval_workflow.enforce_close = False disables it).
-* Close & Post runs the REAL payslip validation (standard action_payslip_done); the standard Odoo
-  Pay button then appears by itself (no custom Pay button any more).
+* Close & Post runs the real standard payslip validation (Confirm, then Validate / accounting
+  entry as the standard does). The STANDARD Pay button then appears by itself; there is no custom
+  Pay button any more.
 * Separate "Approve Ops" / "Approve HR" buttons (form, list, Pay Run).
 * Approval buttons on the form are shown per status and per role (no repeated Approve for
   Operations) and every action is checked on the server against the status the user saw.
