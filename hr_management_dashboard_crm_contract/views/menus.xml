@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Reuses the contracts action; HR Reports root is already restricted to HR managers -->
+    <record id="action_customer_contract_report" model="ir.actions.act_window">
+        <field name="name">Customer Contracts Expiry</field>
+        <field name="res_model">crm.customer.contract</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_running': 1, 'search_default_group_end': 1}</field>
+    </record>
+    <menuitem id="menu_customer_contract_report" name="Customer Contracts Expiry"
+              parent="hr_management_dashboard.menu_hr_mgmt_root"
+              action="action_customer_contract_report" sequence="17"/>
+</odoo>

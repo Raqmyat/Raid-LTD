@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_crm_customer_contract_user,crm.customer.contract user (read - receives alerts),model_crm_customer_contract,base.group_user,1,0,0,0
+access_crm_customer_contract_salesman,crm.customer.contract salesman,model_crm_customer_contract,sales_team.group_sale_salesman,1,1,1,0
+access_crm_customer_contract_manager,crm.customer.contract manager,model_crm_customer_contract,sales_team.group_sale_manager,1,1,1,1

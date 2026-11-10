@@ -35,6 +35,9 @@ class HrMgmtDashboard(models.AbstractModel):
             (_('Visa expired'), 'danger',
              [('visa_expire', '!=', False), ('visa_expire', '<', fields.Date.to_string(today))]),
             (_('Visa expiring within 60 days'), 'warning', _between('visa_expire', 60)),
+            (_('ID expired'), 'danger',
+             [('id_expiry_date', '!=', False), ('id_expiry_date', '<', fields.Date.to_string(today))]),
+            (_('ID expiring within 60 days'), 'warning', _between('id_expiry_date', 60)),
             (_('Contract renewal within 30 days'), 'warning', _between('rpt_contract_end', 30)),
             (_('Contract renewal within 60 days'), 'warning', _between('rpt_contract_end', 60)),
         ]

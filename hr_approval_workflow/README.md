@@ -22,8 +22,8 @@ Close & Post | Refuse | Reset Approval), same roles, same permissions:
   Extra buttons to hide: `hr_approval_workflow.hide_buttons` (comma separated technical names).
 - Existing payslips at first install: validated -> Done, cancelled -> Refused.
 - Time Off approvals: separate module later, depending on this one (`approval.mixin`, `approval.step`).
-- Pay button (payslip form): appears after Close & Post (approval Done + payslip validated), for the
-  HR / Finance / CEO groups and anyone with Accounting access (Billing / Accountant / Adviser). It replaces the standard Pay button and calls the standard "mark as paid".
+- Close & Post = the real standard validation (Confirm, then Validate / accounting entry). If the standard validation does not complete, Close & Post is rolled back and the approval status does not change.
+- Pay: the STANDARD Pay button of payroll appears by itself once the payslip is validated. This module no longer has its own Pay button (v19.0.5.0.0).
 - Form buttons are per status and per role: e.g. Operations sees Approve only while the payslip is
   Submitted. Each press carries the status the user saw; if the record was already moved (double click,
   two approvers at once) it is skipped instead of being pushed one more step (rows are locked).

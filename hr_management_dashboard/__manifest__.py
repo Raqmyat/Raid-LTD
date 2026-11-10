@@ -1,9 +1,9 @@
 {
     'name': 'HR Management Dashboard & Reports',
-    'version': '19.0.1.1.0',
+    'version': '19.0.1.2.0',
     'category': 'Human Resources',
     'summary': 'Interactive HR dashboards, payroll rules report, user activity audit and pending/missing-data reports',
-    'depends': ['hr', 'hr_holidays', 'hr_attendance', 'hr_payroll',
+    'depends': ['hr', 'hr_holidays', 'hr_attendance', 'hr_skills', 'hr_payroll',
                 'hr_payslip_worked_days_editable', 'sale_purchase_employee_salaries'],
     'data': [
         'security/ir.model.access.csv',
@@ -12,6 +12,7 @@
         'views/audit_views.xml',
         'views/missing_data_views.xml',
         'views/expiry_views.xml',
+        'views/skill_report_views.xml',
         'views/worked_days_views.xml',
         'views/approval_views.xml',
         'views/billing_views.xml',

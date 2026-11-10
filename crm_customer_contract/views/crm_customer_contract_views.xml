@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="crm_customer_contract_view_form" model="ir.ui.view">
+        <field name="name">crm.customer.contract.form</field>
+        <field name="model">crm.customer.contract</field>
+        <field name="arch" type="xml">
+            <form string="Customer Contract">
+                <header>
+                    <button name="action_confirm" type="object" string="Confirm" class="btn-primary"
+                            invisible="state != 'draft'" groups="sales_team.group_sale_salesman"/>
+                    <button name="action_cancel" type="object" string="Cancel"
+                            invisible="state not in ('draft', 'running')" groups="sales_team.group_sale_salesman"/>
+                    <button name="action_draft" type="object" string="Set to Draft"
+                            invisible="state not in ('cancelled', 'expired')" groups="sales_team.group_sale_salesman"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,running,expired"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                        <h2><field name="title" placeholder="Contract subject..."/></h2>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="opportunity_id"/>
+                            <field name="user_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="amount"/>
+                        </group>
+                        <group>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                            <field name="days_left" invisible="state != 'running'"/>
+                            <field name="alert_stage" invisible="state != 'running' or not alert_stage"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Terms &amp; Details" name="terms">
+                            <field name="terms" placeholder="Terms, scope, renewal conditions..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="crm_customer_contract_view_list" model="ir.ui.view">
+        <field name="name">crm.customer.contract.list</field>
+        <field name="model">crm.customer.contract</field>
+        <field name="arch" type="xml">
+            <list string="Customer Contracts" default_order="date_end asc"
+                  decoration-danger="state == 'running' and days_left &lt; 30"
+                  decoration-warning="state == 'running' and days_left &gt;= 30 and days_left &lt;= 90"
+                  decoration-muted="state in ('expired', 'cancelled')">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="title" optional="show"/>
+                <field name="user_id" widget="many2one_avatar_user" optional="show"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="days_left" invisible="state != 'running'"/>
+                <field name="amount" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'" decoration-success="state == 'running'"
+                       decoration-danger="state == 'expired'" decoration-muted="state == 'cancelled'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="crm_customer_contract_view_search" model="ir.ui.view">
+        <field name="name">crm.customer.contract.search</field>
+        <field name="model">crm.customer.contract</field>
+        <field name="arch" type="xml">
+            <search string="Customer Contracts">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="title"/>
+                <field name="user_id"/>
+                <filter name="running" string="Running" domain="[('state', '=', 'running')]"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="expired" string="Expired" domain="[('state', '=', 'expired')]"/>
+                <separator/>
+                <filter name="exp_30" string="Ending within 30 days"
+                        domain="[('state', '=', 'running'), ('date_end', '&gt;=', context_today().strftime('%Y-%m-%d')), ('date_end', '&lt;=', (context_today() + relativedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                <filter name="exp_90" string="Ending within 3 months"
+                        domain="[('state', '=', 'running'), ('date_end', '&gt;=', context_today().strftime('%Y-%m-%d')), ('date_end', '&lt;=', (context_today() + relativedelta(months=3)).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter name="my" string="My Contracts" domain="[('user_id', '=', uid)]"/>
+                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
+                <group>
+                    <filter name="group_customer" string="Customer" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_user" string="Responsible" context="{'group_by': 'user_id'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_end" string="End Month" context="{'group_by': 'date_end:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="crm_customer_contract_action" model="ir.actions.act_window">
+        <field name="name">Customer Contracts</field>
+        <field name="res_model">crm.customer.contract</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_running': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create your first customer contract</p>
+            <p>Track the start and end date of each customer contract. Every internal user gets an
+               activity 3, 2 and 1 month before it ends.</p>
+        </field>
+    </record>
+</odoo>
