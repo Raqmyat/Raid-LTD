@@ -8,8 +8,8 @@
                 'hr_approval_workflow', 'hr_payslip_worked_days_editable',
                 'sale_purchase_employee_salaries', 'crm_client_contract'],
     'data': [
-        'security/ir.model.access.csv',
         'security/security.xml',
+        'security/ir.model.access.csv',
         'views/payslip_line_views.xml',
         'views/audit_views.xml',
         'views/missing_data_views.xml',

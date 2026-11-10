@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <menuitem id="menu_hr_mgmt_root" name="HR Reports" sequence="95"
-              web_icon="hr,static/description/icon.png" groups="hr.group_hr_manager"/>
+              web_icon="hr,static/description/icon.png" groups="hr_management_dashboard.group_hr_reports_user"/>
 
     <!-- Employees -->
     <menuitem id="menu_group_employees" name="Employees" parent="menu_hr_mgmt_root" sequence="10"/>

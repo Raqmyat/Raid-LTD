@@ -14,8 +14,8 @@ class HrMgmtDashboard(models.AbstractModel):
     _description = 'HR Management Dashboard Data'
 
     def _check_manager(self):
-        if not self.env.user.has_group('hr.group_hr_manager'):
-            raise AccessError(_('Only HR managers can open this dashboard.'))
+        if not self.env.user.has_group('hr_management_dashboard.group_hr_reports_user'):
+            raise AccessError(_('You do not have the HR Reports access right.'))
 
     # ------------------------------------------------------------ Employee status
     @api.model

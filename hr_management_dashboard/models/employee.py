@@ -12,16 +12,16 @@ class HrEmployee(models.Model):
         help='Expiry date of the Identification No (ID card), next to the ID number on the employee card.')
     rpt_contract_start = fields.Date(
         string='Contract Start (first)', compute='_compute_rpt_contract_dates', store=True,
-        groups='hr.group_hr_manager',
+        groups='hr_management_dashboard.group_hr_reports_user',
         help='Earliest contract start date found on the employee versions.')
     rpt_contract_end = fields.Date(
         string='Contract End (auto-renewed yearly)', compute='_compute_rpt_contract_dates',
-        store=True, index=True, groups='hr.group_hr_manager',
+        store=True, index=True, groups='hr_management_dashboard.group_hr_reports_user',
         help='Next anniversary of the contract start date. The contract renews automatically '
              'every year while the employee file is open (active / not departed); the end date '
              'typed on the contract is ignored.')
     rpt_contract_days_left = fields.Integer(
-        string='Contract Days Left', compute='_compute_rpt_days_left', groups='hr.group_hr_manager')
+        string='Contract Days Left', compute='_compute_rpt_days_left', groups='hr_management_dashboard.group_hr_reports_user')
     rpt_visa_days_left = fields.Integer(
         string='Visa Days Left', compute='_compute_rpt_days_left', groups='hr.group_hr_user')
     rpt_id_days_left = fields.Integer(
