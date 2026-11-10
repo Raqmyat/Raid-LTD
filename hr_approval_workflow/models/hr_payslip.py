@@ -58,8 +58,8 @@ class HrPayslip(models.Model):
             if view_type == 'form':
                 # direct buttons + status bar, same row as Compute Sheet / Cancel / Print
                 specs = approval_buttons('action_btn_', groups_for, True)
-                # the STANDARD Pay button is left untouched: it appears by itself once
-                # Close & Post has really validated the payslip
+                # the standard Pay button is NOT touched: it shows by itself once the
+                # payslip is really validated (Close & Post runs the real validation)
                 patch_header(arch, specs, names, HIDE_LABELS, statusbar=True)
             else:
                 # selection -> wizard
@@ -104,37 +104,24 @@ class HrPayslip(models.Model):
     # closing = the old "validate", now driven by the approval cycle
     # ------------------------------------------------------------------
     def _approval_on_done(self):
-        """Close & Post = the REAL standard validation of the payslip.
-
-        Runs the standard steps in order - Confirm (draft -> waiting) when the payslip
-        is still a draft, then Validate (action_payslip_done: creates / posts the
-        accounting entry as the standard does) - and checks that the payslip really
-        ended in the validated status. If it did not, the whole Close & Post is
-        rolled back (UserError) and the approval status stays where it was, so the
-        standard Pay button only ever shows on a payslip that was truly validated.
-        """
-        validated = _validated_state(self)
+        """Close & Post = the REAL validation of the payslip (the same method the
+        standard Validate button called). No shortcut: if the payslip does not end
+        in the validated status, the whole close is cancelled with a clear message,
+        so Odoo's own Pay button can only appear on a really validated payslip."""
         to_close = self.filtered(lambda p: p.state in ('draft', 'verify'))
         if not to_close:
             return
-        # sudo: approvers (HR / Finance / CEO) usually have no payroll officer rights;
-        # the approval role was already checked by action_approval_close
-        slips = to_close.sudo().with_context(approval_closing=True)
-        drafts = slips.filtered(lambda p: p.state == 'draft')
-        if drafts:
-            confirm = next((m for m in ('action_payslip_confirm', 'action_payslip_verify')
-                            if hasattr(drafts, m)), None)
-            if confirm:
-                getattr(drafts, confirm)()
-        if not hasattr(slips, 'action_payslip_done'):
+        if not hasattr(to_close, 'action_payslip_done'):
             raise UserError(_("Cannot find the payslip validation method on this Odoo version."))
-        slips.action_payslip_done()
-        not_validated = slips.filtered(lambda p: p.state != validated)
-        if not_validated:
+        to_close.sudo().with_context(approval_closing=True).action_payslip_done()
+        validated = _validated_state(self)
+        stuck = to_close.sudo().filtered(lambda p: p.state != validated)
+        if stuck:
             raise UserError(_(
                 "The standard validation did not complete for:\n%s\n"
-                "Check the payslip (Compute Sheet, accounting configuration) and try again.",
-                '\n'.join(not_validated.mapped('display_name'))))
+                "(status after validation: %s). Close & Post was cancelled.",
+                '\n'.join(stuck.mapped('display_name')),
+                ', '.join(sorted(set(stuck.mapped('state'))))))
 
     def action_payslip_done(self):
         """Block the standard validation until the approval cycle is complete."""
