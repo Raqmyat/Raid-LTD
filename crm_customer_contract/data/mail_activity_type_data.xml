@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="mail_activity_type_contract_expiry" model="mail.activity.type">
+        <field name="name">Contract Expiry</field>
+        <field name="icon">fa-calendar-times-o</field>
+        <field name="res_model">crm.customer.contract</field>
+        <field name="delay_count">0</field>
+    </record>
+</odoo>
