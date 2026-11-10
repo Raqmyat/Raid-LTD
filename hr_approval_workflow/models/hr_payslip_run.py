@@ -1,12 +1,21 @@
 from odoo import api, models
 
-from .approval_mixin import BULK, BUTTONS
-from .hr_payslip import _roles_groups
+from .approval_mixin import BULK
+from .hr_payslip import PRE_VALIDATION_STATES, _roles_groups
 from .view_patch import approval_buttons, patch_header
 
 
 class HrPayslipRun(models.Model):
     _inherit = 'hr.payslip.run'
+
+    @api.depends('slip_ids.state')
+    def _compute_state(self):
+        super()._compute_state()
+        # a payslip that is still in the approval cycle keeps the pay run "Ready": the run
+        # only closes when none of its payslips is waiting for an approval
+        for run in self:
+            if any(s in PRE_VALIDATION_STATES for s in run.slip_ids.mapped('state')):
+                run.state = '01_ready'
 
     @api.model
     def _get_view(self, view_id=None, view_type='form', **options):
@@ -34,5 +43,5 @@ def _make_run_method(key):
 
 # action_run_<key>: from the pay run, no selection needed - the wizard lists the
 # payslips of this run that are waiting for the current user
-for _key in BULK:  # includes the legacy 'approve' key
+for _key in BULK:
     setattr(HrPayslipRun, 'action_run_%s' % _key, _make_run_method(_key))

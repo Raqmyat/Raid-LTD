@@ -2,8 +2,6 @@ from lxml import etree
 
 from .approval_mixin import BULK, BUTTONS
 
-STATUSBAR_VISIBLE = 'draft,submitted,ops_approved,hr_approved,finance,ceo,done'
-
 
 def approval_buttons(prefix, group_xmlids_for, with_state_visibility):
     """Button specs for the headers.
@@ -19,7 +17,7 @@ def approval_buttons(prefix, group_xmlids_for, with_state_visibility):
                 specs.append({
                     'name': '%s%s__%s' % (prefix, key, state), 'string': label, 'class': css,
                     'groups': ','.join(group_xmlids_for(key, state)),
-                    'invisible': "approval_state != '%s'" % state,
+                    'invisible': "state != '%s'" % state,
                 })
         else:
             specs.append({
@@ -29,10 +27,10 @@ def approval_buttons(prefix, group_xmlids_for, with_state_visibility):
     return specs
 
 
-def patch_header(arch, specs, hide_names=(), hide_labels=(), statusbar=False):
+def patch_header(arch, specs, hide_names=(), hide_labels=(), statusbar_visible=None):
     """Works on any header structure: removes the old buttons, puts the
     approval buttons FIRST (same row as the standard ones) and optionally
-    the approval status bar at the end of the header."""
+    widens the statusbar of the standard `state` field (statusbar_visible)."""
     for btn in arch.xpath('//header//button'):
         label = (btn.get('string') or '').strip().lower()
         if btn.get('name') in hide_names or label in hide_labels:
@@ -53,9 +51,7 @@ def patch_header(arch, specs, hide_names=(), hide_labels=(), statusbar=False):
             attrs['invisible'] = spec['invisible']
         header.insert(idx, etree.Element('button', attrs))
         idx += 1
-    if statusbar and not arch.xpath("//header/field[@name='approval_state']"):
-        header.append(etree.Element('field', {
-            'name': 'approval_state', 'widget': 'statusbar', 'readonly': '1',
-            'statusbar_visible': STATUSBAR_VISIBLE,
-        }))
+    if statusbar_visible:
+        for field in arch.xpath("//header/field[@name='state']"):
+            field.set('statusbar_visible', statusbar_visible)
     return arch

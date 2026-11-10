@@ -1,26 +1,33 @@
 import ast
 
-from odoo import api, models, _
+from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
 from .approval_mixin import BULK
 from .view_patch import approval_buttons, patch_header
 
+# The approval statuses live on the STANDARD payslip `state` field, between
+# Draft and Validated:
+#   draft -> submitted -> ops_approved -> hr_approved -> (finance -> (ceo)) -> validated -> paid
+# Close & Post is the real validation of the payslip (validated) + posting of its entry.
+APPROVAL_STATES = [
+    ('submitted', 'Submitted'),
+    ('ops_approved', 'Operations Approved'),
+    ('hr_approved', 'HR Approved'),
+    ('finance', 'Finance'),
+    ('ceo', 'CEO'),
+]
+NEW_STATES = tuple(code for code, _label in APPROVAL_STATES)
+# statuses in which the payslip is NOT validated yet
+PRE_VALIDATION_STATES = ('draft',) + NEW_STATES
+STATUSBAR_VISIBLE = 'draft,submitted,ops_approved,hr_approved,finance,ceo,validated,paid'
+
 # Buttons of the old validation cycle that are removed from the payslip
 # headers. Extra technical names: system parameter hr_approval_workflow.hide_buttons
 # (comma separated; restart / upgrade to refresh the view cache).
-HIDE_NAMES = {'action_payslip_done', 'action_payslip_verify', 'action_payslip_confirm'}
+# The standard Pay button (action_register_payment) is NOT touched.
+HIDE_NAMES = {'action_payslip_done', 'action_validate'}
 HIDE_LABELS = {'validate', 'confirm', 'create draft entry'}
-
-
-def _validated_state(model):
-    """Technical value of the payslip status "Done" (validated, not yet paid):
-    'validated' on recent payroll versions, 'done' on older ones."""
-    keys = [k for k, _label in model._fields['state']._description_selection(model.env)]
-    for candidate in ('validated', 'done'):
-        if candidate in keys:
-            return candidate
-    return 'done'
 
 
 def _roles_groups(env, model, key, state=None):
@@ -40,6 +47,43 @@ def _roles_groups(env, model, key, state=None):
 class HrPayslip(models.Model):
     _name = 'hr.payslip'
     _inherit = ['hr.payslip', 'approval.mixin']
+    _approval_field = 'state'
+
+    state = fields.Selection(
+        selection_add=APPROVAL_STATES + [('validated',)],
+        ondelete={code: 'set default' for code in NEW_STATES})
+    approval_my_turn = fields.Boolean(
+        string='My Turn', compute='_compute_approval_my_turn',
+        search='_search_approval_my_turn')
+
+    # ------------------------------------------------------------------
+    # permissions on the status
+    # ------------------------------------------------------------------
+    def _approval_guarded_values(self):
+        # the standard statuses (draft / validated / paid / cancel) keep being written by
+        # payroll itself; only the approval ones are reserved to the approval buttons
+        return NEW_STATES
+
+    def write(self, vals):
+        self._approval_check_write(vals)
+        return super().write(vals)
+
+    @api.depends_context('uid')
+    @api.depends('state')
+    def _compute_approval_my_turn(self):
+        states = self._approval_user_states()
+        for rec in self:
+            rec.approval_my_turn = rec.state in states
+
+    @api.depends('state', 'error_count', 'warning_count')
+    def _compute_state_display(self):
+        # state_display only knows the standard statuses: an approval status shows as Draft there
+        # (the real approval status has its own column / the status bar)
+        pending = self.filtered(lambda p: p.state in NEW_STATES)
+        for slip in pending:
+            slip.state_display = (
+                'error' if slip.error_count else 'warning' if slip.warning_count else 'draft')
+        super(HrPayslip, self - pending)._compute_state_display()
 
     # ------------------------------------------------------------------
     # views: old validation buttons out, approval buttons in
@@ -56,11 +100,11 @@ class HrPayslip(models.Model):
                 return _roles_groups(self.env, 'hr.payslip', key, state)
 
             if view_type == 'form':
-                # direct buttons + status bar, same row as Compute Sheet / Cancel / Print
+                # direct buttons + the approval statuses in the standard status bar,
+                # same row as Compute Sheet / Cancel / Print. The standard Pay button
+                # is left alone: it shows once the payslip is really validated.
                 specs = approval_buttons('action_btn_', groups_for, True)
-                # the STANDARD Pay button is left untouched: it appears by itself once
-                # Close & Post has really validated the payslip
-                patch_header(arch, specs, names, HIDE_LABELS, statusbar=True)
+                patch_header(arch, specs, names, HIDE_LABELS, statusbar_visible=STATUSBAR_VISIBLE)
             else:
                 # selection -> wizard
                 specs = approval_buttons('action_wizard_', groups_for, False)
@@ -100,84 +144,57 @@ class HrPayslip(models.Model):
         targets.extend((s, s) for s in self.filtered(lambda p: not p.payslip_run_id))
         return targets
 
-    # ------------------------------------------------------------------
-    # closing = the old "validate", now driven by the approval cycle
-    # ------------------------------------------------------------------
-    def _approval_on_done(self):
-        """Close & Post = the REAL standard validation of the payslip.
+    def _approval_check_transition(self, key):
+        if key == 'submit':
+            empty = self.filtered(lambda p: not p.line_ids)
+            if empty:
+                raise UserError(_(
+                    "Compute the sheet before submitting:\n%s",
+                    '\n'.join(empty.mapped('display_name'))))
 
-        Runs the standard steps in order - Confirm (draft -> waiting) when the payslip
-        is still a draft, then Validate (action_payslip_done: creates / posts the
-        accounting entry as the standard does) - and checks that the payslip really
-        ended in the validated status. If it did not, the whole Close & Post is
-        rolled back (UserError) and the approval status stays where it was, so the
-        standard Pay button only ever shows on a payslip that was truly validated.
-        """
-        validated = _validated_state(self)
-        to_close = self.filtered(lambda p: p.state in ('draft', 'verify'))
-        if not to_close:
-            return
-        # sudo: approvers (HR / Finance / CEO) usually have no payroll officer rights;
-        # the approval role was already checked by action_approval_close
-        slips = to_close.sudo().with_context(approval_closing=True)
-        drafts = slips.filtered(lambda p: p.state == 'draft')
-        if drafts:
-            confirm = next((m for m in ('action_payslip_confirm', 'action_payslip_verify')
-                            if hasattr(drafts, m)), None)
-            if confirm:
-                getattr(drafts, confirm)()
-        if not hasattr(slips, 'action_payslip_done'):
-            raise UserError(_("Cannot find the payslip validation method on this Odoo version."))
-        slips.action_payslip_done()
-        not_validated = slips.filtered(lambda p: p.state != validated)
-        if not_validated:
+    # ------------------------------------------------------------------
+    # Close & Post = the REAL validation (+ posting of the journal entry)
+    # ------------------------------------------------------------------
+    def _approval_finish(self):
+        """Same as the standard Validate button (action_payslip_done: status Validated and the
+        accounting entry), then the entry is posted, so that the standard Pay button
+        (which needs a validated payslip with a POSTED entry) can be used.
+        If anything fails the whole close is cancelled and the status does not change."""
+        slips = self.sudo()
+        slips.with_context(approval_closing=True, payslip_generate_pdf=True).action_payslip_done()
+        stuck = slips.filtered(lambda p: p.state != 'validated')
+        if stuck:
             raise UserError(_(
                 "The standard validation did not complete for:\n%s\n"
-                "Check the payslip (Compute Sheet, accounting configuration) and try again.",
-                '\n'.join(not_validated.mapped('display_name'))))
+                "Close & Post was cancelled.", '\n'.join(stuck.mapped('display_name'))))
+        post = self.env['ir.config_parameter'].sudo().get_param(
+            'hr_approval_workflow.post_entry', 'True')
+        if post not in ('False', '0') and 'move_id' in self._fields:
+            moves = slips.mapped('move_id').filtered(lambda m: m.state == 'draft')
+            if moves:
+                moves.action_post()
 
     def action_payslip_done(self):
-        """Block the standard validation until the approval cycle is complete."""
+        """Block the standard validation until the approval cycle is complete
+        (only Close & Post validates)."""
         if not self.env.context.get('approval_closing'):
             enforce = self.env['ir.config_parameter'].sudo().get_param(
                 'hr_approval_workflow.enforce_close', 'True')
             if enforce not in ('False', '0'):
-                pending = self.filtered(lambda p: p.approval_state != 'done')
+                pending = self.filtered(lambda p: p.state in PRE_VALIDATION_STATES)
                 if pending:
                     raise UserError(_(
-                        "These payslips must go through the approval workflow before "
-                        "they can be validated:\n%s",
+                        "These payslips must go through the approval workflow (Close & Post) "
+                        "before they can be validated:\n%s",
                         '\n'.join(pending.mapped('display_name'))))
         return super().action_payslip_done()
 
     # ------------------------------------------------------------------
-    # Compute / Cancel / Set to Draft stay available, tied to the approval status
+    # Refuse = the standard cancel (Set to Draft brings it back)
     # ------------------------------------------------------------------
-    def compute_sheet(self):
-        locked = self.filtered(lambda p: p.approval_state != 'draft')
-        if locked:
-            raise UserError(_(
-                "The sheet can only be computed while the approval status is Draft "
-                "(use Reset Approval / Set to Draft first):\n%s",
-                '\n'.join(locked.mapped('display_name'))))
-        return super().compute_sheet()
-
-    def action_payslip_cancel(self):
-        if any(p.approval_state == 'done' for p in self):
-            raise UserError(_("A payslip whose approval is Done can no longer be cancelled."))
-        res = super().action_payslip_cancel()
-        self.filtered(lambda p: p.approval_state != 'refused')._approval_set('refused')
-        return res
-
-    def action_payslip_draft(self):
-        res = super().action_payslip_draft()
-        self._approval_set('draft')
-        return res
-
-    def _approval_on_reset(self):
-        cancelled = self.filtered(lambda p: p.state == 'cancel')
-        if cancelled:
-            cancelled.sudo().action_payslip_draft()
+    def _approval_refuse(self):
+        self.sudo().with_context(approval_internal=True).action_payslip_cancel()
+        self._approval_notify()
 
     @api.model
     def _approval_apply_default_filter(self):
