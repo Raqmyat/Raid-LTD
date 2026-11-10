@@ -5,14 +5,16 @@
         <field name="name">hr.employee.expiry.list</field>
         <field name="model">hr.employee</field>
         <field name="arch" type="xml">
-            <list string="Visa &amp; Contract Expiry" create="0" delete="0"
-                  default_order="visa_expire asc, rpt_contract_end asc"
-                  decoration-danger="visa_expire and rpt_visa_days_left &lt; 0"
-                  decoration-warning="visa_expire and rpt_visa_days_left &gt;= 0 and rpt_visa_days_left &lt;= 60">
+            <list string="ID, Visa &amp; Contract Expiry" create="0" delete="0"
+                  default_order="id_expiry_date asc, visa_expire asc, rpt_contract_end asc"
+                  decoration-danger="(visa_expire and rpt_visa_days_left &lt; 0) or (id_expiry_date and rpt_id_days_left &lt; 0)"
+                  decoration-warning="(visa_expire and rpt_visa_days_left &gt;= 0 and rpt_visa_days_left &lt;= 60) or (id_expiry_date and rpt_id_days_left &gt;= 0 and rpt_id_days_left &lt;= 60)">
                 <field name="name"/>
                 <field name="company_id"/>
                 <field name="department_id" optional="show"/>
                 <field name="identification_id" string="ID" optional="show"/>
+                <field name="id_expiry_date" optional="show"/>
+                <field name="rpt_id_days_left" string="ID Days Left" optional="show" invisible="not id_expiry_date"/>
                 <field name="visa_no" optional="show"/>
                 <field name="visa_expire"/>
                 <field name="rpt_visa_days_left" string="Visa Days Left" invisible="not visa_expire"/>
@@ -27,7 +29,7 @@
         <field name="name">hr.employee.expiry.search</field>
         <field name="model">hr.employee</field>
         <field name="arch" type="xml">
-            <search string="Visa &amp; Contract Expiry">
+            <search string="ID, Visa &amp; Contract Expiry">
                 <field name="name"/>
                 <field name="identification_id"/>
                 <field name="visa_no"/>
@@ -44,6 +46,17 @@
                 <filter name="visa_90" string="Visa expires in 90 days"
                         domain="[('visa_expire', '&gt;=', context_today().strftime('%Y-%m-%d')), ('visa_expire', '&lt;=', (context_today() + relativedelta(days=90)).strftime('%Y-%m-%d'))]"/>
                 <separator/>
+                <filter name="id_set" string="Has ID Expiry Date" domain="[('id_expiry_date', '!=', False)]"/>
+                <filter name="id_missing" string="No ID Expiry Date" domain="[('id_expiry_date', '=', False)]"/>
+                <filter name="id_expired" string="ID Expired"
+                        domain="[('id_expiry_date', '!=', False), ('id_expiry_date', '&lt;', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="id_30" string="ID expires in 30 days"
+                        domain="[('id_expiry_date', '&gt;=', context_today().strftime('%Y-%m-%d')), ('id_expiry_date', '&lt;=', (context_today() + relativedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                <filter name="id_60" string="ID expires in 60 days"
+                        domain="[('id_expiry_date', '&gt;=', context_today().strftime('%Y-%m-%d')), ('id_expiry_date', '&lt;=', (context_today() + relativedelta(days=60)).strftime('%Y-%m-%d'))]"/>
+                <filter name="id_90" string="ID expires in 90 days"
+                        domain="[('id_expiry_date', '&gt;=', context_today().strftime('%Y-%m-%d')), ('id_expiry_date', '&lt;=', (context_today() + relativedelta(days=90)).strftime('%Y-%m-%d'))]"/>
+                <separator/>
                 <filter name="contract_30" string="Contract renews in 30 days"
                         domain="[('rpt_contract_end', '&gt;=', context_today().strftime('%Y-%m-%d')), ('rpt_contract_end', '&lt;=', (context_today() + relativedelta(days=30)).strftime('%Y-%m-%d'))]"/>
                 <filter name="contract_60" string="Contract renews in 60 days"
@@ -52,6 +65,7 @@
                 <separator/>
                 <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
                 <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                <filter name="group_id_month" string="ID Expiry Month" context="{'group_by': 'id_expiry_date:month'}"/>
                 <filter name="group_visa_month" string="Visa Expiry Month" context="{'group_by': 'visa_expire:month'}"/>
                 <filter name="group_contract_month" string="Contract End Month" context="{'group_by': 'rpt_contract_end:month'}"/>
             </search>
@@ -59,7 +73,7 @@
     </record>
 
     <record id="action_employee_expiry" model="ir.actions.act_window">
-        <field name="name">Visa &amp; Contract Expiry</field>
+        <field name="name">ID, Visa &amp; Contract Expiry</field>
         <field name="res_model">hr.employee</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_employee_expiry_search"/>
@@ -69,6 +83,18 @@
         <field name="view_mode">list</field>
         <field name="view_id" ref="view_employee_expiry_list"/>
         <field name="act_window_id" ref="action_employee_expiry"/>
+    </record>
+
+    <!-- ID expiry date on the employee form, right after the ID number (Private Information tab) -->
+    <record id="view_employee_form_id_expiry" model="ir.ui.view">
+        <field name="name">hr.employee.form.id.expiry</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='identification_id']" position="after">
+                <field name="id_expiry_date" groups="hr.group_hr_user"/>
+            </xpath>
+        </field>
     </record>
 
     <!-- daily refresh of the auto-renewed contract end -->

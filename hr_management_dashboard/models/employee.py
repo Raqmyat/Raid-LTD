@@ -7,6 +7,12 @@ class HrEmployee(models.Model):
     _inherit = 'hr.employee'
 
     # Visa expiry itself is the STANDARD field `visa_expire` (Private Information > Work Permit).
+    # CUSTOM: Odoo has no expiry date for the ID number (identification_id).
+    id_expiry_date = fields.Date(
+        string='ID Expiry Date', groups='hr.group_hr_user', tracking=True, index=True,
+        help='Expiry date of the identification document whose number is in "Identification No".')
+    rpt_id_days_left = fields.Integer(
+        string='ID Days Left', compute='_compute_rpt_days_left', groups='hr.group_hr_user')
     rpt_contract_start = fields.Date(
         string='Contract Start (first)', compute='_compute_rpt_contract_dates', store=True,
         groups='hr.group_hr_manager',
@@ -52,12 +58,13 @@ class HrEmployee(models.Model):
             emp.rpt_contract_start = vals['rpt_contract_start']
             emp.rpt_contract_end = vals['rpt_contract_end']
 
-    @api.depends('rpt_contract_end', 'visa_expire')
+    @api.depends('rpt_contract_end', 'visa_expire', 'id_expiry_date')
     def _compute_rpt_days_left(self):
         today = fields.Date.context_today(self)
         for emp in self:
             emp.rpt_contract_days_left = (emp.rpt_contract_end - today).days if emp.rpt_contract_end else 0
             emp.rpt_visa_days_left = (emp.visa_expire - today).days if emp.visa_expire else 0
+            emp.rpt_id_days_left = (emp.id_expiry_date - today).days if emp.id_expiry_date else 0
 
     @api.model
     def _cron_refresh_rpt_contract_dates(self):

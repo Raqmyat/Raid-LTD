@@ -4,7 +4,7 @@
               web_icon="hr,static/description/icon.png" groups="hr.group_hr_manager"/>
     <menuitem id="menu_employee_status" name="Employee Status" parent="menu_hr_mgmt_root"
               action="action_employee_status" sequence="10"/>
-    <menuitem id="menu_employee_expiry" name="Visa &amp; Contract Expiry" parent="menu_hr_mgmt_root"
+    <menuitem id="menu_employee_expiry" name="ID, Visa &amp; Contract Expiry" parent="menu_hr_mgmt_root"
               action="action_employee_expiry" sequence="15"/>
     <menuitem id="menu_worked_days_report" name="Worked Days by Period" parent="menu_hr_mgmt_root"
               action="action_worked_days_report" sequence="22"
@@ -18,6 +18,8 @@
     <menuitem id="menu_payslip_line_report" name="Payroll Rules Report" parent="menu_hr_mgmt_root"
               action="action_payslip_line_report" sequence="20"
               groups="hr_payroll.group_hr_payroll_user"/>
+    <menuitem id="menu_employee_skills_report" name="Skills &amp; Certifications" parent="menu_hr_mgmt_root"
+              action="action_employee_skill_report_server" sequence="16"/>
     <menuitem id="menu_weekly_tasks" name="Weekly Tasks Report" parent="menu_hr_mgmt_root"
               action="action_audit_report_wizard" sequence="30"/>
     <menuitem id="menu_audit_log" name="All User Actions" parent="menu_hr_mgmt_root"
