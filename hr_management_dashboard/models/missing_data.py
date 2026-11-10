@@ -2,12 +2,12 @@ from odoo import api, fields, models
 
 # employee fields that must be filled; fields not existing in this DB are skipped
 CHECK_FIELDS = [
-    'identification_id', 'id_expiry_date', 'passport_id', 'birthday', 'gender', 'country_id',
+    'identification_id', 'passport_id', 'birthday', 'gender', 'country_id',
     'place_of_birth', 'marital', 'private_street', 'private_phone', 'private_email',
     'work_email', 'mobile_phone', 'emergency_contact', 'emergency_phone',
     'bank_account_id', 'department_id', 'job_id', 'parent_id',
 ]
-LABEL_OVERRIDE = {'identification_id': 'Identification No (ID)', 'id_expiry_date': 'ID Expiry Date'}
+LABEL_OVERRIDE = {'identification_id': 'Identification No (ID)'}
 
 
 class HrEmployeeDataIssue(models.Model):

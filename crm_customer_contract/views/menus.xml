@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <menuitem id="menu_crm_customer_contract" name="Customer Contracts"
-              parent="crm.crm_menu_root" action="crm_customer_contract_action" sequence="25"/>
-</odoo>
