@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="crm_lead_view_form_client_contract" model="ir.ui.view">
+        <field name="name">crm.lead.form.client.contract</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_client_contracts" type="object" class="oe_stat_button"
+                        icon="fa-file-text-o" invisible="type != 'opportunity'"
+                        groups="crm_client_contract.group_client_contract_viewer">
+                    <field name="client_contract_count" widget="statinfo" string="Contracts"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_skill_report_list" model="ir.ui.view">
+        <field name="name">hr.skill.report.list</field>
+        <field name="model">hr.skill.report</field>
+        <field name="arch" type="xml">
+            <list string="Skills &amp; Certificates" action="action_open_employee" type="object"
+                  create="0" edit="0" delete="0"
+                  decoration-danger="cert_status == 'expired'"
+                  decoration-warning="cert_status in ('expiring', 'no_expiry')">
+                <field name="company_id" optional="show"/>
+                <field name="department_id" optional="show"/>
+                <field name="employee_id"/>
+                <field name="skill_type_id"/>
+                <field name="skill_id"/>
+                <field name="skill_level_id" optional="show"/>
+                <field name="level_progress" widget="progressbar" optional="hide"/>
+                <field name="is_certification" string="Certificate?" widget="boolean" optional="show"/>
+                <field name="valid_from" optional="show"/>
+                <field name="valid_to"/>
+                <field name="days_left" string="Days Left" invisible="cert_status in ('no_cert', 'no_expiry')"/>
+                <field name="cert_status" widget="badge"
+                       decoration-muted="cert_status == 'no_cert'"
+                       decoration-success="cert_status == 'valid'"
+                       decoration-warning="cert_status in ('expiring', 'no_expiry')"
+                       decoration-danger="cert_status == 'expired'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_skill_report_pivot" model="ir.ui.view">
+        <field name="name">hr.skill.report.pivot</field>
+        <field name="model">hr.skill.report</field>
+        <field name="arch" type="xml">
+            <pivot string="Skills &amp; Certificates">
+                <field name="skill_type_id" type="row"/>
+                <field name="skill_id" type="row"/>
+                <field name="cert_status" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_skill_report_search" model="ir.ui.view">
+        <field name="name">hr.skill.report.search</field>
+        <field name="model">hr.skill.report</field>
+        <field name="arch" type="xml">
+            <search string="Skills &amp; Certificates">
+                <field name="employee_id"/>
+                <field name="skill_id"/>
+                <field name="skill_type_id"/>
+                <field name="department_id"/>
+                <field name="company_id"/>
+                <filter name="is_cert" string="Linked to a Certificate" domain="[('is_certification', '=', True)]"/>
+                <filter name="not_cert" string="Not a Certificate" domain="[('is_certification', '=', False)]"/>
+                <separator/>
+                <filter name="expired" string="Certificate Expired" domain="[('cert_status', '=', 'expired')]"/>
+                <filter name="expiring" string="Expiring (60 days)" domain="[('cert_status', '=', 'expiring')]"/>
+                <filter name="no_expiry" string="Certificate without Expiry Date" domain="[('cert_status', '=', 'no_expiry')]"/>
+                <filter name="valid" string="Valid" domain="[('cert_status', '=', 'valid')]"/>
+                <separator/>
+                <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
+                <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                <filter name="group_employee" string="Employee" context="{'group_by': 'employee_id'}"/>
+                <filter name="group_type" string="Skill Type" context="{'group_by': 'skill_type_id'}"/>
+                <filter name="group_skill" string="Skill" context="{'group_by': 'skill_id'}"/>
+                <filter name="group_status" string="Certificate Status" context="{'group_by': 'cert_status'}"/>
+                <filter name="group_expiry_month" string="Expiry Month" context="{'group_by': 'valid_to:month'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_skill_report" model="ir.actions.act_window">
+        <field name="name">Skills &amp; Certificates</field>
+        <field name="res_model">hr.skill.report</field>
+        <field name="view_mode">list,pivot</field>
+        <field name="search_view_id" ref="view_skill_report_search"/>
+        <field name="context">{'search_default_group_company': 1, 'search_default_group_employee': 1}</field>
+    </record>
+    <!-- client action: rebuilds the snapshot first (via JS), then opens the report -->
+    <record id="action_skill_report_client" model="ir.actions.client">
+        <field name="name">Skills &amp; Certificates</field>
+        <field name="tag">hr_management_dashboard.open_skill_report</field>
+    </record>
+</odoo>

@@ -6,14 +6,22 @@
         <field name="model">hr.payslip</field>
         <field name="arch" type="xml">
             <list string="Worked Days by Period" create="0" delete="0"
-                  default_order="date_from desc, employee_id">
+                  default_order="date_from desc, employee_id"
+                  decoration-muted="state == 'cancel'">
                 <field name="company_id" optional="show"/>
                 <field name="payslip_run_id"/>
                 <field name="employee_id"/>
-                <field name="date_from"/>
-                <field name="date_to"/>
+                <field name="date_from" string="From"/>
+                <field name="date_to" string="To"/>
                 <field name="manual_worked_days" string="Worked Days" sum="Total Days"/>
-                <field name="state" widget="badge" optional="show"/>
+                <field name="state" string="Status" widget="badge" optional="show"
+                       decoration-muted="state == 'draft'"
+                       decoration-info="state in ('submitted', 'ops_approved', 'hr_approved')"
+                       decoration-warning="state in ('finance', 'ceo')"
+                       decoration-success="state == 'validated'"
+                       decoration-primary="state == 'paid'"
+                       decoration-danger="state == 'cancel'"/>
+                <field name="rpt_waiting_for" optional="hide"/>
             </list>
         </field>
     </record>
@@ -41,7 +49,16 @@
                 <filter name="period" string="Period" date="date_from"/>
                 <filter name="no_days" string="Zero worked days" domain="[('manual_worked_days', '=', 0)]"/>
                 <separator/>
+                <filter name="st_draft" string="Draft (not submitted)" domain="[('state', '=', 'draft')]"/>
+                <filter name="st_approval" string="In Approval (Submitted → CEO)"
+                        domain="[('state', 'in', ['submitted', 'ops_approved', 'hr_approved', 'finance', 'ceo'])]"/>
+                <filter name="st_closed" string="Validated / Paid" domain="[('state', 'in', ['validated', 'paid'])]"/>
+                <filter name="st_validated" string="Validated (not paid)" domain="[('state', '=', 'validated')]"/>
+                <filter name="st_paid" string="Paid" domain="[('state', '=', 'paid')]"/>
+                <filter name="st_cancel" string="Cancelled / Refused" domain="[('state', '=', 'cancel')]"/>
+                <separator/>
                 <filter name="group_run" string="Pay Run (period)" context="{'group_by': 'payslip_run_id'}"/>
+                <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
                 <filter name="group_month" string="Month" context="{'group_by': 'date_from:month'}"/>
                 <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
                 <filter name="group_employee" string="Employee" context="{'group_by': 'employee_id'}"/>

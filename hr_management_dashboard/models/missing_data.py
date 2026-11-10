@@ -8,6 +8,8 @@ CHECK_FIELDS = [
     'bank_account_id', 'department_id', 'job_id', 'parent_id',
 ]
 LABEL_OVERRIDE = {'identification_id': 'Identification No (ID)'}
+# field -> field that must be filled first (only checked when that one is set)
+CONDITIONAL_FIELDS = {'identification_expire': 'identification_id'}
 
 
 class HrEmployeeDataIssue(models.Model):
@@ -25,11 +27,13 @@ class HrEmployeeDataIssue(models.Model):
     def _rebuild(self):
         Employee = self.env['hr.employee'].sudo()
         self.sudo().search([]).unlink()
-        names = [n for n in CHECK_FIELDS if n in Employee._fields]
+        names = [n for n in CHECK_FIELDS + list(CONDITIONAL_FIELDS) if n in Employee._fields]
         labels = Employee.fields_get(names, attributes=['string'])
         vals = []
         for emp in Employee.search([]):
             for n in names:
+                if n in CONDITIONAL_FIELDS and not emp[CONDITIONAL_FIELDS[n]]:
+                    continue
                 v = emp[n]
                 missing = (not v.strip()) if isinstance(v, str) else (not v)
                 if missing:

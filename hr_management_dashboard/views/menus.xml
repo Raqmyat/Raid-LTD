@@ -2,28 +2,43 @@
 <odoo>
     <menuitem id="menu_hr_mgmt_root" name="HR Reports" sequence="95"
               web_icon="hr,static/description/icon.png" groups="hr.group_hr_manager"/>
-    <menuitem id="menu_employee_status" name="Employee Status" parent="menu_hr_mgmt_root"
+
+    <!-- Employees -->
+    <menuitem id="menu_group_employees" name="Employees" parent="menu_hr_mgmt_root" sequence="10"/>
+    <menuitem id="menu_employee_status" name="Employee Status" parent="menu_group_employees"
               action="action_employee_status" sequence="10"/>
-    <menuitem id="menu_employee_expiry" name="Visa &amp; Contract Expiry" parent="menu_hr_mgmt_root"
-              action="action_employee_expiry" sequence="15"/>
-    <menuitem id="menu_worked_days_report" name="Worked Days by Period" parent="menu_hr_mgmt_root"
-              action="action_worked_days_report" sequence="22"
+    <menuitem id="menu_employee_expiry" name="ID, Visa &amp; Contract Expiry" parent="menu_group_employees"
+              action="action_employee_expiry" sequence="20"/>
+    <menuitem id="menu_skill_report" name="Skills &amp; Certificates" parent="menu_group_employees"
+              action="action_skill_report_client" sequence="30"/>
+    <menuitem id="menu_employee_data_issue" name="Employee Missing Data" parent="menu_group_employees"
+              action="action_employee_data_issue_client" sequence="40"/>
+
+    <!-- Clients -->
+    <menuitem id="menu_group_clients" name="Clients" parent="menu_hr_mgmt_root" sequence="20"/>
+    <menuitem id="menu_contract_report" name="Client Contracts Expiry" parent="menu_group_clients"
+              action="action_contract_report" sequence="10"/>
+
+    <!-- Payroll -->
+    <menuitem id="menu_group_payroll" name="Payroll" parent="menu_hr_mgmt_root" sequence="30"
               groups="hr_payroll.group_hr_payroll_user"/>
-    <menuitem id="menu_payroll_approval_status" name="Payroll Approval Status" parent="menu_hr_mgmt_root"
-              action="action_payroll_approval_status" sequence="24"
-              groups="hr_payroll.group_hr_payroll_user"/>
-    <menuitem id="menu_payslip_billing_status" name="Payslip Billing Status" parent="menu_hr_mgmt_root"
-              action="action_payslip_billing_client" sequence="26"
-              groups="hr_payroll.group_hr_payroll_user"/>
-    <menuitem id="menu_payslip_line_report" name="Payroll Rules Report" parent="menu_hr_mgmt_root"
-              action="action_payslip_line_report" sequence="20"
-              groups="hr_payroll.group_hr_payroll_user"/>
-    <menuitem id="menu_weekly_tasks" name="Weekly Tasks Report" parent="menu_hr_mgmt_root"
-              action="action_audit_report_wizard" sequence="30"/>
-    <menuitem id="menu_audit_log" name="All User Actions" parent="menu_hr_mgmt_root"
-              action="action_audit_log" sequence="35"/>
-    <menuitem id="menu_issues" name="Issues &amp; Pending Tasks" parent="menu_hr_mgmt_root"
-              action="action_issues_dashboard" sequence="40"/>
-    <menuitem id="menu_employee_data_issue" name="Employee Missing Data" parent="menu_hr_mgmt_root"
-              action="action_employee_data_issue_client" sequence="50"/>
+    <menuitem id="menu_payslip_line_report" name="Payroll Rules Report" parent="menu_group_payroll"
+              action="action_payslip_line_report" sequence="10"/>
+    <menuitem id="menu_worked_days_report" name="Worked Days by Period" parent="menu_group_payroll"
+              action="action_worked_days_report" sequence="20"/>
+    <menuitem id="menu_payroll_approval_status" name="Approval Status - Pay Runs" parent="menu_group_payroll"
+              action="action_payroll_approval_status" sequence="30"/>
+    <menuitem id="menu_payslip_approval_status" name="Approval Status - Payslips" parent="menu_group_payroll"
+              action="action_payslip_approval_status" sequence="35"/>
+    <menuitem id="menu_payslip_billing_status" name="Payslip Billing Status" parent="menu_group_payroll"
+              action="action_payslip_billing_client" sequence="40"/>
+
+    <!-- Follow-up -->
+    <menuitem id="menu_group_followup" name="Follow-up" parent="menu_hr_mgmt_root" sequence="40"/>
+    <menuitem id="menu_issues" name="Issues &amp; Pending Tasks" parent="menu_group_followup"
+              action="action_issues_dashboard" sequence="10"/>
+    <menuitem id="menu_weekly_tasks" name="Weekly Tasks Report" parent="menu_group_followup"
+              action="action_audit_report_wizard" sequence="20"/>
+    <menuitem id="menu_audit_log" name="All User Actions" parent="menu_group_followup"
+              action="action_audit_log" sequence="30"/>
 </odoo>

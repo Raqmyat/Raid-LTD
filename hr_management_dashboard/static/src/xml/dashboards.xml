@@ -23,11 +23,11 @@
                     </div>
                 </div>
 
-                <h4 class="mt-4">Visa &amp; Contract Alerts</h4>
+                <h4 class="mt-4">ID, Visa &amp; Contract Alerts</h4>
                 <div class="o_hrm_cards">
                     <div class="o_hrm_card" t-foreach="state.data.alerts" t-as="al" t-key="al_index"
                          t-att-class="al.count ? 'o_hrm_danger' : 'o_hrm_ok'"
-                         t-on-click="() => this.openEmployees(al.label, al.domain)">
+                         t-on-click="() => this.openAlert(al)">
                         <div class="o_hrm_num" t-out="al.count"/>
                         <div class="o_hrm_lbl" t-out="al.label"/>
                     </div>

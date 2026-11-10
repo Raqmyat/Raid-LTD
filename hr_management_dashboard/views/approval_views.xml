@@ -1,22 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Where is each payroll batch in the approval cycle -->
+    <!-- ====================== 1) Pay runs: where is each batch in the approval cycle ====================== -->
     <record id="view_payroll_approval_list" model="ir.ui.view">
         <field name="name">hr.payslip.run.approval.status.list</field>
         <field name="model">hr.payslip.run</field>
         <field name="arch" type="xml">
             <list string="Payroll Approval Status" create="0" delete="0"
                   default_order="date_start desc, id desc"
-                  decoration-success="state in ('ceo', 'close', 'paid')"
-                  decoration-muted="state == 'draft'">
+                  decoration-muted="rpt_stage in ('empty', 'draft')"
+                  decoration-success="rpt_stage == 'closed'">
                 <field name="name"/>
                 <field name="company_id" optional="show"/>
-                <field name="date_start"/>
-                <field name="date_end"/>
+                <field name="date_start" string="From"/>
+                <field name="date_end" string="To"/>
                 <field name="rpt_slip_count" string="Payslips"/>
-                <field name="state" widget="badge"/>
+                <field name="rpt_stage" string="Current Stage" widget="badge"
+                       decoration-muted="rpt_stage in ('empty', 'draft')"
+                       decoration-info="rpt_stage in ('submitted', 'ops_approved', 'hr_approved')"
+                       decoration-warning="rpt_stage in ('finance', 'ceo')"
+                       decoration-success="rpt_stage == 'closed'"/>
                 <field name="approval_waiting_for"/>
-                <field name="write_date" string="Last Updated" optional="show"/>
+                <field name="rpt_cnt_draft" string="Draft" optional="show"/>
+                <field name="rpt_cnt_submitted" string="Submitted" optional="show"/>
+                <field name="rpt_cnt_ops" string="Ops ✓" optional="show"/>
+                <field name="rpt_cnt_hr" string="HR ✓" optional="show"/>
+                <field name="rpt_cnt_finance" string="Finance" optional="show"/>
+                <field name="rpt_cnt_ceo" string="CEO" optional="show"/>
+                <field name="rpt_cnt_validated" string="Validated" optional="show"/>
+                <field name="rpt_cnt_paid" string="Paid" optional="show"/>
+                <field name="rpt_cnt_cancel" string="Cancelled" optional="hide"/>
+                <field name="write_date" string="Last Updated" optional="hide"/>
             </list>
         </field>
     </record>
@@ -28,13 +41,18 @@
             <search string="Payroll Approval Status">
                 <field name="name"/>
                 <field name="company_id"/>
-                <filter name="not_submitted" string="Not Submitted" domain="[('state', '=', 'draft')]"/>
-                <filter name="in_approval" string="In Approval"
-                        domain="[('state', 'in', ['submitted', 'op_manager', 'hr', 'legal', 'finance', 'audit'])]"/>
-                <filter name="fully_approved" string="Fully Approved (CEO)" domain="[('state', '=', 'ceo')]"/>
+                <filter name="stage_draft" string="Not Submitted" domain="[('rpt_stage', '=', 'draft')]"/>
+                <filter name="stage_approval" string="In Approval"
+                        domain="[('rpt_stage', 'in', ['submitted', 'ops_approved', 'hr_approved', 'finance', 'ceo'])]"/>
+                <filter name="stage_closed" string="Fully Validated / Paid" domain="[('rpt_stage', '=', 'closed')]"/>
+                <separator/>
+                <filter name="stage_submitted" string="Waiting: Operations" domain="[('rpt_stage', '=', 'submitted')]"/>
+                <filter name="stage_ops" string="Waiting: HR" domain="[('rpt_stage', 'in', ['ops_approved', 'hr_approved'])]"/>
+                <filter name="stage_finance" string="Waiting: Finance" domain="[('rpt_stage', '=', 'finance')]"/>
+                <filter name="stage_ceo" string="Waiting: CEO" domain="[('rpt_stage', '=', 'ceo')]"/>
+                <separator/>
                 <filter name="period" string="Period" date="date_start"/>
                 <separator/>
-                <filter name="group_state" string="Approval Stage" context="{'group_by': 'state'}"/>
                 <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
                 <filter name="group_month" string="Month" context="{'group_by': 'date_start:month'}"/>
             </search>
@@ -42,7 +60,7 @@
     </record>
 
     <record id="action_payroll_approval_status" model="ir.actions.act_window">
-        <field name="name">Payroll Approval Status</field>
+        <field name="name">Payroll Approval Status (Pay Runs)</field>
         <field name="res_model">hr.payslip.run</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_payroll_approval_search"/>
@@ -52,5 +70,94 @@
         <field name="view_mode">list</field>
         <field name="view_id" ref="view_payroll_approval_list"/>
         <field name="act_window_id" ref="action_payroll_approval_status"/>
+    </record>
+
+    <!-- ====================== 2) Payslips: who is each payslip waiting for ====================== -->
+    <record id="view_payslip_approval_list" model="ir.ui.view">
+        <field name="name">hr.payslip.approval.status.list</field>
+        <field name="model">hr.payslip</field>
+        <field name="arch" type="xml">
+            <list string="Payslips Approval Status" create="0" delete="0"
+                  default_order="date_from desc, payslip_run_id, employee_id"
+                  decoration-muted="state == 'cancel'">
+                <field name="company_id" optional="show"/>
+                <field name="payslip_run_id"/>
+                <field name="employee_id"/>
+                <field name="date_from" string="From" optional="show"/>
+                <field name="date_to" string="To" optional="hide"/>
+                <field name="state" string="Status" widget="badge"
+                       decoration-muted="state == 'draft'"
+                       decoration-info="state in ('submitted', 'ops_approved', 'hr_approved')"
+                       decoration-warning="state in ('finance', 'ceo')"
+                       decoration-success="state == 'validated'"
+                       decoration-primary="state == 'paid'"
+                       decoration-danger="state == 'cancel'"/>
+                <field name="rpt_waiting_for"/>
+                <field name="write_date" string="Last Updated" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_payslip_approval_pivot" model="ir.ui.view">
+        <field name="name">hr.payslip.approval.status.pivot</field>
+        <field name="model">hr.payslip</field>
+        <field name="arch" type="xml">
+            <pivot string="Payslips Approval Status">
+                <field name="payslip_run_id" type="row"/>
+                <field name="state" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_payslip_approval_search" model="ir.ui.view">
+        <field name="name">hr.payslip.approval.status.search</field>
+        <field name="model">hr.payslip</field>
+        <field name="arch" type="xml">
+            <search string="Payslips Approval Status">
+                <field name="employee_id"/>
+                <field name="payslip_run_id"/>
+                <field name="company_id"/>
+                <filter name="my_turn" string="My Turn" domain="[('approval_my_turn', '=', True)]"/>
+                <separator/>
+                <filter name="f_draft" string="Draft (not submitted)" domain="[('state', '=', 'draft')]"/>
+                <filter name="f_submitted" string="Submitted (waiting Operations)" domain="[('state', '=', 'submitted')]"/>
+                <filter name="f_ops" string="Operations Approved (waiting HR)" domain="[('state', '=', 'ops_approved')]"/>
+                <filter name="f_hr" string="HR Approved" domain="[('state', '=', 'hr_approved')]"/>
+                <filter name="f_finance" string="Finance" domain="[('state', '=', 'finance')]"/>
+                <filter name="f_ceo" string="CEO" domain="[('state', '=', 'ceo')]"/>
+                <filter name="f_validated" string="Validated (not paid)" domain="[('state', '=', 'validated')]"/>
+                <filter name="f_paid" string="Paid" domain="[('state', '=', 'paid')]"/>
+                <filter name="f_cancel" string="Cancelled / Refused" domain="[('state', '=', 'cancel')]"/>
+                <separator/>
+                <filter name="stuck" string="Stuck in approval (no change for 3+ days)"
+                        domain="[('state', 'in', ['submitted', 'ops_approved', 'hr_approved', 'finance', 'ceo']), ('write_date', '&lt;', (context_today() - relativedelta(days=3)).strftime('%Y-%m-%d'))]"/>
+                <filter name="period" string="Period" date="date_from"/>
+                <separator/>
+                <filter name="group_run" string="Pay Run" context="{'group_by': 'payslip_run_id'}"/>
+                <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
+                <filter name="group_month" string="Month" context="{'group_by': 'date_from:month'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_payslip_approval_status" model="ir.actions.act_window">
+        <field name="name">Payslips Approval Status</field>
+        <field name="res_model">hr.payslip</field>
+        <field name="view_mode">list,pivot,form</field>
+        <field name="search_view_id" ref="view_payslip_approval_search"/>
+        <field name="context">{'search_default_group_state': 1}</field>
+    </record>
+    <record id="action_payslip_approval_status_list" model="ir.actions.act_window.view">
+        <field name="sequence">1</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_payslip_approval_list"/>
+        <field name="act_window_id" ref="action_payslip_approval_status"/>
+    </record>
+    <record id="action_payslip_approval_status_pivot" model="ir.actions.act_window.view">
+        <field name="sequence">2</field>
+        <field name="view_mode">pivot</field>
+        <field name="view_id" ref="view_payslip_approval_pivot"/>
+        <field name="act_window_id" ref="action_payslip_approval_status"/>
     </record>
 </odoo>

@@ -13,6 +13,13 @@
                 <field name="date_from" optional="hide"/>
                 <field name="date_to" optional="hide"/>
                 <field name="billable_amount" sum="Total"/>
+                <field name="slip_state" string="Payslip Status" widget="badge" optional="show"
+                       decoration-muted="slip_state == 'draft'"
+                       decoration-info="slip_state in ('submitted', 'ops_approved', 'hr_approved')"
+                       decoration-warning="slip_state in ('finance', 'ceo')"
+                       decoration-success="slip_state == 'validated'"
+                       decoration-primary="slip_state == 'paid'"
+                       decoration-danger="slip_state == 'cancel'"/>
                 <field name="billing_status" widget="badge"
                        decoration-danger="billing_status == 'none'"
                        decoration-warning="billing_status == 'ordered'"
@@ -50,8 +57,16 @@
                 <filter name="st_ordered" string="Sale Order - Not Invoiced" domain="[('billing_status', '=', 'ordered')]"/>
                 <filter name="st_invoiced" string="Invoiced" domain="[('billing_status', '=', 'invoiced')]"/>
                 <separator/>
+                <filter name="to_bill" string="Closed but NOT billed (Validated / Paid, no sale order)"
+                        domain="[('slip_state', 'in', ['validated', 'paid']), ('billing_status', '=', 'none')]"/>
+                <filter name="to_invoice" string="Closed, sale order NOT invoiced"
+                        domain="[('slip_state', 'in', ['validated', 'paid']), ('billing_status', '=', 'ordered')]"/>
+                <filter name="slip_approval" string="Payslip still in approval"
+                        domain="[('slip_state', 'in', ['draft', 'submitted', 'ops_approved', 'hr_approved', 'finance', 'ceo'])]"/>
+                <separator/>
                 <filter name="group_run" string="Pay Run" context="{'group_by': 'payslip_run_id'}"/>
                 <filter name="group_status" string="Billing Status" context="{'group_by': 'billing_status'}"/>
+                <filter name="group_slip_state" string="Payslip Status" context="{'group_by': 'slip_state'}"/>
                 <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
                 <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
             </search>

@@ -4,7 +4,9 @@ import pytz
 from dateutil.relativedelta import relativedelta
 
 from odoo import _, api, fields, models
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, UserError
+
+from .payslip import APPROVAL_STATES, waiting_map
 
 
 class HrMgmtDashboard(models.AbstractModel):
@@ -32,15 +34,32 @@ class HrMgmtDashboard(models.AbstractModel):
                     (field, '<=', fields.Date.to_string(today + timedelta(days=days)))]
 
         alert_defs = [
-            (_('Visa expired'), 'danger',
+            (_('ID expired'), 'danger', 'hr.employee',
+             [('identification_expire', '!=', False), ('identification_expire', '<', fields.Date.to_string(today))]),
+            (_('ID expiring within 60 days'), 'warning', 'hr.employee', _between('identification_expire', 60)),
+            (_('ID number without expiry date'), 'warning', 'hr.employee',
+             [('identification_id', '!=', False), ('identification_expire', '=', False)]),
+            (_('Visa expired'), 'danger', 'hr.employee',
              [('visa_expire', '!=', False), ('visa_expire', '<', fields.Date.to_string(today))]),
-            (_('Visa expiring within 60 days'), 'warning', _between('visa_expire', 60)),
-            (_('Contract renewal within 30 days'), 'warning', _between('rpt_contract_end', 30)),
-            (_('Contract renewal within 60 days'), 'warning', _between('rpt_contract_end', 60)),
+            (_('Visa expiring within 60 days'), 'warning', 'hr.employee', _between('visa_expire', 60)),
+            (_('Contract renewal within 30 days'), 'warning', 'hr.employee', _between('rpt_contract_end', 30)),
+            (_('Contract renewal within 60 days'), 'warning', 'hr.employee', _between('rpt_contract_end', 60)),
         ]
-        alerts = [{'label': label, 'level': level, 'domain': domain,
-                   'count': Employee.search_count(domain)}
-                  for label, level, domain in alert_defs]
+        # client contracts (CRM): status is refreshed daily by the contracts cron
+        alert_defs += [
+            (_('Client contracts expired (not renewed)'), 'danger', 'crm.client.contract',
+             [('expiry_status', '=', 'expired')]),
+            (_('Client contracts expiring soon'), 'warning', 'crm.client.contract',
+             [('expiry_status', '=', 'expiring')]),
+        ]
+        alerts = []
+        for label, level, model, domain in alert_defs:
+            try:
+                count = self.env[model].search_count(domain)
+            except (KeyError, AccessError):
+                continue
+            alerts.append({'label': label, 'level': level, 'model': model,
+                           'domain': domain, 'count': count})
 
         # Company > Department > count
         companies = {}
@@ -99,22 +118,28 @@ class HrMgmtDashboard(models.AbstractModel):
             return None
         return {'label': label, 'count': cnt, 'model': model, 'domain': domain, 'action': action}
 
-    def _approval_items(self):
-        """Batches per approval stage (only when the Raid payroll approval cycle is installed)."""
-        Run = self.env['hr.payslip.run']
-        waiting = Run._approval_waiting_map()
-        if not waiting:
+    def _approval_items(self, limit):
+        """Payslips per approval status (hr_approval_workflow: the statuses are values of the
+        standard payslip `state`)."""
+        Slip = self.env['hr.payslip']
+        if 'approval_my_turn' not in Slip._fields:      # approval module not installed
             return []
-        items = []
-        for state in ('submitted', 'op_manager', 'hr', 'legal', 'finance', 'audit', 'ceo'):
-            label = (_('Batches waiting for: %s') % waiting[state] if state != 'ceo'
-                     else _('Batches fully approved, not confirmed yet'))
-            items.append(self._item(label, 'hr.payslip.run', [('state', '=', state)]))
+        waiting = waiting_map(self.env)
+        items = [
+            self._item(_('Waiting for: %s') % waiting[state], 'hr.payslip', [('state', '=', state)])
+            for state in ('submitted', 'ops_approved', 'hr_approved', 'finance', 'ceo')
+        ]
         items.append(self._item(
-            _('Payslips (without batch) inside the approval cycle'), 'hr.payslip',
-            [('payslip_run_id', '=', False),
-             ('state', 'in', ['submitted', 'op_manager', 'hr', 'legal', 'finance', 'audit', 'ceo'])]))
+            _('Validated, not paid yet'), 'hr.payslip', [('state', '=', 'validated')]))
+        items.append(self._item(
+            _('Stuck in approval (no change for %s days)') % self._days(), 'hr.payslip',
+            [('state', 'in', list(APPROVAL_STATES)), ('write_date', '<', limit)]))
+        items.append(self._item(
+            _('Waiting for ME (approval)'), 'hr.payslip', [('approval_my_turn', '=', True)]))
         return items
+
+    def _days(self):
+        return int(self.env['ir.config_parameter'].sudo().get_param('hr_management_dashboard.overdue_days', 3))
 
     @api.model
     def get_issues(self):
@@ -131,6 +156,14 @@ class HrMgmtDashboard(models.AbstractModel):
         Issue = self.env['hr.employee.data.issue']
         Issue._rebuild()
         emp_missing = len(Issue._read_group([], ['employee_id'], ['__count']))
+
+        skill_alerts = 0
+        try:
+            Skill = self.env['hr.skill.report']
+            Skill._rebuild()
+            skill_alerts = Skill.sudo().search_count([('cert_status', 'in', ['expired', 'expiring'])])
+        except (UserError, KeyError, AccessError):
+            pass
 
         sections = [
             {'title': _('Time Off'), 'items': [
@@ -152,20 +185,41 @@ class HrMgmtDashboard(models.AbstractModel):
             {'title': _('Payroll'), 'items': [
                 self._item(_('Draft payslips whose period already ended'), 'hr.payslip',
                            [('state', '=', 'draft'), ('date_to', '<', today)]),
-                self._item(_('Payslips waiting for verification'), 'hr.payslip', [('state', '=', 'verify')]),
                 self._item(_('Draft batches whose period already ended'), 'hr.payslip.run',
                            [('state', '=', 'draft'), ('date_end', '<', today)]),
             ]},
-            {'title': _('Payroll Approval Cycle'), 'items': self._approval_items()},
+            {'title': _('Payroll Approval Cycle'), 'items': self._approval_items(limit)},
             {'title': _('Payroll Billing (Sale Orders / Invoices)'), 'items': [
-                self._item(_('Batch payslips with NO sale order'), 'hr.payslip',
-                           [('payslip_run_id', '!=', False), ('billing_status', '=', 'none')]),
-                self._item(_('Batch payslips with sale order but NOT invoiced'), 'hr.payslip',
-                           [('payslip_run_id', '!=', False), ('billing_status', '=', 'ordered')]),
+                self._item(_('Closed payslips (Validated / Paid) with NO sale order'), 'hr.payslip',
+                           [('payslip_run_id', '!=', False), ('state', 'in', ['validated', 'paid']),
+                            ('billing_status', '=', 'none')]),
+                self._item(_('Closed payslips with sale order but NOT invoiced'), 'hr.payslip',
+                           [('payslip_run_id', '!=', False), ('state', 'in', ['validated', 'paid']),
+                            ('billing_status', '=', 'ordered')]),
+                self._item(_('Payslips still in approval with NO sale order'), 'hr.payslip',
+                           [('payslip_run_id', '!=', False),
+                            ('state', 'in', ['draft'] + list(APPROVAL_STATES)),
+                            ('billing_status', '=', 'none')]),
             ]},
             {'title': _('Employee Data'), 'items': [
                 self._item(_('Employees with missing data'), 'hr.employee', [], count=emp_missing,
                            action='hr_management_dashboard.action_employee_data_issue_client'),
+                self._item(_('IDs expired'), 'hr.employee',
+                           [('identification_expire', '!=', False), ('identification_expire', '<', today)]),
+                self._item(_('IDs expiring within 60 days'), 'hr.employee',
+                           [('identification_expire', '>=', today),
+                            ('identification_expire', '<=', today + timedelta(days=60))]),
+                self._item(_('Skill certificates expired / expiring (60 days)'), 'hr.skill.report', [],
+                           count=skill_alerts,
+                           action='hr_management_dashboard.action_skill_report_client'),
+            ]},
+            {'title': _('Client Contracts'), 'items': [
+                self._item(_('Contracts expired and not renewed'), 'crm.client.contract',
+                           [('expiry_status', '=', 'expired')]),
+                self._item(_('Contracts expiring soon (inside their alert window)'), 'crm.client.contract',
+                           [('expiry_status', '=', 'expiring')]),
+                self._item(_('Running contracts with no responsible user'), 'crm.client.contract',
+                           [('state', '=', 'running'), ('user_id', '=', False)]),
             ]},
         ]
         for s in sections:

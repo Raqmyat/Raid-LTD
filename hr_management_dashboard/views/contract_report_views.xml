@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Client contracts (model crm.client.contract of the CRM module) inside the HR Reports -->
+    <record id="view_contract_report_list" model="ir.ui.view">
+        <field name="name">crm.client.contract.report.list</field>
+        <field name="model">crm.client.contract</field>
+        <field name="arch" type="xml">
+            <list string="Client Contracts Expiry" create="0" delete="0"
+                  default_order="date_end asc"
+                  decoration-danger="expiry_status == 'expired'"
+                  decoration-warning="expiry_status == 'expiring'"
+                  decoration-muted="state in ('renewed', 'terminated', 'cancel')">
+                <field name="partner_id" string="Client"/>
+                <field name="name" string="Contract"/>
+                <field name="contract_type"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="days_left" string="Days Left" invisible="state != 'running'"/>
+                <field name="expiry_status" string="Expiry" widget="badge"
+                       decoration-success="expiry_status == 'ok'"
+                       decoration-warning="expiry_status == 'expiring'"
+                       decoration-danger="expiry_status == 'expired'"
+                       decoration-muted="expiry_status == 'na'"/>
+                <field name="state" widget="badge" optional="show"
+                       decoration-info="state == 'draft'"
+                       decoration-success="state == 'running'"
+                       decoration-muted="state in ('renewed', 'terminated', 'cancel')"/>
+                <field name="auto_renew" optional="show"/>
+                <field name="headcount" string="Contracted Emp." optional="show" sum="Contracted"/>
+                <field name="actual_headcount" string="Actual Emp." optional="show" sum="Actual"/>
+                <field name="monthly_value" optional="show" sum="Monthly Fees"/>
+                <field name="currency_id" optional="hide"/>
+                <field name="user_id" widget="many2one_avatar_user" optional="show"/>
+                <field name="company_id" optional="hide" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_contract_report_pivot" model="ir.ui.view">
+        <field name="name">crm.client.contract.report.pivot</field>
+        <field name="model">crm.client.contract</field>
+        <field name="arch" type="xml">
+            <pivot string="Client Contracts">
+                <field name="partner_id" type="row"/>
+                <field name="date_end" type="col" interval="month"/>
+                <field name="monthly_value" type="measure"/>
+                <field name="headcount" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_contract_report_graph" model="ir.ui.view">
+        <field name="name">crm.client.contract.report.graph</field>
+        <field name="model">crm.client.contract</field>
+        <field name="arch" type="xml">
+            <graph string="Contracts ending per month" type="bar">
+                <field name="date_end" interval="month"/>
+                <field name="expiry_status"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_contract_report" model="ir.actions.act_window">
+        <field name="name">Client Contracts Expiry</field>
+        <field name="res_model">crm.client.contract</field>
+        <field name="view_mode">list,pivot,graph,form</field>
+        <field name="search_view_id" ref="crm_client_contract.view_client_contract_search"/>
+        <field name="context">{'search_default_running': 1}</field>
+    </record>
+    <record id="action_contract_report_list" model="ir.actions.act_window.view">
+        <field name="sequence">1</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_contract_report_list"/>
+        <field name="act_window_id" ref="action_contract_report"/>
+    </record>
+    <record id="action_contract_report_pivot" model="ir.actions.act_window.view">
+        <field name="sequence">2</field>
+        <field name="view_mode">pivot</field>
+        <field name="view_id" ref="view_contract_report_pivot"/>
+        <field name="act_window_id" ref="action_contract_report"/>
+    </record>
+    <record id="action_contract_report_graph" model="ir.actions.act_window.view">
+        <field name="sequence">3</field>
+        <field name="view_mode">graph</field>
+        <field name="view_id" ref="view_contract_report_graph"/>
+        <field name="act_window_id" ref="action_contract_report"/>
+    </record>
+</odoo>

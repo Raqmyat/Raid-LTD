@@ -5,13 +5,13 @@
         <field name="model">hr.payslip.line</field>
         <field name="arch" type="xml">
             <list string="Payroll Rules" action="action_open_payslip" type="object"
-                  create="0" edit="0" delete="0" default_order="rpt_date_from desc, rpt_employee_id">
-                <field name="rpt_company_id"/>
-                <field name="rpt_department_id"/>
+                  create="0" edit="0" delete="0" default_order="rpt_date_from desc, rpt_employee_id, sequence">
+                <field name="rpt_company_id" optional="show"/>
+                <field name="rpt_department_id" optional="show"/>
                 <field name="rpt_employee_id"/>
-                <field name="slip_id"/>
-                <field name="rpt_date_from"/>
-                <field name="rpt_date_to"/>
+                <field name="slip_id" optional="hide"/>
+                <field name="rpt_date_from" string="From"/>
+                <field name="rpt_date_to" string="To" optional="show"/>
                 <field name="code"/>
                 <field name="name"/>
                 <field name="category_id" optional="show"/>
@@ -19,7 +19,13 @@
                 <field name="rate" optional="hide"/>
                 <field name="amount" optional="hide"/>
                 <field name="total" sum="Total"/>
-                <field name="rpt_state" optional="show"/>
+                <field name="rpt_state" string="Payslip Status" widget="badge" optional="show"
+                       decoration-muted="rpt_state == 'draft'"
+                       decoration-info="rpt_state in ('submitted', 'ops_approved', 'hr_approved')"
+                       decoration-warning="rpt_state in ('finance', 'ceo')"
+                       decoration-success="rpt_state == 'validated'"
+                       decoration-primary="rpt_state == 'paid'"
+                       decoration-danger="rpt_state == 'cancel'"/>
             </list>
         </field>
     </record>
@@ -50,16 +56,23 @@
                 <field name="name"/>
                 <field name="slip_id"/>
                 <filter name="period" string="Period" date="rpt_date_from"/>
-                <filter name="state_done" string="Done / Paid" domain="[('rpt_state', 'in', ['done', 'paid'])]"/>
-                <filter name="state_draft" string="Draft / Waiting" domain="[('rpt_state', 'in', ['draft', 'verify'])]"/>
+                <separator/>
+                <filter name="st_draft" string="Draft (not submitted)" domain="[('rpt_state', '=', 'draft')]"/>
+                <filter name="st_approval" string="In Approval (Submitted → CEO)"
+                        domain="[('rpt_state', 'in', ['submitted', 'ops_approved', 'hr_approved', 'finance', 'ceo'])]"/>
+                <filter name="st_closed" string="Validated / Paid" domain="[('rpt_state', 'in', ['validated', 'paid'])]"/>
+                <filter name="st_validated" string="Validated (not paid)" domain="[('rpt_state', '=', 'validated')]"/>
+                <filter name="st_paid" string="Paid" domain="[('rpt_state', '=', 'paid')]"/>
+                <filter name="st_cancel" string="Cancelled / Refused" domain="[('rpt_state', '=', 'cancel')]"/>
                 <separator/>
                 <filter name="group_company" string="Company" context="{'group_by': 'rpt_company_id'}"/>
-                    <filter name="group_department" string="Department" context="{'group_by': 'rpt_department_id'}"/>
-                    <filter name="group_employee" string="Employee" context="{'group_by': 'rpt_employee_id'}"/>
-                    <filter name="group_slip" string="Payslip" context="{'group_by': 'slip_id'}"/>
-                    <filter name="group_rule" string="Rule" context="{'group_by': 'code'}"/>
-                    <filter name="group_category" string="Category" context="{'group_by': 'category_id'}"/>
-                    <filter name="group_month" string="Month" context="{'group_by': 'rpt_date_from:month'}"/>
+                <filter name="group_department" string="Department" context="{'group_by': 'rpt_department_id'}"/>
+                <filter name="group_employee" string="Employee" context="{'group_by': 'rpt_employee_id'}"/>
+                <filter name="group_slip" string="Payslip" context="{'group_by': 'slip_id'}"/>
+                <filter name="group_state" string="Payslip Status" context="{'group_by': 'rpt_state'}"/>
+                <filter name="group_rule" string="Rule" context="{'group_by': 'code'}"/>
+                <filter name="group_category" string="Category" context="{'group_by': 'category_id'}"/>
+                <filter name="group_month" string="Month" context="{'group_by': 'rpt_date_from:month'}"/>
             </search>
         </field>
     </record>

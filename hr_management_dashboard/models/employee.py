@@ -7,6 +7,9 @@ class HrEmployee(models.Model):
     _inherit = 'hr.employee'
 
     # Visa expiry itself is the STANDARD field `visa_expire` (Private Information > Work Permit).
+    identification_expire = fields.Date(
+        string='ID Expiry Date', groups='hr.group_hr_user', tracking=True, index=True,
+        help='Expiry date of the Identification No (ID card), next to the ID number on the employee card.')
     rpt_contract_start = fields.Date(
         string='Contract Start (first)', compute='_compute_rpt_contract_dates', store=True,
         groups='hr.group_hr_manager',
@@ -21,6 +24,8 @@ class HrEmployee(models.Model):
         string='Contract Days Left', compute='_compute_rpt_days_left', groups='hr.group_hr_manager')
     rpt_visa_days_left = fields.Integer(
         string='Visa Days Left', compute='_compute_rpt_days_left', groups='hr.group_hr_user')
+    rpt_id_days_left = fields.Integer(
+        string='ID Days Left', compute='_compute_rpt_days_left', groups='hr.group_hr_user')
 
     @staticmethod
     def _rpt_next_anniversary(start, today):
@@ -52,10 +57,11 @@ class HrEmployee(models.Model):
             emp.rpt_contract_start = vals['rpt_contract_start']
             emp.rpt_contract_end = vals['rpt_contract_end']
 
-    @api.depends('rpt_contract_end', 'visa_expire')
+    @api.depends('rpt_contract_end', 'visa_expire', 'identification_expire')
     def _compute_rpt_days_left(self):
         today = fields.Date.context_today(self)
         for emp in self:
+            emp.rpt_id_days_left = (emp.identification_expire - today).days if emp.identification_expire else 0
             emp.rpt_contract_days_left = (emp.rpt_contract_end - today).days if emp.rpt_contract_end else 0
             emp.rpt_visa_days_left = (emp.visa_expire - today).days if emp.visa_expire else 0
 

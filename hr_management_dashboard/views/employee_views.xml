@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ID expiry date on the employee card, right under the Identification No -->
+    <record id="view_employee_form_id_expire" model="ir.ui.view">
+        <field name="name">hr.employee.form.id.expire</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='identification_id']" position="after">
+                <field name="identification_expire" groups="hr.group_hr_user"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

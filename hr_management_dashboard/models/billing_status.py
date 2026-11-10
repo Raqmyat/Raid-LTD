@@ -13,6 +13,7 @@ class HrPayslipBillingStatus(models.Model):
     company_id = fields.Many2one('res.company', string='Company', index=True)
     department_id = fields.Many2one('hr.department', string='Department')
     payslip_run_id = fields.Many2one('hr.payslip.run', string='Pay Run', ondelete='cascade', index=True)
+    slip_state = fields.Selection(related='slip_id.state', string='Payslip Status', store=True, index=True)
     date_from = fields.Date(string='Period From')
     date_to = fields.Date(string='Period To')
     billing_status = fields.Selection(

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_client_contract_root" name="Contracts" parent="crm.crm_menu_root" sequence="25"
+              groups="crm_client_contract.group_client_contract_viewer"/>
+    <menuitem id="menu_client_contract" name="Client Contracts" parent="menu_client_contract_root"
+              action="action_client_contract" sequence="10"/>
+    <menuitem id="menu_client_contract_expiring" name="Contracts to Renew" parent="menu_client_contract_root"
+              action="action_client_contract_expiring" sequence="20"/>
+    <menuitem id="menu_client_contract_service" name="Services" parent="menu_client_contract_root"
+              action="action_client_contract_service" sequence="90"
+              groups="crm_client_contract.group_client_contract_manager"/>
+</odoo>

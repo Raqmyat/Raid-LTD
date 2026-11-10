@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_crm_client_contract_viewer,crm.client.contract viewer,model_crm_client_contract,group_client_contract_viewer,1,0,0,0
+access_crm_client_contract_user,crm.client.contract user,model_crm_client_contract,group_client_contract_user,1,1,1,0
+access_crm_client_contract_manager,crm.client.contract manager,model_crm_client_contract,group_client_contract_manager,1,1,1,1
+access_crm_client_contract_renew_wizard,crm.client.contract.renew.wizard user,model_crm_client_contract_renew_wizard,group_client_contract_user,1,1,1,1
+access_crm_client_contract_service_viewer,crm.client.contract.service viewer,model_crm_client_contract_service,group_client_contract_viewer,1,0,0,0
+access_crm_client_contract_service_manager,crm.client.contract.service manager,model_crm_client_contract_service,group_client_contract_manager,1,1,1,1

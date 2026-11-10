@@ -45,6 +45,10 @@ export class EmployeeStatus extends BaseDashboard {
         this.openRecords(name, "hr.employee", domain);
     }
 
+    openAlert(alert) {
+        this.openRecords(alert.label, alert.model || "hr.employee", alert.domain);
+    }
+
     toggle(id) {
         this.state.collapsed[id] = !this.state.collapsed[id];
     }
@@ -86,4 +90,9 @@ registry.category("actions").add("hr_management_dashboard.open_missing_data", as
 // Same pattern for the payslip billing snapshot
 registry.category("actions").add("hr_management_dashboard.open_billing_status", async (env) => {
     return env.services.orm.call("hr.payslip.billing.status", "action_open_report", []);
+});
+
+// Skills & certificates snapshot
+registry.category("actions").add("hr_management_dashboard.open_skill_report", async (env) => {
+    return env.services.orm.call("hr.skill.report", "action_open_report", []);
 });
