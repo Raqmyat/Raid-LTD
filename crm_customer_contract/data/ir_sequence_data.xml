@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo noupdate="1">
-    <record id="seq_crm_customer_contract" model="ir.sequence">
-        <field name="name">Customer Contract</field>
-        <field name="code">crm.customer.contract</field>
-        <field name="prefix">CC/%(year)s/</field>
-        <field name="padding">4</field>
-    </record>
-</odoo>
